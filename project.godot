@@ -1,0 +1,22 @@
+; Robot Dash — an endless runner made with Godot .NET 4.7.2
+config_version=5
+
+[application]
+config/name="Robot Dash"
+run/main_scene="res://Scenes/Main.tscn"
+config/features=PackedStringArray("4.7", "C#", "GL Compatibility")
+config/icon="res://icon.svg"
+
+[display]
+window/size/viewport_width=1280
+window/size/viewport_height=720
+window/stretch/mode="canvas_items"
+window/stretch/aspect="keep"
+
+[dotnet]
+project/assembly_name="RobotDash"
+
+[rendering]
+renderer/rendering_method="gl_compatibility"
+renderer/rendering_method.mobile="gl_compatibility"
+environment/defaults/default_clear_color=Color(0.53, 0.81, 0.98, 1)

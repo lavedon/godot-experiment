@@ -1,0 +1,10 @@
+.godot/
+**/bin/
+**/obj/
+*.user
+*.db
+*.db-shm
+*.db-wal
+build/*
+!build/.gdignore
+dist/
