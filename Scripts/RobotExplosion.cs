@@ -10,6 +10,7 @@ public record RobotPart(string Name, Vector2 Center, float Radius, Action Draw, 
 /// <summary>
 /// KABOOM! When Bolt-E crashes, it bursts into pieces: the parts fly off spinning, bounce on the ground,
 /// and skid to a stop. Plus a flash, a shockwave ring, sparks, smoke, gears and screws, and dizzy stars.
+/// With a spare battery, it can also run backwards: the magic rebuild flies every piece back into place (head last!).
 /// Everything here is in the robot's own drawing space (0,0 = where the robot's feet were).
 /// </summary>
 public class RobotExplosion
@@ -25,6 +26,11 @@ public class RobotExplosion
         public Debris Debris;
         public Vector2 Center, Position, Velocity;
         public float Rotation, Spin, Radius, FlatEvery;
+
+        // For the magic rebuild: where it flies back from, how long it waits before it starts,
+        // and how much it has shrunk (the little gears get sucked into Bolt-E's chest)
+        public Vector2 From;
+        public float FromRotation, Delay, Shrink;
     }
 
     class Spark
@@ -50,6 +56,21 @@ public class RobotExplosion
     Vector2 boomCenter;
     float time;
 
+    // ---- The magic rebuild ----
+    const float HeadWait = 0.35f;   // the head waits this long, so it's the last piece to snap back on
+    bool puttingBack;
+    float backTime;                 // seconds since the pieces started flying back
+    float backSeconds;              // how long the whole rebuild takes
+
+    /// <summary>True while the pieces are flying back together.</summary>
+    public bool PuttingBack => puttingBack;
+    /// <summary>True when every piece is back in its place.</summary>
+    public bool IsBackTogether => puttingBack && backTime >= backSeconds;
+    /// <summary>Where the middle of the KABOOM is (it slides along with the world).</summary>
+    public Vector2 BoomCenter => boomCenter;
+    /// <summary>True if one of the flying pieces is the part with this name, like "head" or "hat".</summary>
+    public bool HasPart(string name) => pieces.Any(piece => piece.Part?.Name == name);
+
     static readonly Color Metal = new(0.62f, 0.64f, 0.7f);
 
     /// <param name="parts">The robot's parts, drawn back to front.</param>
@@ -57,13 +78,15 @@ public class RobotExplosion
     /// <param name="bodyAngle">How tilted the robot was at the moment of the crash.</param>
     /// <param name="groundY">Where the ground is, measured from the robot's position.</param>
     /// <param name="onBounce">Called when a piece hits the ground hard (true = a big robot part, false = a little gear or screw).</param>
+    /// <param name="boomAt">Where the KABOOM starts. Leave it out for Bolt-E (then it's his chest). Smashed crates, cones and drones pass their own middle.</param>
+    /// <param name="littleBits">How many little gears, screws and springs fly out.</param>
     public RobotExplosion(IEnumerable<RobotPart> parts, Vector2 pivot, float bodyAngle, float groundY, Color glowColor,
-                          Action<bool>? onBounce = null)
+                          Action<bool>? onBounce = null, Vector2? boomAt = null, int littleBits = 12)
     {
         this.groundY = groundY;
         this.glowColor = glowColor;
         this.onBounce = onBounce;
-        boomCenter = pivot + (new Vector2(0, -75) - pivot).Rotated(bodyAngle);
+        boomCenter = boomAt ?? pivot + (new Vector2(0, -75) - pivot).Rotated(bodyAngle); // (Bolt-E's chest)
 
         // 1. The big parts: start exactly where they were, then fly away from the middle of the boom.
         foreach (var part in parts)
@@ -93,7 +116,7 @@ public class RobotExplosion
         }
 
         // 2. Little gears, screws and springs
-        for (int i = 0; i < 12; i++)
+        for (int i = 0; i < littleBits; i++)
         {
             pieces.Add(new Piece
             {
@@ -126,9 +149,39 @@ public class RobotExplosion
             AddPuff(boomCenter + RandomDirection() * Rand(0, 25), RandomDirection() * Rand(30, 130) + new Vector2(0, -40), Rand(14, 28));
     }
 
+    /// <summary>
+    /// The magic rebuild! Every piece flies back to its place on the robot over "seconds".
+    /// Big parts go one after another, the head goes last, and the little gears and screws get sucked in.
+    /// </summary>
+    public void StartPuttingBackTogether(float seconds)
+    {
+        puttingBack = true;
+        backTime = 0;
+        backSeconds = seconds;
+        int partIndex = 0; // which robot part this is, in the order the robot is drawn
+        foreach (var piece in pieces)
+        {
+            piece.From = piece.Position;
+            piece.FromRotation = piece.Rotation;
+            if (piece.Part is null)
+            {
+                piece.Delay = 0; // gears, screws and springs go right away
+                continue;
+            }
+            piece.Delay = piece.Part.Name is "head" or "hat" ? HeadWait : Mathf.Min(0.05f * partIndex, 0.3f);
+            partIndex++;
+        }
+    }
+
     public void Update(float dt, float worldSpeed)
     {
         time += dt;
+        if (puttingBack)
+        {
+            UpdatePuttingBack(dt);
+            return;
+        }
+
         // The world is still skidding to a stop, so everything slides back with the ground.
         var drift = new Vector2(-worldSpeed * dt, 0);
         boomCenter += drift;
@@ -185,6 +238,49 @@ public class RobotExplosion
         }
     }
 
+    /// <summary>The rebuild, every frame: no gravity or bouncing, every piece glides smoothly back to its spot.</summary>
+    void UpdatePuttingBack(float dt)
+    {
+        backTime += dt;
+        float flyTime = Mathf.Max(0.05f, backSeconds - HeadWait); // how long each piece takes to fly back
+
+        foreach (var piece in pieces)
+        {
+            float t = Smooth((backTime - piece.Delay) / flyTime); // 0 = where it landed, 1 = back on the robot
+            if (piece.Part is not null)
+            {
+                // A real part: back to its spot on the robot (standing on the ground), turned the right way up
+                piece.Position = piece.From.Lerp(piece.Center + new Vector2(0, groundY), t);
+                piece.Rotation = Mathf.LerpAngle(piece.FromRotation, 0, t);
+            }
+            else
+            {
+                // A little gear, screw or spring: sucked into Bolt-E's chest, shrinking away
+                piece.Position = piece.From.Lerp(new Vector2(0, groundY - 75), t);
+                piece.Shrink = t;
+            }
+        }
+
+        // The last sparks and smoke fade away quickly
+        for (int i = sparks.Count - 1; i >= 0; i--)
+        {
+            sparks[i].Life -= 3 * dt;
+            if (sparks[i].Life <= 0) sparks.RemoveAt(i);
+        }
+        for (int i = puffs.Count - 1; i >= 0; i--)
+        {
+            puffs[i].Life -= 2 * dt;
+            if (puffs[i].Life <= 0) puffs.RemoveAt(i);
+        }
+    }
+
+    /// <summary>Makes movement start and stop gently instead of jerking. (The same as in Boss.cs.)</summary>
+    static float Smooth(float t)
+    {
+        t = Mathf.Clamp(t, 0, 1);
+        return t * t * (3 - 2 * t);
+    }
+
     public void Draw(CanvasItem canvas)
     {
         // Smoke goes behind everything
@@ -198,9 +294,16 @@ public class RobotExplosion
         // Each piece: move it to where it is now, turn it, then draw it as if it were still on the robot.
         foreach (var piece in pieces)
         {
-            canvas.DrawSetTransform(piece.Position - piece.Center.Rotated(piece.Rotation), piece.Rotation, Vector2.One);
-            if (piece.Part is not null) piece.Part.Draw();
-            else DrawDebris(canvas, piece.Debris);
+            if (piece.Part is not null)
+            {
+                canvas.DrawSetTransform(piece.Position - piece.Center.Rotated(piece.Rotation), piece.Rotation, Vector2.One);
+                piece.Part.Draw();
+            }
+            else if (piece.Shrink < 0.98f) // (once a gear has shrunk away to nothing, it's inside Bolt-E)
+            {
+                canvas.DrawSetTransform(piece.Position, piece.Rotation, Vector2.One * (1 - piece.Shrink));
+                DrawDebris(canvas, piece.Debris);
+            }
         }
         canvas.DrawSetTransform(Vector2.Zero, 0, Vector2.One);
 
@@ -225,8 +328,8 @@ public class RobotExplosion
             canvas.DrawArc(boomCenter, 20 + 220 * t, 0, Mathf.Tau, 64, new Color(glowColor, 1 - t), 1 + 9 * (1 - t), true);
         }
 
-        // Dizzy stars spinning above the head after it lands
-        if (head is not null && time > 0.9f)
+        // Dizzy stars spinning above the head after it lands (not while it's flying back on)
+        if (head is not null && time > 0.9f && !puttingBack)
         {
             float fadeIn = Mathf.Min(1, (time - 0.9f) * 3);
             for (int i = 0; i < 3; i++)
@@ -235,6 +338,14 @@ public class RobotExplosion
                 var at = head.Position + new Vector2(Mathf.Cos(angle) * 32, Mathf.Sin(angle) * 9 - 50);
                 Shapes.Star(canvas, at, 8, time * 3f, new Color(1f, 0.88f, 0.25f, fadeIn));
             }
+        }
+
+        // The rebuild ends with a bright glow on Bolt-E's chest (the robot fades it out once it's back together)
+        const float GlowTime = 0.15f;
+        if (puttingBack && backTime > backSeconds - GlowTime)
+        {
+            float glow = Mathf.Clamp((backTime - (backSeconds - GlowTime)) / GlowTime, 0, 1);
+            canvas.DrawCircle(new Vector2(0, groundY - 75), 60, new Color(1, 1, 1, 0.8f * glow));
         }
     }
 

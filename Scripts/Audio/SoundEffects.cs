@@ -215,6 +215,143 @@ public static class SoundEffects
         return Done(sound);
     }
 
+    /// <summary>"1-UP!" — a sparkly run up the notes when a new spare battery is charged. The long last note wobbles.</summary>
+    public static float[] OneUp() =>
+        Tune(new[] { ("C6", 0.06f), ("E6", 0.06f), ("G6", 0.06f), ("C7", 0.06f), ("E7", 0.06f), ("G7", 0.55f) }, Wave.Square25);
+
+    /// <summary>
+    /// "Vwoooop... zip zip zip... ding-DING!" — Bolt-E putting himself back together.
+    /// The "vwoop" is the explosion's robot zap played backwards (low to high), the zips are pieces snapping into place,
+    /// and the little bell is the face screen switching back on.
+    /// </summary>
+    public static float[] Rebuild()
+    {
+        var sound = Synth.Silence(1.2f);
+        Synth.AddTone(sound, 0, 0.7f, Wave.Square25, 0.2f, Held, 90, 900); // power coming back up
+
+        var zip = new Envelope(0.001f, 0.02f, 0f, 0.01f);
+        foreach (float at in new[] { 0.05f, 0.2f, 0.32f, 0.42f, 0.5f, 0.56f })
+            Synth.AddTone(sound, at, 0.03f, Wave.Noise, 0.25f, zip, 1); // a piece zips into place
+
+        var bell = new Envelope(0.001f, 0.18f, 0f, 0.05f);
+        Synth.AddTone(sound, 0.75f, 0.12f, Wave.Sine, 0.4f, bell, Synth.NoteToFrequency("E6"));
+        Synth.AddTone(sound, 0.82f, 0.3f, Wave.Sine, 0.4f, bell, Synth.NoteToFrequency("B6"));
+        return Done(sound);
+    }
+
+    // ---------- Powers from the rainbow ? boxes ----------
+
+    /// <summary>"Ta-da-da-da-da-DAAA!" — a sparkly run up the notes when a power starts, with a low note underneath.</summary>
+    public static float[] PowerUp()
+    {
+        var sound = Tune(new[] { ("C6", 0.07f), ("E6", 0.07f), ("G6", 0.07f), ("C7", 0.07f), ("E7", 0.07f), ("G7", 0.35f) },
+                         Wave.Square25, normalize: false);
+        Synth.AddTone(sound, 0, 0.5f, Wave.Triangle, 0.3f, Held, Synth.NoteToFrequency("C4"));
+        return Done(sound);
+    }
+
+    /// <summary>"Tick!" — a tiny click for each flick of the slot machine (and the "almost over" clock).</summary>
+    public static float[] Tick()
+    {
+        var sound = Synth.Silence(0.06f);
+        Synth.AddTone(sound, 0, 0.025f, Wave.Square12, 0.3f, Pluck, 1500);
+        return Done(sound);
+    }
+
+    /// <summary>"SMASH!" — a crunchy crack, a low thud, and a little metal "ting".</summary>
+    public static float[] Smash()
+    {
+        var sound = Synth.Silence(0.3f);
+        Synth.AddTone(sound, 0, 0.12f, Wave.Noise, 0.5f, new Envelope(0.001f, 0.06f, 0f, 0.03f), 1);   // crack!
+        Synth.AddTone(sound, 0, 0.15f, Wave.Triangle, 0.5f, new Envelope(0.002f, 0.1f, 0f, 0.03f), 220, 90); // thud
+        Synth.AddTone(sound, 0, 0.1f, Wave.Sine, 0.2f, new Envelope(0.001f, 0.06f, 0f, 0.02f), 1900);     // ting
+        return Done(sound);
+    }
+
+    /// <summary>"Bwip-bwip-BWIIIP!" — growing into MEGA BOLT-E (three slides up, each one bigger, like Mario).</summary>
+    public static float[] Grow()
+    {
+        var sound = Synth.Silence(0.55f);
+        Synth.AddTone(sound, 0, 0.1f, Wave.Square50, 0.3f, Held, 300, 500);
+        Synth.AddTone(sound, 0.12f, 0.1f, Wave.Square50, 0.3f, Held, 400, 650);
+        Synth.AddTone(sound, 0.25f, 0.2f, Wave.Square50, 0.3f, Held, 500, 1000);
+        return Done(sound);
+    }
+
+    /// <summary>"Pfffft..." — shrinking back to normal: a slide down, like air coming out of a balloon.</summary>
+    public static float[] Shrink()
+    {
+        var sound = Synth.Silence(0.6f);
+        Synth.AddTone(sound, 0, 0.45f, Wave.Square50, 0.3f, Held, 700, 150);
+        Synth.AddTone(sound, 0, 0.4f, Wave.Noise, 0.15f, new Envelope(0.02f, 0.3f, 0.3f, 0.1f), 1); // the "fffft" air
+        return Done(sound);
+    }
+
+    /// <summary>"FWOOOOSH!" — the rocket board blasting off: a roar of noise and a whistle going up.</summary>
+    public static float[] Rocket()
+    {
+        var sound = Synth.Silence(1.1f);
+        Synth.AddTone(sound, 0, 0.8f, Wave.Noise, 0.3f, new Envelope(0.05f, 0.5f, 0.4f, 0.2f), 1);
+        Synth.AddTone(sound, 0, 0.6f, Wave.Square12, 0.2f, Held, 300, 1200);
+        return Done(sound);
+    }
+
+    // ---------- The World Tour ----------
+
+    /// <summary>
+    /// "Ta-da-da-da-da-DAAA... twinkle twinkle!" — welcome to a new world! A happy run up to a long high note,
+    /// a bouncy bass underneath, and 6 little sparkles at the end (always the same "random" ones).
+    /// </summary>
+    public static float[] NewWorld()
+    {
+        var sound = Tune(new[] { ("C6", 0.1f), ("G5", 0.1f), ("C6", 0.1f), ("E6", 0.1f), ("G6", 0.15f), ("C7", 0.55f) },
+                         Wave.Square25, normalize: false);
+        Synth.AddTone(sound, 0.0f, 0.3f, Wave.Triangle, 0.3f, Held, Synth.NoteToFrequency("C3"));
+        Synth.AddTone(sound, 0.3f, 0.15f, Wave.Triangle, 0.3f, Held, Synth.NoteToFrequency("G3"));
+        Synth.AddTone(sound, 0.45f, 0.5f, Wave.Triangle, 0.3f, Held, Synth.NoteToFrequency("C4"));
+
+        // Sparkles: high notes from C7 up to C8 (only the happy ones: C, D, E, G, A and the top C)
+        int[] happySteps = { 0, 2, 4, 7, 9, 12 };
+        var random = new Random(3);
+        for (int i = 0; i < 6; i++)
+        {
+            float at = 0.5f + random.NextSingle() * 0.4f; // somewhere between 0.5 and 0.9 seconds
+            int key = Synth.NoteToKey("C7") + happySteps[random.Next(happySteps.Length)];
+            Synth.AddTone(sound, at, 0.04f, Wave.Square12, 0.12f, Pluck, Synth.KeyToFrequency(key));
+        }
+        return Done(sound);
+    }
+
+    // ---------- Bolt-E's looks ----------
+
+    /// <summary>
+    /// "Ding-ding-ding-ding-DIIING... bling bling!" — a NEW LOOK! A quick run up to a high note,
+    /// and two little bells ringing on top.
+    /// </summary>
+    public static float[] Unlock()
+    {
+        var sound = Tune(new[] { ("C6", 0.06f), ("E6", 0.06f), ("G6", 0.06f), ("C7", 0.06f), ("E7", 0.3f) },
+                         Wave.Square12, normalize: false);
+        var bell = new Envelope(0.001f, 0.25f, 0f, 0.05f);
+        Synth.AddTone(sound, 0.24f, 0.4f, Wave.Sine, 0.2f, bell, 1568); // (a G)
+        Synth.AddTone(sound, 0.24f, 0.4f, Wave.Sine, 0.2f, bell, 2637); // (an E, higher up)
+        return Done(sound);
+    }
+
+    // ---------- The family race ----------
+
+    /// <summary>
+    /// "Ta-da-DA!" — zooming past somebody's flag (or your own record). A happy cheer, never a "nah-nah" taunt:
+    /// a quick run up to a high note, a little crowd going "yaaay" (soft noise), and a low note underneath.
+    /// </summary>
+    public static float[] PassFlag()
+    {
+        var sound = Tune(new[] { ("C6", 0.08f), ("E6", 0.08f), ("G6", 0.08f), ("C7", 0.3f) }, Wave.Square25, normalize: false);
+        Synth.AddTone(sound, 0, 0.5f, Wave.Noise, 0.08f, new Envelope(0.05f, 0.3f, 0.3f, 0.1f), 1);   // the crowd
+        Synth.AddTone(sound, 0, 0.4f, Wave.Triangle, 0.3f, Held, Synth.NoteToFrequency("C4"));          // the low note
+        return Done(sound);
+    }
+
     /// <summary>Plays a list of (note, seconds) one after another.</summary>
     static float[] Tune((string Note, float Length)[] notes, Wave wave, bool normalize = true)
     {

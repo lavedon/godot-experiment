@@ -24,16 +24,21 @@ public static class Shapes
         canvas.DrawArc(center + new Vector2(0, size * 0.4f), size, Mathf.Pi * 1.15f, Mathf.Pi * 1.85f, 12, color, width, true);
     }
 
+    /// <summary>
+    /// The 32 corner points of an oval, made once and used again and again. (DrawColoredPolygon copies the points,
+    /// so the next oval can reuse them. That way the game doesn't make a new list for every oval in every frame.)
+    /// </summary>
+    static readonly Vector2[] scratch = new Vector2[32];
+
     /// <summary>An oval (a stretched circle). It can be turned with "rotation".</summary>
     public static void Ellipse(CanvasItem canvas, Vector2 center, Vector2 radius, Color color, float rotation = 0)
     {
-        var points = new Vector2[32];
-        for (int i = 0; i < points.Length; i++)
+        for (int i = 0; i < scratch.Length; i++)
         {
-            float angle = i * Mathf.Tau / points.Length;
-            points[i] = center + new Vector2(Mathf.Cos(angle) * radius.X, Mathf.Sin(angle) * radius.Y).Rotated(rotation);
+            float angle = i * Mathf.Tau / scratch.Length;
+            scratch[i] = center + new Vector2(Mathf.Cos(angle) * radius.X, Mathf.Sin(angle) * radius.Y).Rotated(rotation);
         }
-        canvas.DrawColoredPolygon(points, color);
+        canvas.DrawColoredPolygon(scratch, color);
     }
 
     /// <summary>A glowing eye with a slanted "angry eyebrow" cut out of its top inner corner.</summary>
@@ -61,5 +66,16 @@ public static class Shapes
     {
         canvas.DrawLine(center + new Vector2(-size, -size), center + new Vector2(size, size), color, 4f, true);
         canvas.DrawLine(center + new Vector2(-size, size), center + new Vector2(size, -size), color, 4f, true);
+    }
+
+    /// <summary>A heart, used for love-struck eyes: two circles on top and a triangle pointing down.</summary>
+    public static void HeartEye(CanvasItem canvas, Vector2 center, float size, Color color)
+    {
+        canvas.DrawCircle(center + new Vector2(-0.45f * size, -0.2f * size), 0.5f * size, color);
+        canvas.DrawCircle(center + new Vector2(0.45f * size, -0.2f * size), 0.5f * size, color);
+        canvas.DrawColoredPolygon(new[]
+        {
+            center + new Vector2(-0.9f * size, 0), center + new Vector2(0.9f * size, 0), center + new Vector2(0, 0.95f * size),
+        }, color);
     }
 }
