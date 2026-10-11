@@ -112,8 +112,8 @@ public partial class Main
         await NextFrame();
         Check(pauseMenu.Row == ContinueRow && pauseMenu.Picked == 0 && pauseMenu.HereRibbonOn == 0,
               $"CONTINUE is picked first, and Sunny Hills says YOU ARE HERE (row {pauseMenu.Row}, ribbon on {pauseMenu.HereRibbonOn})");
-        Check(pauseMenu.PicturesDrawn == 2 && pauseMenu.QuestionMarksDrawn == 4,
-              $"a new player can warp to Sunny Hills and the Station: 2 pictures, 4 grey '?' cards ({pauseMenu.PicturesDrawn}, {pauseMenu.QuestionMarksDrawn})");
+        Check(pauseMenu.PicturesDrawn == 3 && pauseMenu.QuestionMarksDrawn == 4,
+              $"a new player can warp to Sunny Hills, the Station and VOLCANO ISLAND: 3 pictures, 4 grey '?' cards ({pauseMenu.PicturesDrawn}, {pauseMenu.QuestionMarksDrawn})");
 
         int ticks = sounds.TimesPlayed(Sfx.MenuTick);
         await PressButton(JoyButton.DpadRight);
@@ -123,9 +123,12 @@ public partial class Main
         await PressButton(JoyButton.DpadRight);
         Check(pauseMenu.Picked == Worlds.StationIndex, $"RIGHT skips the grey worlds, to the Station ({pauseMenu.Picked})");
         await PressButton(JoyButton.DpadRight);
-        Check(pauseMenu.Picked == Worlds.StationIndex, "RIGHT again stays at the end");
+        bool volcanoNext = pauseMenu.Picked == Worlds.VolcanoIndex; // (RIGHT again: VOLCANO ISLAND, the last world)
+        await PressButton(JoyButton.DpadRight);
+        Check(volcanoNext && pauseMenu.Picked == Worlds.VolcanoIndex, "RIGHT again: VOLCANO ISLAND, and then it stays at the end");
         await PressButton(JoyButton.DpadLeft);
-        Check(pauseMenu.Picked == 0, "LEFT goes back to Sunny Hills");
+        await PressButton(JoyButton.DpadLeft);
+        Check(pauseMenu.Picked == 0, "LEFT, LEFT goes back to Sunny Hills");
         await StickX(0.9f);
         await StickX(1f);
         await StickX(0);
@@ -164,7 +167,7 @@ public partial class Main
             steps.Add(pauseMenu.Picked);
         }
         await NextFrame();
-        Check(string.Join(" ", steps) == "1 2 5 5" && pauseMenu.PicturesDrawn == 4 && pauseMenu.QuestionMarksDrawn == 2,
+        Check(string.Join(" ", steps) == "1 2 5 6" && pauseMenu.PicturesDrawn == 5 && pauseMenu.QuestionMarksDrawn == 2,
               $"a player who reached Night City steps through worlds {string.Join(" ", steps)} (Snowy Peaks and the Moon are grey)");
         await PressButton(JoyButton.Start);
         Check(!paused, "START goes straight back to the game from any row");
@@ -307,7 +310,7 @@ public partial class Main
         await Wait(0.5);
         await WarpWithButtons(1);
         Check(WorldHere == Worlds.StationIndex, "warped to the Station");
-        ChangeWorld(worldNumber + 1); // (like beating a boss in the Station: on to Sunny Hills)
+        ChangeWorld(worldNumber + 2); // (like beating bosses after the Station: past VOLCANO ISLAND, on to Sunny Hills)
         Check(WorldHere == 0 && worldsReached == 1, $"beating a boss after a warp doesn't count every world on the way ({worldsReached} world)");
 
         boltsCollected = 23;

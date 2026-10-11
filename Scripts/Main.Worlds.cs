@@ -5,7 +5,8 @@ using Godot;
 ///
 /// Every time Bolt-E beats Big Rusty, "YOU BEAT BIG RUSTY!" shows first, and a moment later he rides into a new world:
 /// the sky, the sun, the clouds, the hills and the ground all change color smoothly over 3 seconds.
-/// Sunny Hills, Candy Land, Night City, Snowy Peaks, The Moon, UPSIDE-DOWN STATION... then all the way around to Sunny Hills!
+/// Sunny Hills, Candy Land, Night City, Snowy Peaks, The Moon, UPSIDE-DOWN STATION, VOLCANO ISLAND... then all the way
+/// around to Sunny Hills!
 /// The worlds themselves (their colors, gravity, music speed and Big Rusty's outfits) are in Worlds.cs.
 /// This file changes the worlds and draws the special things in them: stars, the moon, the Earth, skyscrapers,
 /// mountains, lollipops, pine trees, sprinkles, road dashes, craters, falling snow, and a glow around Bolt-E at night.
@@ -28,7 +29,7 @@ public partial class Main
     /// <summary>The colors of the sky, hills and ground drawn in the last frame, like "grass" (the self-test checks these).</summary>
     readonly Dictionary<string, Color> drawnColors = new();
 
-    /// <summary>The world we're in now. (After UPSIDE-DOWN STATION it goes around again: world 6 is Sunny Hills.)</summary>
+    /// <summary>The world we're in now. (After VOLCANO ISLAND it goes around again: world 7 is Sunny Hills.)</summary>
     World CurrentWorld => Worlds.All[worldNumber % Worlds.All.Length];
 
     /// <summary>UPSIDE-DOWN STATION has its own running score; the other worlds share the original theme.</summary>
@@ -86,6 +87,7 @@ public partial class Main
         else hud.ShowBanner($"WELCOME TO {toWorld.Name}!", gold);
         if (toWorld.Gravity < 1) hud.ShowHint("Moon jumps are FLOATY!"); // (only the Moon has low gravity)
         StationWorldChanged(); // into UPSIDE-DOWN STATION (or out of it): see Main.Station.cs
+        VolcanoWorldChanged(); // into VOLCANO ISLAND (or out of it): see Main.Volcano.cs
 
         sounds.Play(Sfx.NewWorld);
         robot.SetGravityScale(toWorld.Gravity);

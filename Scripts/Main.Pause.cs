@@ -39,7 +39,7 @@ public partial class Main
     bool warpedThisRun;   // true once this game used WORLD WARP (it counts the worlds reached the fair way)
     bool newWorldComing;  // true between beating a boss and the next world arriving (see NextWorldSoon)
 
-    /// <summary>The world we're in now, as a postcard number: 0 = Sunny Hills ... 5 = UPSIDE-DOWN STATION.</summary>
+    /// <summary>The world we're in now, as a postcard number: 0 = Sunny Hills ... 5 = UPSIDE-DOWN STATION, 6 = VOLCANO ISLAND.</summary>
     int WorldHere => worldNumber % Worlds.All.Length;
 
     /// <summary>Makes the pause screen. It lives on its own layer, on top of everything, and never gets frozen itself.</summary>
@@ -58,7 +58,8 @@ public partial class Main
     /// Bolt-E can pause right now: a game is going, nothing is in slow motion, and he isn't in pieces or falling
     /// through a gap. (Otherwise the pause waits a moment: see UpdatePause.)
     /// </summary>
-    bool CanPauseNow => state == GameState.Playing && !paused && Engine.TimeScale == 1 && fallingThrough is null && !robot.Crashed;
+    bool CanPauseNow => state == GameState.Playing && !paused && Engine.TimeScale == 1 && fallingThrough is null && !robot.Crashed &&
+                        !VolcanoBusy; // (not while dropping into a LAVA CAVE, blasting out, or hopping in the lava: see Main.Volcano.cs)
 
     /// <summary>START (or P or Esc), or Bolt-E's controller came unplugged: pause now, or as soon as he can.</summary>
     void AskToPause()
@@ -127,7 +128,8 @@ public partial class Main
 
     /// <summary>
     /// The worlds WORLD WARP can go to: the same as the title screen's start worlds (Sunny Hills, every world this player
-    /// has reached, and UPSIDE-DOWN STATION), plus the worlds this game has really reached so far, and the world we're in.
+    /// has reached, UPSIDE-DOWN STATION and VOLCANO ISLAND), plus the worlds this game has really reached so far, and the world
+    /// we're in.
     /// </summary>
     HashSet<int> WarpWorlds()
     {
@@ -140,6 +142,7 @@ public partial class Main
     /// <summary>Why WORLD WARP can't be used right now (the words on its greyed-out row), or null if it can.</summary>
     string? WhyNoWarp()
     {
+        if (InCave || CaveBusy) return FindTheWayOut;                 // (in a LAVA CAVE: see Main.LavaCave.cs)
         if (newWorldComing) return NewWorldIsComing;                   // (a boss was just beaten: the next world is on its way)
         if (BossFightActive || bossWarningShown) return BeatTheBossFirst; // (a boss fight, or a boss on the way)
         return null;
@@ -237,6 +240,7 @@ public partial class Main
         warpedThisRun = true;
         startWorld = world; // (the title screen's start world for the next game)
         bool wasInStation = InStation;
+        bool wasInVolcano = InVolcano;
 
         // Clear the road: any power ends quietly, and the dangers and ? boxes puff away
         StopPowersNow();
@@ -257,6 +261,8 @@ public partial class Main
 
         if (InStation) ArriveInStation(shutNow: true); // the ceiling is shut, and JUMP flips gravity
         else if (wasInStation) LeaveStationNow();       // gravity is normal again, and the ceiling is gone
+        if (InVolcano) ArriveInVolcano();                // a safe rock to start on, over the lava
+        else if (wasInVolcano) LeaveVolcanoNow();       // the rocks puff away, and the ground is solid again
 
         sounds.Play(Sfx.Warp);
         sounds.Play(Sfx.NewWorld);

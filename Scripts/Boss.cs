@@ -727,6 +727,21 @@ public partial class Boss : BossBase
     static readonly Color NeonCyan = new(0.35f, 0.95f, 1f);
     static readonly Color NeonPink = new(1f, 0.35f, 0.85f);
     static readonly float[] GoggleLensX = { -24, 2 }; // (he faces left, so his eyes are on the left side of his head)
+    static readonly Color FireRed = new(0.9f, 0.12f, 0.1f);
+    static readonly Color BadgeGold = new(1f, 0.8f, 0.2f);
+    static readonly Vector2[] FireHelmetDome = MakeFireHelmetDome(); // (made once, not every time he's drawn)
+
+    /// <summary>The firefighter helmet's dome: the top half of a circle on his head.</summary>
+    static Vector2[] MakeFireHelmetDome()
+    {
+        var dome = new Vector2[13];
+        for (int i = 0; i < dome.Length; i++)
+        {
+            float angle = Mathf.Pi + i * Mathf.Pi / (dome.Length - 1); // from the left side, over the top, to the right side
+            dome[i] = new Vector2(0, -143) + new Vector2(Mathf.Cos(angle) * 34, Mathf.Sin(angle) * 30);
+        }
+        return dome;
+    }
 
     // The party hat's cone, and the bobble hat's woolly half-circle (made once, not every time he's drawn)
     static readonly Vector2[] PartyHatCone = { new(-14, -155), new(14, -155), new(0, -195) };
@@ -807,6 +822,17 @@ public partial class Boss : BossBase
                 }
                 break;
             }
+
+            case BossOutfit.FireHelmet:
+                // A shiny red firefighter's helmet (on VOLCANO ISLAND!): a long brim that sticks out at the back,
+                // the dome with a ridge over the top, and a gold badge in front with a little flame on it
+                Shapes.Ellipse(this, new Vector2(8, -143), new Vector2(48, 7), FireRed.Darkened(0.25f)); // the brim
+                DrawColoredPolygon(FireHelmetDome, FireRed);
+                DrawArc(new Vector2(0, -143), 26, Mathf.Pi * 1.15f, Mathf.Pi * 1.85f, 14, FireRed.Lightened(0.35f), 5, true); // the ridge
+                DrawArc(new Vector2(0, -143), 30, Mathf.Pi * 1.25f, Mathf.Pi * 1.45f, 6, new Color(1, 1, 1, 0.6f), 3, true);  // shine!
+                DrawCircle(new Vector2(-22, -156), 9, BadgeGold);
+                VolcanoArt.Flame(this, new Vector2(-22, -150), 12, Mathf.Sin(time * 9));
+                break;
         }
     }
 

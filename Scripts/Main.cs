@@ -9,8 +9,9 @@ using Godot;
 /// and the flags on the road), Main.Driver.cs (Dad drives Big Rusty with a second controller), Main.Vroomba.cs
 /// (VROOMBA, the second boss, and how the bosses take turns), Main.Dronezilla.cs (DRONEZILLA, the third boss: his bombs,
 /// zap beam and mini-drones), Main.OptiMax.cs (OPTI-MAX, the fourth boss: his boxes, soccer balls and shockwaves),
-/// Main.Station.cs (UPSIDE-DOWN STATION, the 6th world, where jump FLIPS GRAVITY), Main.StartWorld.cs (picking the world
-/// to start in), Main.Pause.cs (the PAUSE screen and WORLD WARP) and Main.SelfTest.cs (grown-up testing code).
+/// Main.Station.cs (UPSIDE-DOWN STATION, the 6th world, where jump FLIPS GRAVITY), Main.Volcano.cs and Main.LavaCave.cs
+/// (VOLCANO ISLAND, the 7th world: sinking rocks over lava, and holes down into the LAVA CAVES), Main.StartWorld.cs (picking
+/// the world to start in), Main.Pause.cs (the PAUSE screen and WORLD WARP) and Main.SelfTest.cs (grown-up testing code).
 /// </summary>
 public partial class Main : Node2D
 {
@@ -119,6 +120,7 @@ public partial class Main : Node2D
 
         SetUpPowerUps(); // the slot machine for the rainbow ? boxes (see Main.PowerUps.cs)
         SetUpPause();    // the PAUSE screen and WORLD WARP (see Main.Pause.cs)
+        SetUpVolcano();  // the curtain for dropping into the LAVA CAVES (see Main.Volcano.cs)
 
         // A different player picked (or a name typed in): that player's Bolt Bank, look and postcards. Clicking the
         // picker's arrows changes the look. (See Main.Looks.cs.) While a name is still being typed, there are no
@@ -430,6 +432,7 @@ public partial class Main : Node2D
         ClearDroneThings(); // DRONEZILLA's bombs and zap beam, and his rotor buzz (see Main.Dronezilla.cs)
         ClearOptiThings();  // OPTI-MAX's boxes, balls, shockwaves and box stacks (see Main.OptiMax.cs)
         ClearStation();     // UPSIDE-DOWN STATION's gaps, its ceiling and flipping (see Main.Station.cs)
+        ClearVolcano();     // VOLCANO ISLAND's rocks and bubbles, and the LAVA CAVES (see Main.Volcano.cs)
         foreach (var o in obstacles) o.QueueFree();
         foreach (var b in bolts) b.QueueFree();
         foreach (var e in enemies) e.QueueFree();
@@ -790,7 +793,8 @@ public partial class Main : Node2D
             robot.CanMove = BossFightActive;
             robot.MoveInput = MoveAxis();
             if (boss is not null) boss.TargetX = robot.Position.X;
-            boost = Mathf.MoveToward(boost, power == PowerUp.Rocket ? PowerUps.RocketBoost : 1f, 1.5f * dt); // the rocket board rushes along!
+            // The rocket board rushes along! (And the harder LAVA CAVES go faster: see Main.LavaCave.cs.)
+            boost = Mathf.MoveToward(boost, (power == PowerUp.Rocket ? PowerUps.RocketBoost : 1f) * CaveSpeedNow, 1.5f * dt);
             distance += speed * boost * dt;
             SpawnThings(dt);
             UpdatePowerUps(dt); // (see Main.PowerUps.cs)
@@ -815,6 +819,7 @@ public partial class Main : Node2D
         }
 
         UpdateStation(dt); // UPSIDE-DOWN STATION: its ceiling, flipping, and falling through gaps (see Main.Station.cs)
+        UpdateVolcano(dt); // VOLCANO ISLAND: sinking rocks, lava bubbles, and the LAVA CAVES (see Main.Volcano.cs)
         robot.RunSpeed = speed * boost; // (so his music notes drift along with the world)
         MoveWorld(dt);
         // Flags come onto the road, and YOU PASSED DAD! (see Main.Family.cs). (After the road moved, so a new flag
@@ -822,7 +827,7 @@ public partial class Main : Node2D
         if (state is GameState.Playing or GameState.Rebuilding) UpdateFlags();
 
         // Puff of dust (and a soft "thup") when landing
-        if (robot.OnGround && !wasOnGround && !robot.Crashed)
+        if (robot.OnGround && !wasOnGround && !robot.Crashed && !robot.HotFeet) // (not when he lands IN the lava!)
         {
             if (robot.FlipMode)
             {
@@ -870,6 +875,7 @@ public partial class Main : Node2D
         }
 
         MoveStationGaps(move); // (the gaps in UPSIDE-DOWN STATION's floor and ceiling)
+        MoveVolcanoThings(move); // (VOLCANO ISLAND's rocks and bubbles, and the LAVA CAVES' dangers)
 
         for (int i = bolts.Count - 1; i >= 0; i--)
         {
@@ -980,6 +986,7 @@ public partial class Main : Node2D
             }
         }
         if (CheckStationGaps()) return; // riding onto a gap in UPSIDE-DOWN STATION: WHOOOA! (see Main.Station.cs)
+        if (CheckVolcanoBumps(robotBox)) return; // lava, bubbles, holes, cave dangers and the geyser (see Main.Volcano.cs)
 
         // Bad robots: land on their heads to squash them, but bumping into them is a crash!
         // (Up on the rocket board or the parachute, they can't reach Bolt-E at all.)
@@ -1041,9 +1048,10 @@ public partial class Main : Node2D
             if (bolts[i].Touches(robotBox))
             {
                 var at = bolts[i].Position;
+                int worth = bolts[i].Worth; // (a CRYSTAL BOLT from a LAVA CAVE can be worth 2 or 3)
                 bolts[i].QueueFree();
                 bolts.RemoveAt(i);
-                GotBolt(at);
+                GotBolt(at, worth);
             }
         }
 
@@ -1062,6 +1070,9 @@ public partial class Main : Node2D
     /// </summary>
     bool Bonk(Node2D? thing)
     {
+        // Dropping into a LAVA CAVE, or blasting out of one: nothing can crash him (see Main.LavaCave.cs)
+        if (CaveBusy) return false;
+
         // MEGA BOLT-E is too big to crash: SMASH! and SPLAT! instead (see Main.PowerUps.cs)
         if (thing is not null && robot.Size > 1.05f)
         {
@@ -1078,10 +1089,13 @@ public partial class Main : Node2D
         return true;
     }
 
-    /// <summary>Got a bolt! Count it, smile, play the next note up the scale, sparkle, and charge the spare battery.</summary>
-    void GotBolt(Vector2 at)
+    /// <summary>
+    /// Got a bolt! Count it, smile, play the next note up the scale, sparkle, and charge the spare battery.
+    /// (A CRYSTAL BOLT from a LAVA CAVE counts as "worth" bolts: see Main.LavaCave.cs.)
+    /// </summary>
+    void GotBolt(Vector2 at, int worth = 1)
     {
-        boltsCollected++;
+        boltsCollected += worth;
         robot.BeHappy();
         Rumble(0.3f, 0f, 0.06f); // tiny buzz: got a bolt!
 
@@ -1091,8 +1105,9 @@ public partial class Main : Node2D
         int semitones = ScaleSteps[Math.Min(boltCombo, ScaleSteps.Length - 1)];
         sounds.Play(Sfx.Bolt, Mathf.Pow(2f, semitones / 12f));
         Burst(at, 10, new Color(1f, 0.85f, 0.25f), 220f);
+        if (worth > 1) popups.Add(worth == 2 ? "x2" : "x3", at + new Vector2(0, -30), new Color(1f, 0.6f, 0.9f), 28);
 
-        ChargeSpareBattery(); // every 100 bolts = a new spare battery (see Main.Batteries.cs)
+        for (int i = 0; i < worth; i++) ChargeSpareBattery(); // every 100 bolts = a new spare battery (see Main.Batteries.cs)
     }
 
     // ---------- Stomping (like in Mario!) ----------
@@ -1305,6 +1320,14 @@ public partial class Main : Node2D
     {
         int meters = Meters;
 
+        // In a LAVA CAVE (or dropping in, or blasting out) the cave has its own dangers, and no boss ever comes there
+        // (see Main.LavaCave.cs)
+        if (InCave || CaveBusy)
+        {
+            SpawnCaveThings();
+            return;
+        }
+
         // Boss time! First a warning, then (a little later) the boss flies in.
         if (boss is null && !bossWarningShown && meters >= nextBossAt - 20)
         {
@@ -1326,6 +1349,13 @@ public partial class Main : Node2D
         if (InStation)
         {
             if (robot.FlipMode) SpawnStationThings(dt);
+            return;
+        }
+
+        // VOLCANO ISLAND has floating rocks over the lava, in fair patterns (see Main.Volcano.cs)
+        if (InVolcano)
+        {
+            SpawnVolcanoThings();
             return;
         }
 
@@ -1479,6 +1509,8 @@ public partial class Main : Node2D
             DrawCloud(new Vector2(x, CloudHeights[i]), cloudColor);
         }
 
+        DrawVolcanoBackdrop();     // the big volcano and black rock spires, behind the hills (see VolcanoScenery.cs)
+
         // Far hills (move slowly) and near hills (move faster) — this is called "parallax"
         var farHills = Mix(w => w.FarHills);
         for (int i = 0; i < 7; i++)
@@ -1501,6 +1533,7 @@ public partial class Main : Node2D
             DrawCircle(new Vector2(Scrolled(i * 80f, groundScroll, 80f * 18, 20), GroundY + 18), 10, grass); // grass bumps
         DrawGroundDots();          // pebbles, sprinkles, road dashes or craters
         DrawStation();             // the corridor of UPSIDE-DOWN STATION, over everything else (see StationScenery.cs)
+        DrawVolcanoGround();       // VOLCANO ISLAND's lava river, or a LAVA CAVE over everything else (see VolcanoScenery.cs)
 
         // (The self-test checks that these colors really change with the world)
         drawnColors["sky"] = skyTop;
@@ -1510,6 +1543,7 @@ public partial class Main : Node2D
         drawnColors["dirt"] = dirt;
 
         DrawSnow();                // (Snowy Peaks)
+        DrawEmbers();              // (VOLCANO ISLAND)
         DrawNightGlow();           // a soft glow around Bolt-E in the dark worlds (Bolt-E himself is drawn on top)
 
         // Particles

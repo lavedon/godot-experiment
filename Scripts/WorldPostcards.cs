@@ -14,9 +14,9 @@ public partial class WorldPostcards : Control
     static readonly Color NotYet = new(0.55f, 0.57f, 0.62f);   // grey: a world you haven't been to yet
     static readonly Color PickGlow = new(0.35f, 0.95f, 1f);    // the glow around the world the next game starts in
 
-    // (6 cards have to fit in the strip's 306 pixels: 3 + 5 x 50 + 46 = 299, and the glow adds 3 on each side)
-    const float CardWidth = 46, CardHeight = 34;
-    const float CardSpacing = 50;   // from the left side of one card to the next
+    // (7 cards have to fit in the strip's 306 pixels: 3 + 6 x 43 + 40 = 301, and the glow adds 3 on each side)
+    const float CardWidth = 40, CardHeight = 34;
+    const float CardSpacing = 43;   // from the left side of one card to the next
     const float CardsLeft = 3;      // room for the glow around the first card
     const float CardsTop = 24;      // the cards go under the word "WORLDS"
     const float StartLineTop = 60;  // "START: SUNNY HILLS" goes under the cards
@@ -124,6 +124,11 @@ public partial class WorldPostcards : Control
             new[] { r.Position, new Vector2(r.End.X, r.Position.Y), r.End, new Vector2(r.Position.X, r.End.Y) },
             new[] { world.SkyTop, world.SkyTop, world.SkyBottom, world.SkyBottom });
 
+        if (world.Scenery == Scenery.Volcano)
+        {
+            DrawLittleVolcano(canvas, r, world);
+            return;
+        }
         if (world.Scenery == Scenery.Station)
         {
             DrawLittleStation(canvas, r, world);
@@ -145,6 +150,22 @@ public partial class WorldPostcards : Control
 
         // The ground
         canvas.DrawRect(new Rect2(r.Position.X, groundTop, r.Size.X, r.End.Y - groundTop), world.Grass);
+    }
+
+    // VOLCANO ISLAND's postcard shapes, for a 40 x 28 box (made once, then moved into place: no new lists every time)
+    static readonly Vector2[] LittleVolcano = { new(4, 22), new(15, 8), new(23, 8), new(34, 22) };
+    static readonly Vector2[] littleShape = new Vector2[4];
+
+    /// <summary>VOLCANO ISLAND's postcard: a dark volcano with a glowing top, a river of lava, and a floating rock.</summary>
+    static void DrawLittleVolcano(CanvasItem canvas, Rect2 r, World world)
+    {
+        var scale = r.Size / new Vector2(40, 28);
+        for (int i = 0; i < LittleVolcano.Length; i++) littleShape[i] = r.Position + LittleVolcano[i] * scale;
+        canvas.DrawCircle(r.Position + new Vector2(19, 7) * scale, 4 * scale.Y, new Color(1f, 0.5f, 0.15f, 0.5f)); // the glow
+        canvas.DrawColoredPolygon(littleShape, new Color(0.2f, 0.08f, 0.07f));
+        canvas.DrawRect(new Rect2(r.Position + new Vector2(15, 7) * scale, new Vector2(8, 1.5f) * scale), world.Pebbles); // the crater
+        canvas.DrawRect(new Rect2(r.Position.X, r.End.Y - 6 * scale.Y, r.Size.X, 6 * scale.Y), new Color(1f, 0.55f, 0.12f)); // the lava
+        canvas.DrawRect(new Rect2(r.Position + new Vector2(22, 20) * scale, new Vector2(12, 3) * scale), new Color(0.3f, 0.18f, 0.16f)); // a rock
     }
 
     /// <summary>UPSIDE-DOWN STATION's postcard: a ringed planet in space, a magenta ceiling and a glowing cyan floor.</summary>

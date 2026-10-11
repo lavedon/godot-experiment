@@ -15,6 +15,7 @@ public enum Sfx
     RobotStep, BoxWhoosh, BoxCrunch, Boing, Kick, Chirp, Ding, ErrorBuzz, DanceBeat, // OPTI-MAX
     FlipUp, FlipDown, FlipThud, SpaceFall, CeilingSlide, // UPSIDE-DOWN STATION
     PauseBlip, MenuTick, Warp, // the pause screen and WORLD WARP
+    LavaBubble, LavaPlop, Sizzle, RockSink, Wheee, GeyserWhoosh, CaveClear, BatFlap, StalactiteCrack, Eruption, // VOLCANO ISLAND
 }
 
 /// <summary>
@@ -106,6 +107,16 @@ public partial class SoundBoard : Node
         AddEffect(Sfx.FlipThud, SoundEffects.FlipThud(), -9f, voices: 3);
         AddEffect(Sfx.SpaceFall, SoundEffects.SpaceFall(), -8f, voices: 1);
         AddEffect(Sfx.CeilingSlide, SoundEffects.CeilingSlide(), -11f, voices: 1);
+        AddEffect(Sfx.LavaBubble, SoundEffects.LavaBubble(), -12f, voices: 2);
+        AddEffect(Sfx.LavaPlop, SoundEffects.LavaPlop(), -10f, voices: 2);
+        AddEffect(Sfx.Sizzle, SoundEffects.Sizzle(), -8f, voices: 1);
+        AddEffect(Sfx.RockSink, SoundEffects.RockSink(), -12f, voices: 2);
+        AddEffect(Sfx.Wheee, SoundEffects.Wheee(), -8f, voices: 1);
+        AddEffect(Sfx.GeyserWhoosh, SoundEffects.GeyserWhoosh(), -6f, voices: 1);
+        AddEffect(Sfx.CaveClear, SoundEffects.CaveClear(), -7f, voices: 1);
+        AddEffect(Sfx.BatFlap, SoundEffects.BatFlap(), -11f, voices: 2);
+        AddEffect(Sfx.StalactiteCrack, SoundEffects.StalactiteCrack(), -9f, voices: 3);
+        AddEffect(Sfx.Eruption, SoundEffects.Eruption(), -9f, voices: 1);
         // The pause screen's sounds still play while the game is paused (see Main.Pause.cs). MenuTick is the same
         // little tick as the slot machine's, but it's its own player, so the frozen game's sounds stay frozen.
         AddEffect(Sfx.PauseBlip, SoundEffects.PauseBlip(), -9f, playsWhilePaused: true);

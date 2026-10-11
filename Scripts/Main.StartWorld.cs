@@ -5,15 +5,17 @@ using Godot;
 ///
 /// On the title screen, DOWN steps through the worlds this player may start in (the D-pad or the stick on Bolt-E's
 /// controller, or the Down arrow or S on the keyboard; A, B, X and Y all start the game, like they always did):
-/// Sunny Hills, every world they have already reached, and UPSIDE-DOWN STATION (always, because it's the brand-new world).
+/// Sunny Hills, every world they have already reached, and UPSIDE-DOWN STATION and VOLCANO ISLAND (always, because they're
+/// the newest worlds).
 /// The picked world's postcard glows, and "START: ..." under the postcards says which one it is. The game remembers
 /// the pick until it's closed.
 ///
 /// Fair play: starting somewhere else never wins postcards or looks you haven't earned. In a game that started in another
 /// world, a world only counts as "reached" when Bolt-E really rode into it by beating a boss, and only if it's the next
 /// world after one he had already reached (so the worlds reached are always Sunny Hills, Candy Land, ... in order).
-/// Just starting in UPSIDE-DOWN STATION counts as 1 world (Sunny Hills), so its postcard still has to be won by riding
-/// there from the Moon. The saved record is the best game ever, so a game like that never makes it smaller.
+/// Just starting in UPSIDE-DOWN STATION (or VOLCANO ISLAND) counts as 1 world (Sunny Hills), so its postcard still has to be
+/// won by riding there (from the Moon, or from the Station). The saved record is the best game ever, so a game like that
+/// never makes it smaller.
 /// </summary>
 public partial class Main
 {
@@ -27,6 +29,7 @@ public partial class Main
         var allowed = new List<int>();
         for (int world = 0; world < Math.Min(farthestWorld, Worlds.All.Length); world++) allowed.Add(world);
         if (!allowed.Contains(Worlds.StationIndex)) allowed.Add(Worlds.StationIndex);
+        if (!allowed.Contains(Worlds.VolcanoIndex)) allowed.Add(Worlds.VolcanoIndex);
         return allowed;
     }
 
@@ -72,10 +75,11 @@ public partial class Main
         hud.ShowBanner($"WELCOME TO {toWorld.Name}!", new Color(1f, 0.85f, 0.2f));
         if (toWorld.Gravity < 1) hud.ShowHint("Moon jumps are FLOATY!");
         if (InStation) ArriveInStation(shutNow: true);
+        if (InVolcano) ArriveInVolcano(); // (a safe rock to start on: see Main.Volcano.cs)
     }
 
     /// <summary>
-    /// How many worlds this game has reached after riding into world number n (it keeps counting: 6 is Sunny Hills again).
+    /// How many worlds this game has reached after riding into world number n (it keeps counting: 7 is Sunny Hills again).
     /// A game from Sunny Hills: every world on the way counts, like always. A game that started in another world: see the
     /// fair-play rule at the top of this file. A game that used WORLD WARP on the pause screen counts the same fair way
     /// (see Main.Pause.cs), so warping somewhere and beating one boss can't win every postcard on the way.

@@ -12,13 +12,14 @@ public enum Scenery
     Mountains,  // snowy mountains and pine trees
     Craters,    // a bumpy grey ground full of craters
     Station,    // a space-station corridor with a floor AND a ceiling (see StationScenery.cs)
+    Volcano,    // a smoking volcano, and a river of glowing LAVA where the ground should be (see VolcanoScenery.cs)
 }
 
 /// <summary>What twinkles in (or falls from) the sky.</summary>
-public enum Weather { None, Stars, Snow }
+public enum Weather { None, Stars, Snow, Embers }
 
 /// <summary>What Big Rusty dresses up in, so he fits in with the world.</summary>
-public enum BossOutfit { None, PartyHat, Sunglasses, BobbleHat, SpaceHelmet, NeonGoggles }
+public enum BossOutfit { None, PartyHat, Sunglasses, BobbleHat, SpaceHelmet, NeonGoggles, FireHelmet }
 
 /// <summary>
 /// One world on the World Tour: its colors (from the top of the sky down to the dirt), what's in the sky and on the hills,
@@ -30,7 +31,7 @@ public record World(string Name, Color SkyTop, Color SkyBottom, SkyThing Thing, 
                     Scenery Scenery, Weather Weather, float Gravity, float MusicSpeed, BossOutfit RustyOutfit, bool Dark);
 
 /// <summary>
-/// THE WORLD TOUR! Every time Bolt-E beats Big Rusty, he rides on into the next world. After UPSIDE-DOWN STATION, he's
+/// THE WORLD TOUR! Every time Bolt-E beats Big Rusty, he rides on into the next world. After VOLCANO ISLAND, he's
 /// all the way around and it starts again in Sunny Hills. (Main.Worlds.cs changes the worlds and draws them.)
 ///
 /// Make your own world! Every color is (red, green, blue) from 0 to 1, and a 4th number is how see-through it is.
@@ -91,17 +92,31 @@ public static class Worlds
             FarHills: new(0.4f, 0.38f, 0.56f), NearHills: new(0.5f, 0.48f, 0.66f),
             Grass: new(0.35f, 0.95f, 1f), Dirt: new(0.2f, 0.19f, 0.3f), Pebbles: new(1f, 0.35f, 0.85f), // cyan rail, floor metal, magenta lights
             Scenery: Scenery.Station, Weather: Weather.Stars, Gravity: 1f, MusicSpeed: 1.1f, RustyOutfit: BossOutfit.NeonGoggles, Dark: true),
+
+        // 6. VOLCANO ISLAND: a smoking volcano, glowing embers, and a river of LAVA with floating rocks that SINK!
+        //    (Its "grass" and "dirt" are the far bank of the lava river, and its "pebbles" are the lava's glow: see
+        //    VolcanoScenery.cs. Some rocks have a HOLE: ride in for a LAVA CAVE! See Main.Volcano.cs and Main.LavaCave.cs.)
+        new("VOLCANO ISLAND",
+            SkyTop: new(0.2f, 0.04f, 0.05f), SkyBottom: new(0.95f, 0.42f, 0.15f),
+            Thing: SkyThing.Sun, ThingColor: new(1f, 0.35f, 0.18f), Clouds: new(0.3f, 0.22f, 0.24f, 0.75f), // a red sun, and smoke clouds
+            FarHills: new(0.64f, 0.31f, 0.22f), NearHills: new(0.55f, 0.36f, 0.28f),
+            Grass: new(0.36f, 0.2f, 0.17f), Dirt: new(0.3f, 0.14f, 0.1f), Pebbles: new(1f, 0.55f, 0.15f), // the far bank, and the lava's glow
+            Scenery: Scenery.Volcano, Weather: Weather.Embers, Gravity: 1f, MusicSpeed: 1.08f, RustyOutfit: BossOutfit.FireHelmet, Dark: true),
     };
 
     /// <summary>Which world UPSIDE-DOWN STATION is (the 6th one: number 5, counting from 0).</summary>
     public const int StationIndex = 5;
+
+    /// <summary>Which world VOLCANO ISLAND is (the 7th one: number 6, counting from 0).</summary>
+    public const int VolcanoIndex = 6;
 
     /// <summary>How bright a color looks to our eyes (0 = black, 1 = white). Green looks brightest, blue darkest.</summary>
     public static float Brightness(Color color) => 0.299f * color.R + 0.587f * color.G + 0.114f * color.B;
 
     /// <summary>
     /// The line on the results card about how far Bolt-E got. "reached" counts the worlds he rode through:
-    /// 1 = only Sunny Hills, 3 = all the way to Night City, 6 = all the way to UPSIDE-DOWN STATION, 7 or more = all the way around.
+    /// 1 = only Sunny Hills, 3 = all the way to Night City, 6 = all the way to UPSIDE-DOWN STATION, 7 = all the way to
+    /// VOLCANO ISLAND, 8 or more = all the way around.
     /// </summary>
     public static string WorldLine(int reached)
     {

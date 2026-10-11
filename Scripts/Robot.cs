@@ -251,6 +251,7 @@ public partial class Robot : Node2D
         FlipMode = false;            // (UPSIDE-DOWN STATION switches flipping on again: see Main.Station.cs)
         CeilingY = NoCeiling;
         ResetGravityFlip();
+        CoolFeet();                  // (not in any lava: see RobotLava.cs)
     }
 
     /// <summary>True if one of his flying pieces is the part with this name, like "head" or "hat" (the self-test reads this).</summary>
@@ -381,6 +382,7 @@ public partial class Robot : Node2D
             turned = Mathf.Pi;
         }
         ResetGravityFlip();
+        CoolFeet(); // (his pieces bounce on the lava, if that's where he crashed: see RobotLava.cs)
 
         var parts = OnTreads ? TankParts() : new List<RobotPart>
         {

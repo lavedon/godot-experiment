@@ -6,6 +6,7 @@ public enum EnemyKind
     EggBot,  // a hoppy egg-shaped robot (from enemy-2.png)
     DustBunny, // a fluffy grey ball of dust with big eyes: VROOMBA spits them out, and they hop after you
     MiniDrone, // a little buzzing drone with one rotor and one eye: DRONEZILLA drops them, and they drift after you
+    FireBat,   // a fiery bat that swoops up and down: it lives in the LAVA CAVES (see VolcanoThings.cs)
 }
 
 /// <summary>
@@ -37,7 +38,7 @@ public partial class Enemy : Node2D
     public bool Finished => Squashed && squashTime > 0.45f;
 
     /// <summary>How much faster than the ground it moves toward Bolt-E (pixels per second).</summary>
-    public float ExtraSpeed => Squashed ? 0 : Kind == EnemyKind.PupBot ? 140f : 30f;
+    public float ExtraSpeed => Squashed ? 0 : Kind == EnemyKind.PupBot ? 140f : Kind == EnemyKind.FireBat ? BatExtraSpeed : 30f;
 
     /// <summary>How high a mini-drone hovers: the bottom of it, in pixels above the ground (try changing this!)</summary>
     public const float MiniDroneHover = 75f;
@@ -46,6 +47,7 @@ public partial class Enemy : Node2D
     {
         EnemyKind.MiniDrone => new Rect2(Position + new Vector2(-24, -40 + MiniBob), new Vector2(48, 36)),
         EnemyKind.PupBot => new Rect2(Position + new Vector2(-40, -80), new Vector2(72, 80)),
+        EnemyKind.FireBat => BatHitbox, // (its Position is the middle of its body: see VolcanoThings.cs)
         EnemyKind.DustBunny => new Rect2(Position + new Vector2(-25, -50 - HopHeight), new Vector2(50, 48)),
         _ => new Rect2(Position + new Vector2(-24, -110 - HopHeight), new Vector2(48, 108)),
     };
@@ -135,6 +137,11 @@ public partial class Enemy : Node2D
             }
             rotorAngle += (Squashed ? 6f : 45f) * dt;
         }
+        // A fire bat swoops up and down (see VolcanoThings.cs)
+        else if (Kind == EnemyKind.FireBat)
+        {
+            FlyLikeABat(dt);
+        }
         // Falling down after being dropped (or thrown)
         else if (GroundY > 0 && (Position.Y < GroundY || fallSpeed < 0))
         {
@@ -152,7 +159,7 @@ public partial class Enemy : Node2D
         float hop = HopHeight;
 
         // Shadow on the ground (smaller when hopping high). A dust bunny's shadow stays on the ground while it flies.
-        float flying = Kind is EnemyKind.DustBunny or EnemyKind.MiniDrone ? Mathf.Max(0, GroundY - Position.Y) : 0;
+        float flying = Kind is EnemyKind.DustBunny or EnemyKind.MiniDrone or EnemyKind.FireBat ? Mathf.Max(0, GroundY - Position.Y) : 0;
         float shadow = Mathf.Max(0.3f, 1f - (hop + flying) / 200f);
         DrawSetTransform(new Vector2(0, flying), 0, new Vector2(shadow, 0.2f * shadow));
         DrawCircle(Vector2.Zero, Kind == EnemyKind.PupBot ? 42 : 26, new Color(0, 0, 0, 0.18f));
@@ -182,6 +189,7 @@ public partial class Enemy : Node2D
         if (Kind == EnemyKind.PupBot) DrawPupBot();
         else if (Kind == EnemyKind.DustBunny) DrawDustBunny();
         else if (Kind == EnemyKind.MiniDrone) DrawMiniDrone();
+        else if (Kind == EnemyKind.FireBat) DrawFireBat();
         else DrawEggBot(hop);
 
         DrawSetTransform(Vector2.Zero, 0, Vector2.One);

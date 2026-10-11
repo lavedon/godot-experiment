@@ -67,7 +67,7 @@ public partial class Main
     async Task StationIsSixth()
     {
         var station = Worlds.All[5];
-        Check(Worlds.All.Length == 6 && station.Name == "UPSIDE-DOWN STATION" && Worlds.StationIndex == 5 && station.Scenery == Scenery.Station,
+        Check(Worlds.All.Length == 7 && station.Name == "UPSIDE-DOWN STATION" && Worlds.StationIndex == 5 && station.Scenery == Scenery.Station,
               $"the 6th world is {station.Name}");
         Check(station.Dark && Mathf.IsEqualApprox(station.MusicSpeed, 1.1f) && station.Gravity == 1 && station.RustyOutfit == BossOutfit.NeonGoggles,
               "it's a dark world (with the glow), its music is a bit faster (1.1), and Big Rusty wears neon goggles there");
@@ -82,14 +82,14 @@ public partial class Main
         await Wait(1.2);
         Check(robot.FlipMode && ceilingOpen == 0, "the ceiling slides shut, and flipping is on");
         ChangeWorld(6);
-        Check(CurrentWorld.Name == "SUNNY HILLS" && hud.BannerText == "YOU WENT ALL THE WAY AROUND!" && worldsReached == 7,
-              $"after the Station: '{hud.BannerText}' in {CurrentWorld.Name} ({worldsReached} worlds)");
+        Check(CurrentWorld.Name == "VOLCANO ISLAND" && hud.BannerText == "WELCOME TO VOLCANO ISLAND!" && worldsReached == 7,
+              $"after the Station (now the 7th world comes next): '{hud.BannerText}' in {CurrentWorld.Name} ({worldsReached} worlds)");
         await Wait(1.2);
-        Check(!robot.FlipMode && robot.CeilingY == Robot.NoCeiling && ceilingOpen == 1, "back in Sunny Hills: no ceiling, no flipping");
+        Check(!robot.FlipMode && robot.CeilingY == Robot.NoCeiling && ceilingOpen == 1, "out of the Station: no ceiling, no flipping");
 
         Check(Worlds.WorldLine(5) == "You rode all the way to THE MOON!" && Worlds.WorldLine(6) == "You rode all the way to UPSIDE-DOWN STATION!" &&
-              Worlds.WorldLine(7) == "You went all the way around the world!",
-              $"the results card: 5 = '{Worlds.WorldLine(5)}', 6 = '{Worlds.WorldLine(6)}', 7 = '{Worlds.WorldLine(7)}'");
+              Worlds.WorldLine(8) == "You went all the way around the world!",
+              $"the results card: 5 = '{Worlds.WorldLine(5)}', 6 = '{Worlds.WorldLine(6)}', 8 = '{Worlds.WorldLine(8)}'");
         float Wide(string text, int size) => ThemeDB.FallbackFont.GetStringSize(text, HorizontalAlignment.Left, -1, size).X;
         float line = Wide(Worlds.WorldLine(6), 22), banner = Wide("WELCOME TO UPSIDE-DOWN STATION!", 60), tip = Wide(FlipTip, 28);
         Check(line <= 800 && banner <= 1280 && tip <= 1280, $"the words fit (results line {line:0} of 800 px, banner {banner:0} and tip {tip:0} of 1280 px)");
@@ -106,7 +106,7 @@ public partial class Main
         hud.SetPlayerName(moon);
         await NextFrame();
         await NextFrame();
-        Check(Unlocked(astronaut) && hud.Postcards.Reached == 5 && hud.Postcards.QuestionMarksDrawn == 1,
+        Check(Unlocked(astronaut) && hud.Postcards.Reached == 5 && hud.Postcards.QuestionMarksDrawn == 2,
               "a player who reached the Moon has ASTRONAUT, and 5 postcards (the Station's is still a '?')");
     }
 
@@ -134,7 +134,9 @@ public partial class Main
                   $"D-pad DOWN: the Station, the brand-new world, is always allowed ('{postcards.StartLine}', still on the title screen)");
             Check(postcards.PickedCard.Position.X > 200, $"...and its postcard (the 6th) glows (at x {postcards.PickedCard.Position.X:0})");
             await PressButton(JoyButton.DpadDown);
-            Check(startWorld == 0, "DOWN again: back to Sunny Hills (only those two for a new player)");
+            bool volcanoNext = startWorld == Worlds.VolcanoIndex; // (VOLCANO ISLAND, the newest world, is always allowed too)
+            await PressButton(JoyButton.DpadDown);
+            Check(volcanoNext && startWorld == 0, "DOWN again: VOLCANO ISLAND, and again: back to Sunny Hills (only those three for a new player)");
             await TapKey(Key.S);
             Check(state == GameState.Title && startWorld == Worlds.StationIndex, "S on the keyboard picks too (and doesn't start a game)");
             await SecondPadButton(JoyButton.DpadDown);
@@ -145,17 +147,17 @@ public partial class Main
 
             // The Down arrow picks too, and the stick: one push down is one step (wiggling a little more doesn't step again)
             await TapKey(Key.Down);
-            bool arrowPicked = startWorld == 0;
+            bool arrowPicked = startWorld == Worlds.VolcanoIndex;
             await SendInput(new InputEventJoypadMotion { Axis = JoyAxis.LeftY, AxisValue = 0.7f });
             await SendInput(new InputEventJoypadMotion { Axis = JoyAxis.LeftY, AxisValue = 0.9f });
             await SendInput(new InputEventJoypadMotion { Axis = JoyAxis.LeftY, AxisValue = 1f });
             await SendInput(new InputEventJoypadMotion { Axis = JoyAxis.LeftY, AxisValue = 0 });
-            Check(state == GameState.Title && arrowPicked && startWorld == Worlds.StationIndex,
+            Check(state == GameState.Title && arrowPicked && startWorld == 0,
                   $"the Down arrow picks, and one push of the stick is one step (now world {startWorld})");
             await SendInput(new InputEventJoypadMotion { Axis = JoyAxis.LeftY, AxisValue = 0.4f });
             await SendInput(new InputEventJoypadMotion { Axis = JoyAxis.LeftY, AxisValue = 0 });
             await PressButton(JoyButton.DpadUp);
-            Check(state == GameState.Title && startWorld == Worlds.StationIndex, "a small stick wobble and D-pad UP do nothing on the title screen");
+            Check(state == GameState.Title && startWorld == 0, "a small stick wobble and D-pad UP do nothing on the title screen");
 
             // It all fits in the strip, next to the title card
             await NextFrame();
@@ -171,12 +173,12 @@ public partial class Main
             ShowStartWorld();
             await NextFrame();
             var steps = new List<int>();
-            for (int i = 0; i < 4; i++)
+            for (int i = 0; i < 5; i++)
             {
                 await PressButton(JoyButton.DpadDown);
                 steps.Add(startWorld);
             }
-            Check(string.Join(" ", steps) == "1 2 5 0", $"a player who reached Night City steps through worlds {string.Join(" ", steps)}");
+            Check(string.Join(" ", steps) == "1 2 5 6 0", $"a player who reached Night City steps through worlds {string.Join(" ", steps)}");
 
             // Y starts the game again, like A, B and X (it used to pick the world: that got mixed up with A)
             await PressButton(JoyButton.Y);
@@ -206,12 +208,14 @@ public partial class Main
                   $"the results card says '{hud.ResultsWorldLine}', with no new postcards or looks");
             Check(Looks.All.Count(Unlocked) == looksBefore, "no look was won");
 
-            // Riding on from the Station by beating bosses: Sunny Hills, then Candy Land (that one he really rode into)
+            // Riding on from the Station by beating bosses: VOLCANO ISLAND, Sunny Hills, then Candy Land (that one he really
+            // rode into)
             StartGame(); // (still picked: the Station)
             QuietRoad();
-            ChangeWorld(6);
-            Check(worldsReached == 1, $"beating a boss in the Station rides into Sunny Hills ({worldsReached} world)");
-            ChangeWorld(7);
+            ChangeWorld(6); // (VOLCANO ISLAND)
+            ChangeWorld(7); // (Sunny Hills)
+            Check(worldsReached == 1, $"beating bosses in the Station rides into VOLCANO ISLAND, then Sunny Hills ({worldsReached} world)");
+            ChangeWorld(8);
             Check(worldsReached == 2, $"...and the next one into Candy Land: really reached, so 2 worlds ({worldsReached})");
             spareBatteries = 0;
             Check(Bonk(null) && (database?.FarthestWorld(name) ?? 0) == 2, $"saved: 2 worlds ({database?.FarthestWorld(name)})");
@@ -500,7 +504,7 @@ public partial class Main
         var theBoss = boss!;
         theBoss.LoseHealth(BossBase.MaxHealth);
         Check(await WaitUntil(() => theBoss.HasBlownUp, 6), "the boss blows up");
-        Check(await WaitUntil(() => worldNumber == 6, 4) && CurrentWorld.Name == "SUNNY HILLS" && hud.BannerText == "YOU WENT ALL THE WAY AROUND!",
+        Check(await WaitUntil(() => worldNumber == 6, 4) && CurrentWorld.Name == "VOLCANO ISLAND" && hud.BannerText == "WELCOME TO VOLCANO ISLAND!",
               $"then on to the next world: {CurrentWorld.Name} ('{hud.BannerText}')");
         await Wait(1);
         Check(!robot.FlipMode && robot.GravityScale == 1 && robot.CeilingY == Robot.NoCeiling, "with normal gravity, and no ceiling");

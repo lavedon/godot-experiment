@@ -127,6 +127,8 @@ public partial class Main
         PuffAway(obstacles, Near);
         PuffAway(enemies, Near);
         PuffAway(stationGaps, Near); // (the gaps in UPSIDE-DOWN STATION's floor and ceiling too)
+        PuffAway(cavePits, Near);    // (and the lava pits and rocks in a LAVA CAVE: see Main.LavaCave.cs)
+        PuffAway(caveRocks, Near);
         PuffAway(blasts, _ => true);
         PuffAway(shockwaves, _ => true);
         PuffAway(lasers, _ => true);

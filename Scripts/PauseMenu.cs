@@ -14,7 +14,7 @@ public partial class PauseMenu : Control
 {
     // ---- How it looks (try changing these!) ----
     const float CoverAlpha = 0.62f;          // how dark the cover over the game is (0 = see-through, 1 = black)
-    const float CardScale = 3.5f;            // how much bigger than the menu postcards the pictures are
+    const float CardScale = 3.1f;            // how much bigger than the menu postcards the pictures are (7 must fit!)
     const float FlashSeconds = 0.7f;         // how long the WARP! flash takes to fade away
     const int BigWords = 64, RowWords = 40, CardTitleWords = 30, NameWords = 30, HelpWords = 22;
 
@@ -35,7 +35,7 @@ public partial class PauseMenu : Control
     static readonly Rect2 WarpBox = new(110, 212, 1060, 240);
     static readonly Rect2 QuitBox = new(440, 470, 400, 72);
     const float CardsTop = 266;              // the top of the postcards (under the words WORLD WARP)
-    const float CardSpacing = 168;           // from the left side of one card to the next
+    const float CardSpacing = 150;           // from the left side of one card to the next
     const float Frame = 6;                   // the frame around each picture
     static readonly Vector2 PictureSize = new(40, 28); // a menu postcard's picture (WorldPostcards.DrawLittleWorld)
 
@@ -43,7 +43,7 @@ public partial class PauseMenu : Control
     public bool Showing;
     /// <summary>The picked row: 0 = CONTINUE, 1 = WORLD WARP, 2 = QUIT TO TITLE.</summary>
     public int Row;
-    /// <summary>The world picked on the WORLD WARP row (0 = Sunny Hills ... 5 = UPSIDE-DOWN STATION).</summary>
+    /// <summary>The world picked on the WORLD WARP row (0 = Sunny Hills ... 5 = UPSIDE-DOWN STATION, 6 = VOLCANO ISLAND).</summary>
     public int Picked;
     /// <summary>The world we're in (it gets the YOU ARE HERE ribbon).</summary>
     public int Here;
@@ -159,7 +159,7 @@ public partial class PauseMenu : Control
         return picked ? new Rect2(box.Position.X - 44, box.Position.Y - 7, box.Size.X + 51, box.Size.Y + 14) : box;
     }
 
-    /// <summary>The six big postcards. Returns the area they cover.</summary>
+    /// <summary>The seven big postcards. Returns the area they cover.</summary>
     Rect2 DrawCards(Font font)
     {
         PicturesDrawn = QuestionMarksDrawn = 0;

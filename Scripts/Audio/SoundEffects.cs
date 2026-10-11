@@ -697,6 +697,116 @@ public static class SoundEffects
         return Done(sound, 0.75f);
     }
 
+    // ---------- VOLCANO ISLAND and the LAVA CAVES ----------
+
+    /// <summary>"Blub-blub-blub" — a lava bubble is about to pop up: three thick, low bubbles getting higher.</summary>
+    public static float[] LavaBubble()
+    {
+        var sound = Synth.Silence(0.7f);
+        for (int i = 0; i < 3; i++)
+            Synth.AddTone(sound, i * 0.2f, 0.12f, Wave.Sine, 0.6f, new Envelope(0.005f, 0.09f, 0f, 0.02f), 110 + i * 30, 260 + i * 60);
+        return Done(sound, 0.7f);
+    }
+
+    /// <summary>"PLOP!" — a blob of lava jumps out of the river: a quick pop and a splash.</summary>
+    public static float[] LavaPlop()
+    {
+        var sound = Synth.Silence(0.35f);
+        Synth.AddTone(sound, 0, 0.1f, Wave.Sine, 0.7f, new Envelope(0.002f, 0.08f, 0f, 0.02f), 180, 700);
+        Synth.AddTone(sound, 0.03f, 0.2f, Wave.Noise, 0.2f, new Envelope(0.005f, 0.15f, 0f, 0.05f), 1);
+        return Done(sound, 0.7f);
+    }
+
+    /// <summary>"TSSSSSS!" — something hot in the lava: a hiss that fades, with a little whistle on top.</summary>
+    public static float[] Sizzle()
+    {
+        var sound = Synth.Silence(0.8f);
+        Synth.AddTone(sound, 0, 0.7f, Wave.HighNoise, 0.5f, new Envelope(0.01f, 0.5f, 0.2f, 0.15f), 1);
+        Synth.AddTone(sound, 0, 0.35f, Wave.Sine, 0.15f, new Envelope(0.01f, 0.3f, 0f, 0.05f), 2400, 1600);
+        return Done(sound, 0.7f);
+    }
+
+    /// <summary>"Rrrrumble-gloop" — a rock starts sinking into the lava: a low, wobbly rumble.</summary>
+    public static float[] RockSink()
+    {
+        var sound = Synth.Silence(0.7f);
+        Synth.AddTone(sound, 0, 0.6f, Wave.Triangle, 0.6f, new Envelope(0.05f, 0.4f, 0.3f, 0.1f), 70, 45, vibrato: 0.04f);
+        Synth.AddTone(sound, 0.3f, 0.12f, Wave.Sine, 0.3f, new Envelope(0.005f, 0.1f, 0f, 0.02f), 150, 90);
+        return Done(sound, 0.6f);
+    }
+
+    /// <summary>"WHEEEEEEE!" — dropping into a hole: a slide whistle that swoops up, then all the way down.</summary>
+    public static float[] Wheee()
+    {
+        var sound = Synth.Silence(0.95f);
+        Synth.AddTone(sound, 0, 0.25f, Wave.Sine, 0.5f, new Envelope(0.01f, 0.2f, 0.8f, 0.02f), 700, 1500);
+        Synth.AddTone(sound, 0.25f, 0.6f, Wave.Sine, 0.5f, new Envelope(0.005f, 0.4f, 0.7f, 0.1f), 1500, 220);
+        Synth.AddTone(sound, 0, 0.85f, Wave.Triangle, 0.12f, new Envelope(0.01f, 0.5f, 0.5f, 0.1f), 1400, 300);
+        return Done(sound, 0.75f);
+    }
+
+    /// <summary>"KA-WHOOOOSH!" — the geyser blasts Bolt-E up: a deep boom, then rushing steam that swoops up high.</summary>
+    public static float[] GeyserWhoosh()
+    {
+        const float length = 0.9f;
+        var sound = Synth.Silence(length + 0.2f);
+        var random = new Random(41);
+        float low = 0;
+        for (int i = 0; i < (int)(length * Synth.SampleRate); i++)
+        {
+            float t = (float)i / Synth.SampleRate / length; // 0 to 1
+            float cutoff = 400f + 5000f * t;                 // the "shhh" of the steam gets brighter
+            float amount = 1f - MathF.Exp(-MathF.Tau * cutoff / Synth.SampleRate);
+            low += amount * (random.NextSingle() * 2f - 1f - low);
+            sound[i] = low * MathF.Sin(MathF.PI * MathF.Min(1, t * 3)) * (1 - t * 0.6f);
+        }
+        Synth.AddTone(sound, 0, 0.3f, Wave.Sine, 0.8f, new Envelope(0.002f, 0.25f, 0f, 0.05f), 120, 40); // BOOM
+        Synth.AddTone(sound, 0.1f, 0.7f, Wave.Sine, 0.3f, new Envelope(0.02f, 0.5f, 0.4f, 0.1f), 300, 1800); // up, up, UP!
+        return Done(sound, 0.8f);
+    }
+
+    /// <summary>"Ta-da-da-DAAA!" — CAVE CLEAR! A happy little fanfare going up.</summary>
+    public static float[] CaveClear() => Tune(new[] { ("G5", 0.1f), ("C6", 0.1f), ("E6", 0.1f), ("G6", 0.18f), ("E6", 0.1f), ("G6", 0.45f) }, Wave.Square25);
+
+    /// <summary>"Flap-flap" — a fire bat flies in: two soft, quick whooshes.</summary>
+    public static float[] BatFlap()
+    {
+        var sound = Synth.Silence(0.35f);
+        for (int i = 0; i < 2; i++)
+            Synth.AddTone(sound, i * 0.13f, 0.08f, Wave.Noise, 0.5f, new Envelope(0.005f, 0.06f, 0f, 0.02f), 1);
+        Synth.AddTone(sound, 0, 0.25f, Wave.Square12, 0.08f, new Envelope(0.005f, 0.2f, 0f, 0.02f), 1800, 2400); // a tiny squeak
+        return Done(sound, 0.55f);
+    }
+
+    /// <summary>"CRACK!" — a stalactite breaks off the ceiling: a sharp snap and a crumbly rumble.</summary>
+    public static float[] StalactiteCrack()
+    {
+        var sound = Synth.Silence(0.5f);
+        Synth.AddTone(sound, 0, 0.03f, Wave.HighNoise, 0.8f, new Envelope(0.001f, 0.025f, 0f, 0.01f), 1);
+        Synth.AddTone(sound, 0.02f, 0.35f, Wave.Noise, 0.35f, new Envelope(0.01f, 0.3f, 0f, 0.05f), 1);
+        Synth.AddTone(sound, 0, 0.2f, Wave.Triangle, 0.4f, new Envelope(0.002f, 0.18f, 0f, 0.02f), 160, 60);
+        return Done(sound, 0.75f);
+    }
+
+    /// <summary>"BRRROOOOM..." — the volcano erupts far away: a long, low rumble that rolls in and out.</summary>
+    public static float[] Eruption()
+    {
+        const float length = 1.6f;
+        var sound = Synth.Silence(length + 0.1f);
+        var random = new Random(43);
+        float low1 = 0, low2 = 0;
+        for (int i = 0; i < (int)(length * Synth.SampleRate); i++)
+        {
+            float t = (float)i / Synth.SampleRate / length;
+            float amount = 1f - MathF.Exp(-MathF.Tau * 140f / Synth.SampleRate); // only the deep, rumbly part of the noise
+            low1 += amount * (random.NextSingle() * 2f - 1f - low1);
+            low2 += amount * (low1 - low2);
+            sound[i] = low2 * MathF.Sin(MathF.PI * t) * 6f;
+        }
+        Synth.AddTone(sound, 0, length * 0.8f, Wave.Triangle, 0.25f, new Envelope(0.2f, 0.8f, 0.3f, 0.2f), 50, 38, vibrato: 0.05f);
+        return Done(sound, 0.7f);
+    }
+
     /// <summary>Plays a list of (note, seconds) one after another.</summary>
     static float[] Tune((string Note, float Length)[] notes, Wave wave, bool normalize = true)
     {

@@ -22,11 +22,13 @@ An endless runner starring **Bolt-E**, a tiny cute robot with headphones riding 
   Bolt-E's head spins and lands on a power: **MEGA BOLT-E**, the **BOLT MAGNET** or the **ROCKET BOARD**.
   See [Mystery ? boxes](#mystery--boxes) below.
 - **World Tour**: every time you beat a boss, Bolt-E rides into a new world: **Candy Land**, **Night City**,
-  **Snowy Peaks**, **THE MOON** (with floaty moon jumps!), then **UPSIDE-DOWN STATION** (where jump FLIPS GRAVITY!),
+  **Snowy Peaks**, **THE MOON** (with floaty moon jumps!), **UPSIDE-DOWN STATION** (where jump FLIPS GRAVITY!), then
+  **VOLCANO ISLAND** (rocks that SINK over a river of lava, and secret holes down into LAVA CAVES!),
   and all the way around again. See [World Tour](#world-tour) below.
 - **Pick a world to start in:** on the title screen press **DOWN** (the D-pad or the stick on the controller, or the
-  **Down arrow** or **S** on the keyboard) to step through the worlds you may start in. UPSIDE-DOWN STATION is always one of them! See
-  [UPSIDE-DOWN STATION](#upside-down-station-the-6th-world) below.
+  **Down arrow** or **S** on the keyboard) to step through the worlds you may start in. UPSIDE-DOWN STATION and VOLCANO
+  ISLAND are always two of them! See
+  [UPSIDE-DOWN STATION](#upside-down-station-the-6th-world) and [VOLCANO ISLAND](#volcano-island-the-7th-world) below.
 - **Bolt Bank & looks**: every bolt you ever grab goes into Bolt-E's **Bolt Bank** (top-left of the menus). It never
   goes down, and it wins Bolt-E new **looks**: Ninja, Fire Truck, Pirate, Hot Dog, King Bolt-E and more (17 in all).
   On the menus, press **LEFT / RIGHT** (arrow keys, the D-pad or the stick), or click the arrows under him,
@@ -134,14 +136,18 @@ An endless runner starring **Bolt-E**, a tiny cute robot with headphones riding 
   5. **The Moon**: the Earth in a black starry sky, grey ground full of craters, and **FLOATY moon jumps**:
      Bolt-E jumps just as high, but hangs in the air longer (obstacles come a bit farther apart to match).
   6. **UPSIDE-DOWN STATION**: a neon space-station corridor where jump **FLIPS GRAVITY** (see below!).
-- After UPSIDE-DOWN STATION you're back in Sunny Hills: **YOU WENT ALL THE WAY AROUND!**
+  7. **VOLCANO ISLAND**: a smoking volcano that erupts, falling embers, and a river of glowing LAVA with floating rocks
+     that SINK. Some rocks have a HOLE down into a LAVA CAVE (see below!).
+- After VOLCANO ISLAND you're back in Sunny Hills: **YOU WENT ALL THE WAY AROUND!**
 - If a new world comes while Bolt-E is in the middle of a jump (kids love jumping for the prize bolts!), the jump
   still goes just as high, on the Moon and back in Sunny Hills.
 - **Big Rusty dresses up** for every world: a party hat in Candy Land, cool sunglasses in Night City (he pushes them
   up when he winds up a ground pound, gets hurt or is dizzy, so you can still see his eyes), a bobble hat in
-  Snowy Peaks, a fishbowl space helmet on the Moon and glowing neon goggles in UPSIDE-DOWN STATION. When he blows up,
+  Snowy Peaks, a fishbowl space helmet on the Moon, glowing neon goggles in UPSIDE-DOWN STATION and a red firefighter
+  helmet on VOLCANO ISLAND. When he blows up,
   his hat flies off too!
-- In the dark worlds (Night City, the Moon and UPSIDE-DOWN STATION) a soft glow around Bolt-E keeps him easy to see.
+- In the dark worlds (Night City, the Moon, UPSIDE-DOWN STATION and VOLCANO ISLAND, caves too) a soft glow around Bolt-E
+  keeps him easy to see.
 - Each world has its own **music speed** (a bit faster in Candy Land and Snowy Peaks, slower at night and on the Moon).
   Sunny Hills' speed plays on the title screen and from the very start of every game.
 - The results card says how far you got, like **You rode all the way to NIGHT CITY!**
@@ -150,15 +156,16 @@ An endless runner starring **Bolt-E**, a tiny cute robot with headphones riding 
 - A new game starts in Sunny Hills, unless you **pick another world** on the title screen: press **DOWN** on the
   controller's D-pad or stick (or the **Down arrow** or **S** on the keyboard) to step through Sunny Hills, every world
   you have reached, and UPSIDE-DOWN
-  STATION (always: it's the brand-new world). The picked world's postcard glows, and **START: ...** under the postcards
+  STATION and VOLCANO ISLAND (always: they're the newest worlds). The picked world's postcard glows, and **START: ...** under the postcards
   says which one. The game remembers it until it's closed. Reaching the Moon from Sunny Hills takes 4 boss wins in one
   game: spare batteries help! (A, B, X and Y all start the game. Only DOWN picks the world, so a Y press out of habit
   never changes it by accident.)
 - **Fair play:** starting in another world never wins postcards or looks. In a game like that, a world only counts as
   reached when Bolt-E really rode into it by beating a boss, and only if it's the next one after a world he had already
-  reached. (Start in the Station and beat 2 bosses: you ride into Sunny Hills and then Candy Land, so Candy Land counts.
+  reached. (Start in the Station and beat 3 bosses: you ride into VOLCANO ISLAND, Sunny Hills and then Candy Land, so
+  Candy Land counts.
   Start on the Moon, if you reached it before, and beat a boss: the Station's postcard is yours!) Just starting in the
-  Station counts as Sunny Hills only, and your best World Tour record never gets smaller.
+  Station (or on VOLCANO ISLAND) counts as Sunny Hills only, and your best World Tour record never gets smaller.
 
 ## Bolt Bank & looks
 - **The Bolt Bank** (top-left of the title screen and the results screen) holds every bolt this player has EVER grabbed,
@@ -417,12 +424,71 @@ light dashes zooming along both. It comes after the Moon (or pick it on the titl
   rebuild always puts him back on the FLOOR, the right way up, with any gap near him gone.
 - **Boss fights:** when **WARNING! BOSS AHEAD!** sounds, it's **GRAVITY ON!**: Bolt-E drops to the floor, the station's
   dangers puff away, and the **ceiling slides open** (up off the screen), so every boss fights exactly like everywhere
-  else, with normal jumps. Win, and you ride on to Sunny Hills: **YOU WENT ALL THE WAY AROUND!**
+  else, with normal jumps. Win, and you ride on to **VOLCANO ISLAND**.
 - The level plays **Neon Slipstream**, an original theme with pulsing bass, glassy synths and tunnel echoes,
   at the station's 1.1 music speed. It starts both on World Tour entry and when the station is picked on the title
   screen. Bosses use their own battle themes; victory returns to the station score before the next world arrives.
   Record flags stand on the floor, like always.
 - Leaving the station, a game over, or going back to the title always puts gravity back to normal.
+
+## VOLCANO ISLAND (the 7th world)
+A dark red sky full of smoke, a big volcano far away that puffs smoke and sometimes **ERUPTS** (a fountain of lava
+blobs and a deep rumble), black rock spires, glowing embers falling everywhere, and where the ground should be: a river
+of glowing **LAVA**, with a wavy shiny top, dark crusts drifting along and bubbles plopping. It comes after UPSIDE-DOWN
+STATION (or pick it on the title screen with **DOWN**, or jump there with **WORLD WARP** on the pause screen).
+- **Ride from rock to rock!** Chunky dark rocks with glowing cracks float on the lava, with gaps between them to jump
+  over. The first rocks are wide and the gaps small; later the rocks get narrower.
+- **The rocks SINK!** A moment after Bolt-E lands on a rock (0.4 seconds) it starts sinking into the lava: it wobbles, its
+  cracks glow brighter, lava splashes up, and Bolt-E goes down with it. Stay on it too long (about 3 seconds) and it
+  goes under. **Keep moving!** Rocks he never touched don't sink.
+- **Lava = HOT HOT HOT!** Riding off a rock into the lava (or staying on one until it's under): Bolt-E does a hot little
+  hop with a sizzle... and KABOOM.
+- **Lava bubbles:** a glowing spot and a "blub blub" warn you, then a blob of lava pops up out of a gap and falls back
+  in. Touching it is a crash. They only ever come out of the gaps, never under a rock.
+- **It's always fair** (the code makes sure, and the self-test checks thousands of rocks): every gap is at most HALF a
+  single jump at the speed it was planned for (a double jump is never needed), every rock can be crossed with time to
+  spare before it sinks, a bubble's blob is always back in the lava before Bolt-E gets to its gap (or, when the world
+  is too fast to see it in front of him, it pops up just behind him), and the first 20 seconds are easy: wide rocks,
+  small gaps and no bubbles.
+- **Bolts** float in arcs over the gaps: jump, and grab them all!
+- **? boxes** float over wide rocks. **MEGA BOLT-E** is too big to fall in (he strides right over the gaps), but he's
+  HEAVY: rocks sink faster under him! The **MAGNET** works like always. The **ROCKET BOARD** flies over the lava, and
+  the parachute always lands on a fresh, wide, safe rock.
+- **Crash with a spare battery:** the magic rebuild puts him back on a fresh, safe rock.
+
+### THE HOLES and the LAVA CAVES
+- About every 30 seconds a wide rock comes with a dark round **HOLE** in it, with a glowing rim and a sign next to it
+  that shows how **HARD** it is:
+  - **1 flame = EASY** (green rim): crystal bolts are worth x1;
+  - **2 flames = MEDIUM** (orange rim): crystal bolts are worth x2;
+  - **3 flames = HARD** (red rim): crystal bolts are worth x3.
+  Sometimes 2 or 3 hole rocks come close together, so you can **choose**!
+- **Holes are optional:** jump over a hole and you stay up on the rocks. Ride INTO the hole and **WHEEEE!** Bolt-E
+  tumbles down, the screen closes like an eye, and he lands in the **LAVA CAVE** of that hardness: **LAVA CAVE -
+  HARD!** with the flame pictures under it. (Hole rocks never sink, so there's time to choose. MEGA BOLT-E is too big
+  to fit in a hole.)
+- **The caves** are levels of their own: dark rock walls with glowing purple and cyan **crystals**, lavafalls, glowing
+  drips, little bats far away, and a ceiling full of stalactites. The HARD cave is darker and redder. Down here the
+  floor is **solid** (no sinking!), with cave dangers to jump over: **rock spikes**, **lava pits** (always
+  single-jumpable), and **stalactites** that shake (with dust and a shadow on the floor) before they fall and stick in
+  the floor. In MEDIUM and HARD caves **fire bats** swoop up and down: stomp them like Egg-Bots, but don't bump them!
+- **Harder caves** go faster (EASY 1.0, MEDIUM 1.15, HARD 1.3 times as fast), with more dangers, more stalactites and
+  more bats, and their music plays a little faster too.
+- **Crystal bolts** glow in the caves, worth x1, x2 or x3 (your Bolt Bank and spare batteries count them all).
+- **The way out:** after about 25 seconds comes a glowing **GEYSER** with an **EXIT** sign and arrows. Ride onto it:
+  **CAVE CLEAR!** (+50 for EASY, +100 for MEDIUM, +250 for HARD) with a fanfare, then **WHOOSH!** a fountain of lava
+  and steam blasts Bolt-E back up to the surface, onto a fresh, wide, safe rock, blinking (safe) for a moment.
+- **In a cave:** no boss ever comes (the boss counter waits until you're back up), the world doesn't change, and WORLD
+  WARP says **Find the way out first!** Crash with a spare battery and the magic rebuild happens right there in the
+  cave. With no spare, it's a normal game over, and the score is saved.
+
+### Boss fights on VOLCANO ISLAND
+- When **WARNING! BOSS AHEAD!** sounds, the rocks join together into one big **SOLID ROCK** floor (**SOLID GROUND!**),
+  with the lava still glowing below. Every boss fights exactly like everywhere else. No holes come near a boss.
+- Big Rusty wears a shiny **red firefighter helmet** here.
+- Win, and you ride on to Sunny Hills: **YOU WENT ALL THE WAY AROUND!**
+- Leaving VOLCANO ISLAND (a new world, WORLD WARP, a game over or the title screen) always puts everything back: solid
+  ground, no caves, normal speed.
 
 ## Dad drives Big Rusty
 - **With one controller (or none), the computer drives Big Rusty**, exactly like the original fight.
@@ -484,14 +550,17 @@ light dashes zooming along both. It comes after the Moon (or pick it on the titl
     WHOOSH, a rainbow flash, and **WELCOME TO ...!** The game goes on in that world with the same score, bolts,
     batteries and meters. Everything dangerous on the screen puffs away, and there's a little gap before new things
     come. You can warp to the same worlds you can start in (Sunny Hills, every world you've reached, and always
-    UPSIDE-DOWN STATION). Grey **?** worlds can't be picked yet, and the world you're in says **YOU ARE HERE**.
+    UPSIDE-DOWN STATION and VOLCANO ISLAND). Grey **?** worlds can't be picked yet, and the world you're in says
+    **YOU ARE HERE**.
     Warp into UPSIDE-DOWN STATION and the ceiling shuts and jump flips gravity; warp out and gravity is normal again.
     The world you warp to is also where your next game starts.
   - **QUIT TO TITLE**: the game ends and is saved like any game over (score, Bolt Bank, family race), with no KABOOM:
     the results card says **Game saved!** (or **NEW HIGH SCORE!**). START plays again, like after any game.
 - **In a boss fight** (or when **WARNING! BOSS AHEAD!** is up) you can pause, but WORLD WARP is grey: **Beat the boss
   first!** Right after beating a boss it says **A new world is coming!** until the new world is here.
-- **While Bolt-E is in pieces** (or in slow motion, or falling through a gap in the station), START waits: the game
+  Down in a **LAVA CAVE** it says **Find the way out first!** (ride to the geyser!).
+- **While Bolt-E is in pieces** (or in slow motion, falling through a gap in the station, hopping in the lava, or
+  dropping into a cave or blasting out of one), START waits: the game
   pauses the moment he's riding again.
 - **Only Bolt-E's controller and the keyboard** can pause. Dad's second controller does nothing on the pause screen.
 - **Controller unplugged?** If Bolt-E's controller comes unplugged in the middle of a game, the game pauses by itself.
@@ -557,6 +626,7 @@ him too, and some of them also run the game 3 times as fast.)
 To run only OPTI-MAX's checks (and the taking-turns rules), add `--selftest-optimax` instead.
 To run only UPSIDE-DOWN STATION's checks (and the start-world picker), add `--selftest-station` instead.
 To run only the PAUSE screen and WORLD WARP checks, add `--selftest-pause` instead.
+To run only VOLCANO ISLAND's and the LAVA CAVES' checks, add `--selftest-volcano` instead.
 Exit codes: **0** = everything passed, **1** = something failed, **2** = refused to start (bad `--db`),
 **3** = it took too long. A good run has no lines with `FAIL:`, `ERROR:`, `SCRIPT ERROR` or `Unhandled exception`
 in the output or in `godot.log`. The tests are in `Scripts/Main.SelfTest.cs`, and new features add theirs there.
@@ -566,8 +636,8 @@ so the commands above use `--quit-after 120000`, which is 2000 seconds).
 a world in `Worlds.cs`, a look in `Looks.cs`, a family race number in `Main.Family.cs`, Big Rusty's
 `AttacksBeforeHeMustPound`, `DriverWaitBeforeAI` or `LaughsInARow`, VROOMBA's numbers in `Vroomba.cs`, DRONEZILLA's
 numbers in `Dronezilla.cs`, OPTI-MAX's numbers in `OptiMax.cs`, UPSIDE-DOWN STATION's numbers in `RobotFlip.cs`,
-`StationThings.cs` or `Main.Station.cs`, or Dad's
-`DriveButtons` (the words on the screen
+`StationThings.cs` or `Main.Station.cs`, VOLCANO ISLAND's numbers in `Main.Volcano.cs`, `Main.LavaCave.cs` or
+`VolcanoThings.cs`, or Dad's `DriveButtons` (the words on the screen
 follow your buttons, but the tests press the normal ones), some tests will say FAIL. Changing `DriverName`
 to MOM, or a flag's `PoleHeight`, is fine: the tests use whatever is there.)
 The self-test only pretends to press buttons: its pretend Bolt-E controller is device 99 and its pretend second controller
@@ -639,6 +709,12 @@ score selected. `StartMusic(speed)` resets to the original runner theme on the t
 | `Scripts/GravityArrow.cs` | The gravity arrow in the top-right corner in UPSIDE-DOWN STATION |
 | `Scripts/Main.StartWorld.cs` | Picking the world to start in (DOWN on the title screen), and the fair-play rule for how a game like that (or a WORLD WARP game) counts the worlds reached |
 | `Scripts/Main.StationTests.cs` | Self-test checks for UPSIDE-DOWN STATION and the start-world picker |
+| `Scripts/Main.Volcano.cs` | VOLCANO ISLAND's surface: arriving on a safe rock, the rocks sinking (and Bolt-E riding up and down with them), HOT HOT HOT! in the lava, lava bubbles that warn first, safe rocks after a crash or under the parachute, putting the planned rocks, bubbles, bolts, ? boxes and holes on the lava, the eruptions, and the SOLID GROUND! floor for a boss |
+| `Scripts/Main.LavaCave.cs` | THE LAVA CAVES: dropping into a hole (WHEEEE! and the screen closing like an eye), the cave's dangers by hardness, crystal bolts, stalactites shaking before they fall, fire bats flying in, and the GEYSER: CAVE CLEAR!, the bonus and WHOOSH back up |
+| `Scripts/VolcanoThings.cs` | The volcano's things: the floating rocks (`LavaPlatform`, with the holes and their signs), lava bubbles, cave pits, rock spikes and stalactites (`CaveRock`), the `Geyser`, the screen curtain (`CaveCurtain`), the fire bat, and `VolcanoPlanner` and `CavePlanner`, which put everything in fair patterns |
+| `Scripts/VolcanoScenery.cs` | Drawing VOLCANO ISLAND (the volcano with its smoke and eruptions, the rock spires, the lava river and the embers) and the LAVA CAVES (walls, lavafalls, crystals, drips, bats, the stalactite ceiling and the glowing floor) |
+| `Scripts/RobotLava.cs` | Bolt-E on the rocks: riding up and down with a sinking rock, the HOT HOT HOT! hop, dropping into a cave, and the geyser's blast |
+| `Scripts/Main.VolcanoTests.cs` | Self-test checks for VOLCANO ISLAND and the LAVA CAVES |
 | `Scripts/Main.Pause.cs` | The PAUSE screen: pausing (START, P, Esc, or Bolt-E's controller coming unplugged) and going on, a pause that waits while Bolt-E is in pieces, the pause screen's buttons, WORLD WARP (which worlds, when it's greyed, and the warp itself) and QUIT TO TITLE |
 | `Scripts/PauseMenu.cs` | Drawing the pause screen: the dark cover, PAUSED, the three rows, the big postcards (grey "?" cards and YOU ARE HERE), and the rainbow WARP! flash |
 | `Scripts/Main.PauseTests.cs` | Self-test checks for the PAUSE screen and WORLD WARP |
@@ -794,6 +870,17 @@ To write your own song, change the notes in `Scripts/Audio/Song.cs`: `"C5"` is a
   long the easy start lasts), `JunkFromSeconds` (when space junk starts coming), and `GapMin` and `GapMax` (how wide the
   gaps are). The dangers' sizes and `JunkSpinSpeed` (how fast the junk spins) are at the top of `StationThings.cs`, and
   the station's look (`WindowTop`, `PillarSpacing`, `DashSpacing`...) at the top of `StationScenery.cs`
+- VOLCANO ISLAND: how the rocks sink, `SinkDelay` (the wait before a rock starts sinking), `SinkSpeed` (how fast it
+  sinks: try 8 for slow, or 30 for HURRY!) and `SinkDepth`, and `MegaSinkTimes` (how heavy MEGA BOLT-E is), the holes
+  (`FirstHoleAt`, `HoleEvery`, `HoleWobble`), `EruptEvery` and `BubbleLead`, all at the top of `Main.Volcano.cs`.
+  The fair rocks in `VolcanoPlanner` (`VolcanoThings.cs`): `GapShare` (how much of a jump a gap can be), `EasySeconds`,
+  `EasyWidthMin` / `EasyWidthMax`, `WidthMin`, `BubbleChance` and `HoleRockWidth`. The lava bubbles' `WarnSeconds`,
+  `LaunchSpeed` (how high they pop) and `Radius` are in `LavaBubble`, and the stalactites' `ShakeSeconds` in `CaveRock`
+- THE LAVA CAVES: `CaveLength` (seconds until the geyser), `CaveClearBonus` (+50, +100, +250), `GeyserLaunch` and
+  `GeyserBlinkSeconds` at the top of `Main.LavaCave.cs`. Each hardness's numbers in `CavePlanner` (`VolcanoThings.cs`):
+  `SpeedTimes` (how much faster), `ReactionSeconds` and `ExtraRoom` (how close together the dangers come),
+  `StalactiteChance`, `BatChance`, `PitChance`, and `PitMin` / `PitMax` (how wide the pits are). The fire bats' swoop
+  (`BatMiddleY`, `BatSwoop`, `BatSwoopSeconds`, `BatExtraSpeed`) is in the `Enemy` part of `VolcanoThings.cs`
 - The bolt song: `ScaleSteps` in `Main.cs` (the notes bolts play when you grab them quickly one after another)
 - The family race, all in `Main.Family.cs`: `MinFlagMeters` (rides shorter than this get no flag), `MaxOtherFlags`
   (how many other people get a flag: try 1 for just the best one), `SoCloseMeters` (how close counts as "So close!"),
