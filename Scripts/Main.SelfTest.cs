@@ -17,6 +17,7 @@ public partial class Main
     const int SelfTestDevice = 99;          // the self-test's pretend presses come from this "device" (real ones are 0, 1, 2...)
     const int SelfTestSecondPad = 98;       // ...and its pretend SECOND controller (the one that can drive Big Rusty)
     const string W16 = "WWWWWWWWWWWWWWWW";  // the widest name you can type: 16 W's (W is the fattest letter)
+    const int SelfTestWatchdogSeconds = 1500; // the self-test gives up if it takes longer than this (seconds of game time)
 
     bool selfTesting;             // true when the game was started with --selftest
     float testMoveAxis;           // the self-test's pretend stick: -1 = left, 0 = stay, 1 = right
@@ -105,8 +106,8 @@ public partial class Main
         errorCounter = new SelfTestLogger();
         OS.AddLogger(errorCounter);
 
-        // The watchdog: if the tests ever get stuck, give up after 15 minutes instead of waiting forever
-        GetTree().CreateTimer(900, true, false, true).Timeout += () =>
+        // The watchdog: if the tests ever get stuck, give up after 25 minutes instead of waiting forever
+        GetTree().CreateTimer(SelfTestWatchdogSeconds, true, false, true).Timeout += () =>
         {
             GD.Print("FAIL: watchdog - the self-test took too long");
             GetTree().Quit(3);
@@ -255,6 +256,9 @@ public partial class Main
             {
                 (nameof(BossMusicFlow), BossMusicFlow),
                 (nameof(BossMusicAudio), BossMusicAudio),
+                // Two new robots: COZMOS and VECKTOR
+                (nameof(NewRobotsUnlocked), NewRobotsUnlocked),
+                (nameof(NewRobotsPlay), NewRobotsPlay),
             }).ToArray();
 
             for (int i = 0; i < tests.Length; i++)
@@ -296,7 +300,7 @@ public partial class Main
         }
 
         // (Every frame is 1/60 of a second of game time, because the self-test runs with --fixed-fps 60)
-        GD.Print($"SELFTEST: the tests took {Engine.GetProcessFrames() / 60.0:0} seconds of game time (the watchdog stops at 900)");
+        GD.Print($"SELFTEST: the tests took {Engine.GetProcessFrames() / 60.0:0} seconds of game time (the watchdog stops at {SelfTestWatchdogSeconds})");
         GD.Print($"SELFTEST DONE: {passedChecks} passed, {failedChecks} failed");
         OS.RemoveLogger(errorCounter);
         GetTree().Quit(failedChecks == 0 ? 0 : 1);
@@ -1911,26 +1915,28 @@ public partial class Main
     // ---------- The Bolt Bank and Bolt-E's looks ----------
 
     /// <summary>
-    /// The 15 looks, in order, with their prices, hats, boards and trails. Every look keeps Bolt-E's face easy to read
-    /// (bright eyes on a dark screen), the classic look is the colors he always had, light looks get a dark outline,
-    /// and every name fits in the look picker.
+    /// The 17 looks, in order, with their prices, hats, boards and trails (the last two are COZMOS and VECKTOR). Every look
+    /// keeps the face easy to read (bright eyes on a dark screen, and the eyes fit on the screen), the classic look is the
+    /// colors Bolt-E always had, light looks get a dark outline, and every name fits in the look picker.
     /// </summary>
     async Task LooksReadable()
     {
         await NextFrame();
         string List(Func<Look, object> pick) => string.Join(" ", Looks.All.Select(look => pick(look).ToString()));
-        Check(List(l => l.Id) == "classic party bubblegum firetruck cowboy ninja ocean hotdog pirate galaxy gold king rainbow rustyjr astronaut",
-              $"the 15 looks, in order ({List(l => l.Id)})");
+        Check(List(l => l.Id) == "classic party bubblegum firetruck cowboy ninja ocean hotdog pirate galaxy gold king rainbow rustyjr astronaut cozmos vecktor",
+              $"the 17 looks, in order ({List(l => l.Id)})");
         Check(List(l => $"{l.By}{l.Need}") == "Bolts0 Bolts100 Bolts250 Bolts450 Bolts700 Bolts1000 Bolts1400 Bolts1900 Bolts2500 " +
-                                               "Bolts3200 Bolts4000 Bolts5500 Bolts7500 BossesBeaten3 World5",
+                                               "Bolts3200 Bolts4000 Bolts5500 Bolts7500 BossesBeaten3 World5 Bolts0 Bolts0",
               $"what each look takes to win ({List(l => $"{l.By}{l.Need}")})");
-        Check(List(l => l.Hat) == "None Party None None Cowboy None None Propeller Pirate None None Crown None None SpaceHelmet",
+        Check(List(l => l.Hat) == "None Party None None Cowboy None None Propeller Pirate None None Crown None None SpaceHelmet None None",
               $"the hats ({List(l => l.Hat)})");
-        Check(List(l => l.Board) == "Classic Classic Classic Classic Skateboard Classic Classic HotDog Classic Classic Classic Rainbow Rainbow Classic Cloud",
+        Check(List(l => l.Board) == "Classic Classic Classic Classic Skateboard Classic Classic HotDog Classic Classic Classic Rainbow Rainbow Classic Cloud Classic Classic",
               $"the boards ({List(l => l.Board)})");
-        Check(List(l => l.Trail) == "None None Hearts None None None Sparkles None None Sparkles None Rainbow Rainbow None None",
+        Check(List(l => l.Trail) == "None None Hearts None None None Sparkles None None Sparkles None Rainbow Rainbow None None None None",
               $"the trails ({List(l => l.Trail)})");
-        Check(List(l => l.RainbowEyes ? l.Id : "-") == "- - - - - - - - - - - - rainbow - -", "only RAINBOW has rainbow eyes");
+        Check(List(l => l.RainbowEyes ? l.Id : "-") == "- - - - - - - - - - - - rainbow - - - -", "only RAINBOW has rainbow eyes");
+        Check(List(l => l.RobotName) == "BOLT-E BOLT-E BOLT-E BOLT-E BOLT-E BOLT-E BOLT-E BOLT-E BOLT-E BOLT-E BOLT-E BOLT-E BOLT-E BOLT-E BOLT-E COZMOS VECKTOR",
+              $"every look is Bolt-E, except the last two robots ({List(l => l.RobotName)})");
         Look gold = Looks.All[10], king = Looks.All[11];
         Check(king.Body == gold.Body && king.Bezel == gold.Bezel && king.Screen == gold.Screen && king.Eyes == gold.Eyes &&
               king.Headphones == gold.Headphones && king.Accent == gold.Accent && king.BoardColor == gold.BoardColor,
@@ -1940,6 +1946,15 @@ public partial class Main
         {
             float eyes = Worlds.Brightness(look.Eyes), screen = Worlds.Brightness(look.Screen);
             Check(eyes >= 0.6f && screen <= 0.1f, $"{look.Name}: bright eyes ({eyes:0.00}) on a dark screen ({screen:0.00})");
+
+            // Both eyes (open, and in a blink) fit on the face screen, with room to spare, and don't touch each other
+            Looks.Apply(robot, look);
+            var eye = robot.EyeSize;
+            var faceScreen = robot.FaceScreen.Grow(-2);
+            var back = new Rect2(robot.EyeSpot(0) - eye / 2, eye).Merge(new Rect2(robot.EyeSpot(0) - new Vector2(eye.X + 2, 3) / 2, new Vector2(eye.X + 2, 3)));
+            var front = new Rect2(robot.EyeSpot(1) - eye / 2, eye).Merge(new Rect2(robot.EyeSpot(1) - new Vector2(eye.X + 2, 3) / 2, new Vector2(eye.X + 2, 3)));
+            Check(faceScreen.Encloses(back) && faceScreen.Encloses(front) && !back.Intersects(front),
+                  $"{look.Name}: both eyes fit on the face screen (eyes {back.Position.X:0} to {front.End.X:0}, screen {robot.FaceScreen.Position.X:0} to {robot.FaceScreen.End.X:0})");
         }
 
         var classic = Looks.Classic;
@@ -1956,7 +1971,7 @@ public partial class Main
             Looks.Apply(robot, look);
             if (robot.Rim) outlined.Add(look.Id);
         }
-        Check(string.Join(" ", outlined) == "bubblegum gold king rustyjr astronaut", $"the light looks get a dark outline ({string.Join(" ", outlined)})");
+        Check(string.Join(" ", outlined) == "bubblegum gold king rustyjr astronaut cozmos", $"the light looks get a dark outline ({string.Join(" ", outlined)})");
         Looks.Apply(robot, classic);
         Check(!robot.Rim && Mathf.Abs(Worlds.Brightness(robot.BodyColor) - 0.24f) < 0.01f, "the classic look has no outline (his body's brightness is 0.24)");
 
@@ -1982,7 +1997,7 @@ public partial class Main
 
         hud.SetPlayerName(name);
         Check(Bank == 480 && playerStats?.GamesPlayed == 2, $"the Bolt Bank adds up both games, even with the name typed differently ({Bank} bolts)");
-        Check(UnlockedIds() == "classic party bubblegum firetruck", $"480 bolts win: {UnlockedIds()}");
+        Check(UnlockedIds() == "classic party bubblegum firetruck cozmos vecktor", $"480 bolts win: {UnlockedIds()} (COZMOS and VECKTOR are everyone's)");
         var bank = hud.BankBox;
         Check(bank.Bank == 480 && bank.Plus == 0 && bank.Next == "Next: COWBOY in 220" && Mathf.Abs(bank.Fraction - 0.12f) < 0.001f,
               $"the menu shows {bank.Bank} bolts and '{bank.Next}' (the bar is {bank.Fraction:0.00} full: 30 of the 250 from FIRE TRUCK to COWBOY)");
@@ -2024,7 +2039,7 @@ public partial class Main
               $"on the title screen Bolt-E stands in the corner on the left (feet at {robot.Position})");
         var picker = hud.LookPicker;
         Check(lookIndex == 0 && robot.SelfModulate == Colors.White && picker.LookName == "CLASSIC" && !picker.Locked &&
-              picker.Number == 1 && picker.Count == 15, $"a new player wears the classic look ({picker.LookName} {picker.Number}/{picker.Count})");
+              picker.Number == 1 && picker.Count == 17, $"a new player wears the classic look ({picker.LookName} {picker.Number}/{picker.Count})");
 
         int ticks = sounds.TimesPlayed(Sfx.Tick);
         await TapKey(Key.A);
@@ -2046,11 +2061,17 @@ public partial class Main
               $"the picker: {picker.LookName} {picker.Number}/{picker.Count}, locked: '{picker.Goal}'");
         Check(database?.GetSetting("look:" + key) is null, "a look he hasn't won isn't saved");
 
-        // All the way round to the left: ASTRONAUT comes just before CLASSIC
+        // All the way round to the left: VECKTOR and COZMOS (everyone has them) come just before CLASSIC, then ASTRONAUT
         for (int i = 0; i < 6; i++) await TapKey(Key.Left);
+        Check(picker.LookName == "VECKTOR" && !picker.Locked && picker.Number == 17 && robot.SelfModulate == Colors.White &&
+              database?.GetSetting("look:" + key) == "vecktor",
+              $"left of CLASSIC comes the last look: {picker.LookName} {picker.Number}/17, won from the start, so it's saved as his look");
+        await TapKey(Key.Left);
+        Check(picker.LookName == "COZMOS" && !picker.Locked && picker.Number == 16, $"then {picker.LookName} {picker.Number}/17");
+        await TapKey(Key.Left);
         Check(picker.LookName == "ASTRONAUT" && picker.Locked && picker.Goal == "Ride to THE MOON!" && picker.Number == 15,
-              $"left of CLASSIC comes the last look: {picker.LookName} {picker.Number}/15 ('{picker.Goal}')");
-        await TapKey(Key.Right);
+              $"then {picker.LookName} {picker.Number}/17 ('{picker.Goal}')");
+        for (int i = 0; i < 3; i++) await TapKey(Key.Right);
         Check(lookIndex == 0 && robot.SelfModulate == Colors.White && !picker.Locked && database?.GetSetting("look:" + key) == "classic",
               "back to CLASSIC: full color, and it's saved as his look");
 
@@ -2216,8 +2237,7 @@ public partial class Main
         Look rustyJr = Looks.All[13], astronaut = Looks.All[14];
         Check(!Unlocked(rustyJr) && Goal(rustyJr) == "Beat 3 bosses (2/3)", $"after 2 Big Rusty wins: '{Goal(rustyJr)}'");
         Check(!Unlocked(astronaut) && Goal(astronaut) == "Ride to THE MOON!", $"ASTRONAUT: '{Goal(astronaut)}'");
-        BrowseLook(-1);
-        BrowseLook(-1);
+        for (int i = 0; i < 4; i++) BrowseLook(-1); // (left of CLASSIC: VECKTOR, COZMOS, ASTRONAUT, then RUSTY JR.)
         var picker = hud.LookPicker;
         Check(picker.LookName == "RUSTY JR." && picker.Locked && picker.Goal == "Beat 3 bosses (2/3)",
               $"the picker shows {picker.LookName}: '{picker.Goal}'");
@@ -2380,7 +2400,10 @@ public partial class Main
                           $"trail {robot.TrailDrawn?.ToString() ?? "-"} ({robot.TrailBits} bits), outline {robot.RimDrawn}";
             bool hatOk = look.Hat == Hat.None ? robot.HatDrawn is null : robot.HatDrawn == look.Hat;
             bool trailOk = look.Trail == Trail.None ? robot.TrailDrawn is null && robot.TrailBits == 0 : robot.TrailDrawn == look.Trail && robot.TrailBits > 0;
-            Check(hatOk && robot.BoardDrawn == look.Board && trailOk && robot.RimDrawn == robot.Rim, $"{look.Name} draws: {drew}");
+            bool rideOk = look.BodyKind == RobotBody.BoltE ? robot.BoardDrawn == look.Board && !robot.TreadsDrawn
+                                                           : robot.BoardDrawn is null && robot.TreadsDrawn; // (treads instead of a board)
+            drew += robot.TreadsDrawn ? ", treads" : "";
+            Check(hatOk && rideOk && trailOk && robot.RimDrawn == robot.Rim, $"{look.Name} draws: {drew}");
             if (robot.OldestTrailBit is Vector2 bit)
                 Check(bit.X < robot.Position.X - 46 - 5 && Mathf.Abs(bit.Y - (robot.Position.Y - 14)) < 0.5f,
                       $"{look.Name}: the trail comes out of the back of the board and drifts away ({bit.X - robot.Position.X:0} px)");
@@ -2483,7 +2506,8 @@ public partial class Main
     }
 
     /// <summary>
-    /// Without a database (for example while DB Browser has it locked): only the classic look, a Bolt Bank of 0,
+    /// Without a database (for example while DB Browser has it locked): only the looks everyone has from the start
+    /// (CLASSIC, COZMOS and VECKTOR), a Bolt Bank of 0,
     /// nothing is saved and no parties, but everything still works. On the menus the warning fits in the strip.
     /// </summary>
     async Task LooksWithoutDatabase()
@@ -2495,8 +2519,8 @@ public partial class Main
         {
             GoToTitle();
             hud.SetPlayerName("TNoDbLooks");
-            Check(UnlockedIds() == "classic" && Bank == 0 && hud.BankBox.Bank == 0 && hud.BankBox.Next == "Next: PARTY BOLT-E in 100",
-                  $"only the classic look ({UnlockedIds()}), and a bank of {hud.BankBox.Bank}");
+            Check(UnlockedIds() == "classic cozmos vecktor" && Bank == 0 && hud.BankBox.Bank == 0 && hud.BankBox.Next == "Next: PARTY BOLT-E in 100",
+                  $"only the looks everyone has ({UnlockedIds()}), and a bank of {hud.BankBox.Bank}");
             BrowseLook(1);
             Check(robot.SelfModulate == LockedShadow && hud.LookPicker.Locked && hud.LookPicker.Goal == "Need 100 more bolts!", "every other look is locked");
 
@@ -5151,6 +5175,168 @@ public partial class Main
 
     /// <summary>A list of sizes as words, like "1.0, 1.3, 1.1".</summary>
     static string SizesText(List<float> sizes) => string.Join(", ", sizes.Select(size => size.ToString("0.0")));
+
+    // ---------- Two new robots: COZMOS and VECKTOR ----------
+
+    /// <summary>
+    /// COZMOS and VECKTOR are the last two looks, and everyone has them from the very start (0 bolts). On the title screen
+    /// LEFT from CLASSIC goes straight to VECKTOR (17/17), and LEFT again to COZMOS (16/17). They're never "won", so they
+    /// never get an unlock party, not even for a player whose looks were remembered before they existed.
+    /// </summary>
+    async Task NewRobotsUnlocked()
+    {
+        Look cozmos = Looks.All[15], vecktor = Looks.All[16];
+        Check(Looks.All.Length == 17 && cozmos.Id == "cozmos" && cozmos.Name == "COZMOS" && vecktor.Id == "vecktor" && vecktor.Name == "VECKTOR",
+              $"COZMOS and VECKTOR are the last two looks ({Looks.All.Length} looks)");
+        Check(cozmos.BodyKind == RobotBody.Cozmos && vecktor.BodyKind == RobotBody.Vecktor && Looks.All.Take(15).All(look => look.BodyKind == RobotBody.BoltE),
+              "they're their own robots, and every other look is still Bolt-E");
+        Check(cozmos.By == UnlockBy.Bolts && cozmos.Need == 0 && vecktor.By == UnlockBy.Bolts && vecktor.Need == 0, "they cost 0 bolts");
+
+        // A brand-new player with 0 bolts, on the title screen
+        string name = FreshName("TNEWBOTS"), key = PlayerKey(name);
+        hud.SetPlayerName(name);
+        await Wait(0.3);
+        Check(Bank == 0 && Unlocked(cozmos) && Unlocked(vecktor) && Goal(cozmos) == "" && Goal(vecktor) == "",
+              $"with {Bank} bolts, both are already won");
+        Check(lookIndex == 0 && robot.RobotName == "BOLT-E", "a new player starts as Bolt-E in the classic look");
+        var picker = hud.LookPicker;
+        await TapKey(Key.Left);
+        Check(picker.LookName == "VECKTOR" && !picker.Locked && picker.Number == 17 && picker.Count == 17,
+              $"LEFT from CLASSIC: {picker.LookName} {picker.Number}/{picker.Count}");
+        Check(robot.BodyKind == RobotBody.Vecktor && robot.RobotName == "VECKTOR" && robot.SelfModulate == Colors.White &&
+              database?.GetSetting("look:" + key) == "vecktor", "Bolt-E turns into VECKTOR, in full color, and it's saved");
+        await TapKey(Key.Left);
+        Check(picker.LookName == "COZMOS" && !picker.Locked && picker.Number == 16 && robot.BodyKind == RobotBody.Cozmos &&
+              database?.GetSetting("look:" + key) == "cozmos", $"LEFT again: {picker.LookName} {picker.Number}/17");
+        await TapKey(Key.Right);
+        await TapKey(Key.Right);
+        Check(lookIndex == 0 && robot.BodyKind == RobotBody.BoltE && robot.RobotName == "BOLT-E", "RIGHT, RIGHT: back to CLASSIC Bolt-E");
+
+        // The saved look comes back: pick VECKTOR, go to the title again, and he's still VECKTOR
+        await TapKey(Key.Left);
+        database?.SetSetting("player_name", name); // (as if the game was closed and opened again)
+        GoToTitle();
+        await Wait(0.2);
+        Check(Looks.All[lookIndex].Id == "vecktor" && robot.BodyKind == RobotBody.Vecktor, "the saved look comes back on the next title screen");
+
+        // A player whose looks were remembered before COZMOS and VECKTOR existed gets no parties for them
+        string old = FreshName("TOLDBOTS"), oldKey = PlayerKey(old);
+        SeedRun(old, bolts: 300);
+        database?.SetSetting("looks_seen:" + oldKey, "classic,party,bubblegum");
+        int jingles = sounds.TimesPlayed(Sfx.Unlock);
+        hud.SetPlayerName(old);
+        await Wait(2);
+        Check(unlockQueue.Count == 0 && sounds.TimesPlayed(Sfx.Unlock) == jingles && !hud.UnlockShowing &&
+              database?.GetSetting("looks_seen:" + oldKey) == "classic,party,bubblegum",
+              "an old player gets no unlock party for COZMOS or VECKTOR (they were never won: everyone has them)");
+
+        // ...and a first-launch note doesn't count them either
+        string first = FreshName("TFIRSTBOTS"), firstKey = PlayerKey(first);
+        SeedRun(first, bolts: 300);
+        hud.SetPlayerName(first);
+        Check(hud.UnlockShowing && hud.UnlockBigText == "2 NEW LOOKS!", $"the first-launch note counts only the looks won ('{hud.UnlockBigText}')");
+        await Wait(2.8);
+        Check(database?.GetSetting("looks_seen:" + firstKey) == "classic,party,bubblegum", $"...and remembers them ({database?.GetSetting("looks_seen:" + firstKey)})");
+    }
+
+    /// <summary>
+    /// COZMOS and VECKTOR really play: they ride on rolling treads, jump, double jump (with a flip), and bump into
+    /// things with exactly Bolt-E's hitbox. A crash with a spare battery blows them into their own pieces (head, body,
+    /// both treads, the lift arm), the head goes back on last, the face boots up, and the banner says "COZMOS IS BACK!".
+    /// They go MEGA, fly the rocket board (flames out of the back of the treads) and float down on the parachute, and
+    /// every face draws on their screen. No engine errors anywhere.
+    /// </summary>
+    async Task NewRobotsPlay()
+    {
+        foreach (var (id, lefts) in new[] { ("cozmos", 2), ("vecktor", 1) })
+        {
+            int errorsBefore = SelfTestLogger.Errors;
+            string name = FreshName("T" + id.ToUpperInvariant()), robotName = id.ToUpperInvariant();
+            hud.SetPlayerName(name);
+            await Wait(0.2);
+            for (int i = 0; i < lefts; i++) await TapKey(Key.Left);
+            Check(Looks.All[lookIndex].Id == id && robot.RobotName == robotName, $"{robotName}: picked on the title screen ({robot.RobotName})");
+
+            // Riding along
+            StartGame();
+            QuietRoad();
+            await Wait(0.5);
+            Check(state == GameState.Playing && Looks.All[lookIndex].Id == id && robot.OnTreads && robot.SelfModulate == Colors.White,
+                  $"{robotName}: a game starts with him");
+            Check(robot.TreadsDrawn && robot.BoardDrawn is null && robot.HatDrawn is null, $"{robotName}: he rides on treads, not a hoverboard");
+            float rolled = robot.TreadRoll;
+            await Wait(0.2);
+            Check(robot.TreadRoll - rolled > 50, $"{robotName}: the treads roll along with the world ({robot.TreadRoll - rolled:0} px in 0.2 s)");
+            var boltEsHitbox = new Rect2(robot.Position + new Vector2(-28, -128), new Vector2(56, 120));
+            Check(robot.Hitbox == boltEsHitbox, $"{robotName}: his hitbox is exactly Bolt-E's ({robot.Hitbox})");
+            Check(robot.Position.Y == GroundY && robot.OnGround, $"{robotName}: his treads are on the ground");
+
+            // Jump and double jump
+            await Press("jump");
+            await Wait(0.1);
+            await Release("jump");
+            Check(!robot.OnGround && robot.Position.Y < GroundY - 20, $"{robotName}: jumps ({GroundY - robot.Position.Y:0} px up)");
+            await Press("jump");
+            await Release("jump");
+            Check(robot.DidDoubleJump && robot.Flipping, $"{robotName}: double jumps, with a flip");
+            Check(await WaitUntil(() => robot.OnGround, 3), $"{robotName}: lands again");
+
+            // A crash with the spare battery: his own pieces, then the magic rebuild
+            await Wait(0.3);
+            Check(spareBatteries == 1 && Bonk(null) && state == GameState.Rebuilding, $"{robotName}: a crash with a spare starts the magic rebuild");
+            var pieces = new[] { "head", "body", "left tread", "right tread", "lift arm" };
+            Check(pieces.All(robot.HasPiece) && !robot.HasPiece("hoverboard") && !robot.HasPiece("front leg"),
+                  $"{robotName}: he blows apart into his own pieces ({string.Join(", ", pieces.Where(robot.HasPiece))})");
+            Check(await WaitUntil(() => !robot.Crashed, 4), $"{robotName}: every piece flies back");
+            Check(robot.Face == RobotFace.Booting && robot.OnTreads, $"{robotName}: his face screen boots up ({robot.Face})");
+            Check(state == GameState.Playing && hud.BannerText == $"{robotName} IS BACK!", $"{robotName}: the banner says '{hud.BannerText}'");
+
+            // MEGA, for a moment
+            robot.BlinkTime = 0;
+            await Wait(0.1);
+            StartPowerUp(PowerUp.Mega);
+            await Wait(1);
+            Check(Mathf.IsEqualApprox(robot.Size, PowerUps.MegaSize) && robot.Hitbox.Size == new Vector2(56, 120) * robot.Size && robot.TreadsDrawn,
+                  $"{robotName}: MEGA {robotName}! (size {robot.Size:0.0}, hitbox {robot.Hitbox.Size})");
+            EndPowerUp(quiet: true);
+            Check(robot.Size == 1, $"{robotName}: back to normal size");
+
+            // The rocket board and the parachute, for a moment
+            StartPowerUp(PowerUp.Rocket);
+            await Wait(1);
+            Check(robot.Rocketing && robot.Position.Y < GroundY - 250, $"{robotName}: flies on the rocket ({GroundY - robot.Position.Y:0} px up)");
+            EndPowerUp();
+            Check(robot.Parachuting, $"{robotName}: the parachute pops open");
+            Check(await WaitUntil(() => robot.OnGround && !robot.Parachuting, 4), $"{robotName}: floats down and lands on his treads");
+
+            // Every face, on his screen
+            var faces = new List<string>();
+            robot.ShowFace(RobotFace.Hearts, 0.3f);
+            await Wait(0.1);
+            if (robot.Face == RobotFace.Hearts) faces.Add("hearts");
+            robot.ShowFace(RobotFace.Stars, 0.3f);
+            await Wait(0.1);
+            if (robot.Face == RobotFace.Stars) faces.Add("stars");
+            robot.BeHappy();
+            await Wait(0.1);
+            faces.Add("happy");
+            robot.ShowMagnet = true;
+            await Wait(0.1);
+            robot.ShowMagnet = false;
+            faces.Add("magnet");
+            Check(faces.Count == 4, $"{robotName}: every face draws ({string.Join(", ", faces)})");
+
+            // A crash without a spare: game over, and the X eyes on his head flying off
+            spareBatteries = 0;
+            bestScore = 1_000_000; // (so this isn't a new high score)
+            robot.BlinkTime = 0;
+            Check(Bonk(null) && state == GameState.GameOver && robot.HasPiece("head"), $"{robotName}: with no spare left, game over");
+            await Wait(1);
+            Check(SelfTestLogger.Errors == errorsBefore, $"{robotName}: no engine errors");
+            GoToTitle();
+            await Wait(0.2);
+        }
+    }
 
     /// <summary>Prints PASS or FAIL for one check, and counts it.</summary>
     void Check(bool ok, string what)

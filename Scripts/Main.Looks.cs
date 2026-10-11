@@ -52,10 +52,14 @@ public partial class Main
     /// <summary>True on the menus, where LEFT / RIGHT change Bolt-E's look: the title screen, or once the results card shows.</summary>
     bool MenuInputOn => state == GameState.Title || (state == GameState.GameOver && gameOverTimer > ResultsDelay && showResults is null);
 
-    /// <summary>Has the loaded player won this look? (Without a database, only the classic look.)</summary>
+    /// <summary>
+    /// Has the loaded player won this look? (Without a database, only the looks everyone has from the start:
+    /// CLASSIC, COZMOS and VECKTOR.)
+    /// </summary>
     bool Unlocked(Look look)
     {
-        if (database is null) return look == Looks.Classic;
+        if (look.FreeFromStart) return true;
+        if (database is null) return false;
         return look.By switch
         {
             UnlockBy.Bolts => Bank >= look.Need,
@@ -128,7 +132,7 @@ public partial class Main
     void FirstTimeForThisPlayer()
     {
         if ((playerStats?.GamesPlayed ?? 0) == 0) return;
-        var won = Looks.All.Where(Unlocked).ToList();
+        var won = WonLooks().ToList();
         string wonIds = string.Join(",", won.Select(look => look.Id)); // like "classic,party,bubblegum"
         int newLooks = won.Count(look => look != Looks.Classic);
         if (newLooks == 0)
@@ -142,6 +146,12 @@ public partial class Main
         firstNoteKey = SeenKey;
         firstNoteTimer = 0;
     }
+
+    /// <summary>
+    /// The looks this player has really WON, plus CLASSIC (they're remembered in looks_seen). The other looks everyone has
+    /// from the start (COZMOS and VECKTOR) were never won, so they never get an unlock party.
+    /// </summary>
+    IEnumerable<Look> WonLooks() => Looks.All.Where(look => Unlocked(look) && (look == Looks.Classic || !look.FreeFromStart));
 
     /// <summary>The look this player saved (the classic look if they never picked one, or haven't won it).</summary>
     int SavedLookIndex()
@@ -160,7 +170,7 @@ public partial class Main
     {
         var seen = SeenLooks();
         foreach (var look in Looks.All)
-            if (look != Looks.Classic && Unlocked(look) && !seen.Contains(look.Id) && !unlockQueue.Contains(look))
+            if (!look.FreeFromStart && Unlocked(look) && !seen.Contains(look.Id) && !unlockQueue.Contains(look))
                 unlockQueue.Enqueue(look);
     }
 
@@ -176,7 +186,7 @@ public partial class Main
         robot.SelfModulate = Colors.White;
         bool brandNew = (playerStats?.GamesPlayed ?? 0) == 0;
         if (database is not null && brandNew && database.GetSetting(SeenKey) is null)
-            SaveSeen(Looks.All.Where(Unlocked).Select(look => look.Id));
+            SaveSeen(WonLooks().Select(look => look.Id));
     }
 
     // ---------- Wearing and browsing looks ----------

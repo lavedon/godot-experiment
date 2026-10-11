@@ -22,9 +22,11 @@ An endless runner starring **Bolt-E**, a tiny cute robot with headphones riding 
   **Snowy Peaks**, then **THE MOON** (with floaty moon jumps!), and all the way around again.
   See [World Tour](#world-tour) below.
 - **Bolt Bank & looks**: every bolt you ever grab goes into Bolt-E's **Bolt Bank** (top-left of the menus). It never
-  goes down, and it wins Bolt-E new **looks**: Ninja, Fire Truck, Pirate, Hot Dog, King Bolt-E and more (15 in all).
+  goes down, and it wins Bolt-E new **looks**: Ninja, Fire Truck, Pirate, Hot Dog, King Bolt-E and more (17 in all).
   On the menus, press **LEFT / RIGHT** (arrow keys, the D-pad or the stick), or click the arrows under him,
   to change his look. See [Bolt Bank & looks](#bolt-bank--looks) below.
+- **Two new robots: COZMOS and VECKTOR!** On the menus, press **LEFT** from CLASSIC: first comes **VECKTOR**, and
+  LEFT again gives **COZMOS**. Everyone has them from the start. See [COZMOS and VECKTOR](#cozmos-and-vecktor) below.
 - **Family race**: on the menus, press **LB / RB** on the controller (or **TAB**, or click the LB / RB buttons) to pick
   **who's playing**. Press **TAB** past the last name (or click the name) to type a **new player**.
   **Flags on the road** show where everyone's best ride ended: zoom past DAD's flag for **YOU PASSED DAD!**, and beat
@@ -69,7 +71,7 @@ An endless runner starring **Bolt-E**, a tiny cute robot with headphones riding 
 - **Crash with a spare** and there's still a big KABOOM, slow motion and rumble, but the music only wobbles down. Then:
   a battery zooms over from the corner, every piece flies back into place (the head goes last), the gears get sucked in,
   there's a bright flash, and the face screen boots up with three loading dots before the eyes open.
-  **BOLT-E IS BACK!** He flips and keeps riding.
+  **BOLT-E IS BACK!** He flips and keeps riding. (As COZMOS or VECKTOR it says **COZMOS IS BACK!** or **VECKTOR IS BACK!**)
 - For 2.5 seconds he **blinks**: he can't crash, but he can still stomp bad robots and grab bolts.
   Dangerous things close by puff away, and the world speeds back up to 85% of the speed it had.
 - **In a Big Rusty fight**, Big Rusty laughs "HA HA HA!" and floats back to his spot. His fireballs, shockwaves and
@@ -148,7 +150,7 @@ An endless runner starring **Bolt-E**, a tiny cute robot with headphones riding 
   starts (or LB / RB picks somebody else) before it has been showing for 2.5 seconds, it comes back, on the results
   card after that game (with that game's new looks in it too) or the next time that player is picked.
 - Each player (each name) has their own Bolt Bank and their own look. "Sam" and "sam" are the same player.
-- The 15 looks (bolts = bolts in the Bolt Bank):
+- The 17 looks (bolts = bolts in the Bolt Bank):
 
   | Look | How to win it | Special |
   |---|---|---|
@@ -167,10 +169,33 @@ An endless runner starring **Bolt-E**, a tiny cute robot with headphones riding 
   | RAINBOW | 7,500 bolts | rainbow eyes, a rainbow board and a rainbow trail |
   | RUSTY JR. | beat 3 bosses: Big Rusty or VROOMBA, all games together | dressed like Big Rusty! |
   | ASTRONAUT | ride all the way to THE MOON | a space helmet, and he rides a cloud |
+  | COZMOS | everyone has him | a whole new robot: white, on tank treads, with blue eyes |
+  | VECKTOR | everyone has him | a whole new robot: shiny black, on tank treads, with green eyes |
 - When Bolt-E blows up, his hat flies off as its own bouncing piece (and flies back on last, with his head).
 - Light-colored looks (Bubblegum, Gold, King, Rusty Jr., Astronaut) get a thin dark outline, so Bolt-E is still easy
   to see on snow and candy.
 - If the score database can't open, Bolt-E wears the classic look and nothing is saved (like the scores).
+  COZMOS and VECKTOR can still be picked (everyone has them), but the game won't remember the pick.
+
+## COZMOS and VECKTOR
+Two new robots to play as, picked from photos of two little real-life robots! Everything is drawn in code, like Bolt-E.
+- **How to pick them:** on the title screen or the results screen, press **LEFT** from CLASSIC (or click the left
+  arrow): **VECKTOR** (17/17) comes first, then **COZMOS** (16/17). They're the last two looks, so RIGHT from
+  ASTRONAUT gets there too. Everyone has them from the very start (0 bolts), so there's no unlock party for them, and
+  the game remembers your pick like any other look.
+- **COZMOS** is a little white and light-grey robot on **tank treads**, with a big rounded head, a black screen face and
+  **blue eyes**, a **red disc** on the side of his head, white wheels with red dots, and a **forklift arm** that reaches
+  from the side of his head down to a flat lift plate in front.
+- **VECKTOR** is his shiny black cousin: black and gunmetal, a glossy black head, a **gold panel** on the side of his
+  head, dark grey wheels with spokes, **green eyes**, and the same forklift arm.
+- They're just as big as Bolt-E and play exactly the same: jump, double jump with a flip, stomp, grab bolts, go MEGA,
+  fly the rocket board (the flames come out of the back of the treads) and float down on the parachute. The treads
+  roll along with the road, and their eyes do every face Bolt-E's do: blinking, happy squints (VECKTOR's eyes stay
+  rounded squares), X eyes in a crash, hearts, stars and the booting dots.
+- When they crash they blow apart into their **own pieces** (head, body, both treads and the lift arm, plus gears and
+  screws), and with a spare battery they zip back together, head last: **COZMOS IS BACK!**
+- Their hoverboard style is ignored (they have treads). A hat would sit on their heads too, if you give them one in
+  `Looks.cs`.
 
 ## Family race
 - **Who's playing?** The title card says `Who's playing?  [LB]  MAX  [RB]`. Press **LB / RB** on the controller (or
@@ -319,7 +344,7 @@ $oldAppData = $env:APPDATA; $oldLocalAppData = $env:LOCALAPPDATA
 try {
     $env:APPDATA = "$scratch\appdata"; $env:LOCALAPPDATA = "$scratch\localappdata"
     & 'C:\my-coding-projects\godotPalaceRoomViewer\.tools\Godot_v4.7.2-stable_mono_win64\Godot_v4.7.2-stable_mono_win64_console.exe' `
-        --headless --path . --fixed-fps 60 --quit-after 72000 --log-file "$scratch\godot.log" `
+        --headless --path . --fixed-fps 60 --quit-after 120000 --log-file "$scratch\godot.log" `
         -- "--db=$scratch\selftest.db" --selftest
     "Exit code: $LASTEXITCODE"
 } finally {
@@ -332,7 +357,7 @@ dotnet build
 S='C:\scratch\rd'; mkdir -p "$S"; rm -f "$S"/selftest.db*
 APPDATA="$S\appdata" LOCALAPPDATA="$S\localappdata" \
   'C:\my-coding-projects\godotPalaceRoomViewer\.tools\Godot_v4.7.2-stable_mono_win64\Godot_v4.7.2-stable_mono_win64_console.exe' \
-  --headless --path . --fixed-fps 60 --quit-after 72000 --log-file "$S\godot.log" -- "--db=$S\selftest.db" --selftest
+  --headless --path . --fixed-fps 60 --quit-after 120000 --log-file "$S\godot.log" -- "--db=$S\selftest.db" --selftest
 ```
 During the self-test the boss that comes by itself is always Big Rusty (so the older tests always meet the boss they
 expect); the VROOMBA tests ask for VROOMBA, and one test checks the taking-turns rule like a real game. A few of the
@@ -340,7 +365,8 @@ VROOMBA tests run the game 3 times as fast while they wait for his moves, so the
 Exit codes: **0** = everything passed, **1** = something failed, **2** = refused to start (bad `--db`),
 **3** = it took too long. A good run has no lines with `FAIL:`, `ERROR:`, `SCRIPT ERROR` or `Unhandled exception`
 in the output or in `godot.log`. The tests are in `Scripts/Main.SelfTest.cs`, and new features add theirs there.
-Just before the DONE line it also prints how many seconds of game time the tests took (the watchdog stops them at 900).
+Just before the DONE line it also prints how many seconds of game time the tests took (the watchdog stops them at 1500,
+so the commands above use `--quit-after 120000`).
 (They expect the normal tuning numbers, so if you change a number like `StartingBatteries` or `MegaSeconds`,
 a world in `Worlds.cs`, a look in `Looks.cs`, a family race number in `Main.Family.cs`, Big Rusty's
 `AttacksBeforeHeMustPound`, `DriverWaitBeforeAI` or `LaughsInARow`, VROOMBA's numbers in `Vroomba.cs`, or Dad's
@@ -370,7 +396,7 @@ The self-test also writes a listenable `titan-circuit.wav` beside its scratch da
 | `Scripts/Main.Worlds.cs` | The World Tour: changing worlds after a Big Rusty win, the smooth color change, and drawing each world's special things (stars, moon, Earth, skyscrapers, mountains, lollipops, pine trees, sprinkles, road dashes, craters, snow, the night glow) |
 | `Scripts/Worlds.cs` | Every world on the World Tour: its colors, sky thing, scenery, weather, gravity, music speed and Big Rusty's outfit. **Make your own world here!** |
 | `Scripts/WorldPostcards.cs` | The World Tour postcards on the menus (pictures, grey "?" cards and gold NEW! ribbons) |
-| `Scripts/Looks.cs` | All 15 of Bolt-E's looks: their colors, hats, boards, trails and what it takes to win them. **Invent your own look here!** |
+| `Scripts/Looks.cs` | All 17 looks: their colors, hats, boards, trails, which robot wears them (Bolt-E, COZMOS or VECKTOR) and what it takes to win them. **Invent your own look here!** |
 | `Scripts/Main.Looks.cs` | The Bolt Bank and the looks: loading a player's bank and look, changing looks on the menus, the count-up after a game, and the unlock parties and the first-launch "N NEW LOOKS!" note (which are never lost) |
 | `Scripts/Main.Family.cs` | The family race: who's playing (LB / RB, TAB), "GO, MAX!" and "DAD'S TURN!", the flags on the road and passing them, NEW HIGH SCORE! in the middle of a ride, fireworks, who's champ today, rounds, and "So close!" |
 | `Scripts/RecordFlag.cs` | A flag on the road: the pole, the waving cloth, the star or X eyes, the words, and tipping over |
@@ -383,6 +409,7 @@ The self-test also writes a listenable `titan-circuit.wav` beside its scratch da
 | `Scripts/PowerBox.cs` | The rainbow ? box with its two orbiting stars |
 | `Scripts/PowerRoulette.cs` | The slot machine over Bolt-E's head (tick-tick-tick!) |
 | `Scripts/Robot.cs` | Bolt-E: jumping, gravity (and floaty Moon gravity, even when a new world comes in the middle of a jump), blinking, music notes, the booting face, growing giant (MEGA), the rocket board and parachute, the magnet, heart eyes, star eyes, drawing the robot, and his looks (hats, boards, trails, rainbow eyes and the dark outline) |
+| `Scripts/RobotBodies.cs` | COZMOS and VECKTOR, the two tank-tread robots: their "try changing these!" shapes, drawing the rolling treads and wheels, the box body, the big head with its screen face (and the red disc or gold panel), the forklift arm, and the pieces they blow apart into |
 | `Scripts/RobotExplosion.cs` | The crash: Bolt-E bursts into bouncing pieces, sparks, smoke, and dizzy stars (and flies back together in the magic rebuild). Smashed crates, cones and drones use it too |
 | `Scripts/Enemy.cs` | Pup-Bot, Egg-Bot and VROOMBA's dust bunnies: how they move, look, and get squashed |
 | `Scripts/BossBase.cs` | What every boss has: 6 health and the ANGRY and FURIOUS phases, stomping, when bumping into him hurts, flying away, the laugh when Bolt-E crashes, blowing up, and being driven (only Big Rusty can be) |
@@ -446,6 +473,9 @@ To write your own song, change the notes in `Scripts/Audio/Song.cs`: `"C5"` is a
   a board (classic, skateboard, hot dog, rainbow or cloud), a trail (sparkles, hearts or rainbow), rainbow eyes, and
   what it takes to win it (`Need`). Keep the eyes bright and the screen dark (the self-test checks it).
 - How many bolts each look costs: the `Need` numbers in `Looks.cs` (try 10 for PARTY BOLT-E!)
+- COZMOS and VECKTOR's colors are in `Looks.cs` (try a pink COZMOS!), their names in `Looks.RobotName`, and their
+  shapes at the top of `RobotBodies.cs`: how many cleats the treads have (`CleatCount`), how big the wheels are
+  (`HubRadius`), and where the eyes sit on the screen
 - The unlock parties and the count-up: `PartyEvery`, `CountUpSeconds`, `CountUpSlowest`, `FirstNoteReadSeconds`
   (how long "5 NEW LOOKS!" has to show before it counts as seen) and `MenuHomeX` (where Bolt-E stands on the menus)
   in `Main.Looks.cs`

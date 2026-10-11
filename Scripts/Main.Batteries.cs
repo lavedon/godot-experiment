@@ -136,7 +136,7 @@ public partial class Main
             speedToGetBackTo = Mathf.Max(StartSpeed, SpeedAfterRebuild * Mathf.Max(speedAtCrash, speedToGetBackTo));
 
         sounds.RestoreMusic();
-        hud.ShowBanner("BOLT-E IS BACK!", new Color(0.45f, 1f, 0.5f));
+        hud.ShowBanner($"{robot.RobotName} IS BACK!", new Color(0.45f, 1f, 0.5f)); // (or "COZMOS IS BACK!"...)
         Rumble(0.3f, 0.2f, 0.2f);
     }
 

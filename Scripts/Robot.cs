@@ -13,7 +13,9 @@ public enum RobotFace
 /// Our hero: Bolt-E, a little robot with a screen face and purple headphones, riding a hoverboard.
 /// (This look came from the picture in hero-robot.png!) He can wear other looks too (see Looks.cs):
 /// other colors, hats, boards (a skateboard, a hot dog, a rainbow, a cloud) and trails.
-/// The robot's "feet" (the bottom of the hoverboard) are at its Position.
+/// He can even be a whole different robot: COZMOS or VECKTOR, little tank-tread robots with a forklift arm
+/// (they're drawn in RobotBodies.cs).
+/// The robot's "feet" (the bottom of the hoverboard, or of the treads) are at its Position.
 /// </summary>
 public partial class Robot : Node2D
 {
@@ -32,10 +34,14 @@ public partial class Robot : Node2D
     public Color BoardColor = Looks.Classic.BoardColor;       // the hoverboard
 
     // ---- The rest of his look (see Looks.cs) ----
+    public RobotBody BodyKind;       // which robot he is: Bolt-E, COZMOS or VECKTOR
     public Hat Hat;                  // what he wears on his head
     public Board BoardStyle;         // what he rides on: a hoverboard, a skateboard, a hot dog...
     public Trail TrailStyle;         // what floats out behind him: sparkles, hearts or a rainbow
     public bool RainbowEyes;         // eyes that slowly change through every color
+
+    /// <summary>The robot's own name: "BOLT-E", "COZMOS" or "VECKTOR" (for "BOLT-E IS BACK!").</summary>
+    public string RobotName => Looks.RobotName(BodyKind);
 
     /// <summary>
     /// A light-colored body gets a thin dark outline around his head and board, so he's easy to see on snow and candy.
@@ -119,6 +125,9 @@ public partial class Robot : Node2D
     // ---- The trail: sparkles, hearts or rainbow bubbles floating out behind him (try changing these!) ----
     const float TrailEvery = 0.05f;   // seconds between two trail bits
     const float TrailLife = 0.6f;     // seconds a trail bit lasts
+
+    static readonly Vector2 BoardTrailSpot = new(-46, -14);   // trail bits come out here: the back of the board...
+    static readonly Vector2 TreadTrailSpot = new(-50, -16);   // ...or the back of the treads
 
     class TrailBit
     {
@@ -354,7 +363,7 @@ public partial class Robot : Node2D
         Modulate = Colors.White; // never see-through in pieces (the explosion doesn't update this)
         Visible = true;          // and never blinking in pieces
         Crashed = true;
-        var parts = new List<RobotPart>
+        var parts = OnTreads ? TankParts() : new List<RobotPart>
         {
             // Back to front, the same order the robot is normally drawn in.
             // (A fluffy cloud board is bigger than a hoverboard, so it bounces on a bigger circle.)
@@ -481,6 +490,7 @@ public partial class Robot : Node2D
     {
         propellerAngle += dt * (6 + Speed / 60);  // faster when he goes faster!
         wheelSpin += dt * Speed / 20;
+        treadRoll += dt * Speed;                  // the treads roll along the ground (COZMOS and VECKTOR)
         if (RainbowEyes) EyeColor = Color.FromHsv(time * 0.25f % 1, 0.55f, 1); // all the way around the rainbow every 4 seconds
     }
 
@@ -494,10 +504,11 @@ public partial class Robot : Node2D
             {
                 trailTimer = TrailEvery;
                 nextSparkleGold = !nextSparkleGold;
-                // Out of the back of the board (the back is on the right when he faces left)
+                // Out of the back of the board, or of the treads (the back is on the right when he faces left)
+                var back = OnTreads ? TreadTrailSpot : BoardTrailSpot;
                 trail.Add(new TrailBit
                 {
-                    Position = Position + new Vector2(-46 * facing, -14) * Size,
+                    Position = Position + new Vector2(back.X * facing, back.Y) * Size,
                     Life = TrailLife,
                     Style = TrailStyle,
                     Gold = nextSparkleGold,
@@ -542,7 +553,8 @@ public partial class Robot : Node2D
             if (noteTimer <= 0)
             {
                 noteTimer = (float)GD.RandRange(0.8, 1.6);
-                notes.Add(new Note { Position = Position + new Vector2(46, -112) * Size, Life = 1.5f, Purple = GD.Randf() < 0.5f });
+                var noteSpot = OnTreads ? new Vector2(-22, -114) : new Vector2(46, -112); // the headphones (or the side of the head)
+                notes.Add(new Note { Position = Position + noteSpot * Size, Life = 1.5f, Purple = GD.Randf() < 0.5f });
             }
         }
 
@@ -560,6 +572,7 @@ public partial class Robot : Node2D
     {
         HatDrawn = null;
         BoardDrawn = null;
+        TreadsDrawn = false;
         TrailDrawn = null;
         RimDrawn = false;
         DrawTrail(); // behind everything else
@@ -580,7 +593,9 @@ public partial class Robot : Node2D
 
         // Everything else gets squished, tilted, and spun around the robot's middle.
         bool riding = OnGround && !Crashed && Speed > 0;
-        float hover = riding ? Mathf.Sin(time * 5f) * 2f - 2f : 0f; // gently floating on the hoverboard
+        float hover = !riding ? 0f
+            : OnTreads ? (Mathf.Sin(time * 40f) - 1f) * 0.6f   // treads rumble a tiny bit (and never sink into the ground)
+            : Mathf.Sin(time * 5f) * 2f - 2f;                  // gently floating on the hoverboard
         var scale = new Vector2(2f - squash, squash);
         float angle = tilt - spin;
         var scaledPivot = Pivot * scale; // squash around the feet, spin around the middle
@@ -589,14 +604,21 @@ public partial class Robot : Node2D
 
         // Draw from back to front: things drawn later cover things drawn earlier.
         if (Parachuting) DrawParachute();
-        if (Rocketing) DrawRocketFlames();
-        DrawHoverboard();
-        DrawLeg(-14, BodyColor.Darkened(0.3f)); // back leg (darker, it's in the shadow)
-        DrawLeg(12, BodyColor);                 // front leg
-        DrawHeadband();
-        DrawBackEarCup();
-        DrawHead();
-        DrawFrontEarCup();
+        if (Rocketing) DrawRocketFlames(OnTreads ? TreadFlameShift : Vector2.Zero);
+        if (OnTreads)
+        {
+            DrawTankRobot(); // COZMOS or VECKTOR (see RobotBodies.cs)
+        }
+        else
+        {
+            DrawHoverboard();
+            DrawLeg(-14, BodyColor.Darkened(0.3f)); // back leg (darker, it's in the shadow)
+            DrawLeg(12, BodyColor);                 // front leg
+            DrawHeadband();
+            DrawBackEarCup();
+            DrawHead();
+            DrawFrontEarCup();
+        }
         DrawHat();
         if (ShowMagnet) DrawMagnet();
 
@@ -730,19 +752,29 @@ public partial class Robot : Node2D
             DrawCircle(middle + at * CloudBoardSize, radius * CloudBoardSize, Colors.White);
     }
 
-    /// <summary>ROCKET BOARD flames shooting out of the back of the board. They flicker longer and shorter really fast.</summary>
-    void DrawRocketFlames()
+    static readonly Vector2 TreadFlameShift = new(2, 3);   // COZMOS and VECKTOR's flames come out of the back of the treads
+    static readonly Vector2[] outerFlame = new Vector2[5], innerFlame = new Vector2[5]; // (corner points reused every frame)
+
+    /// <summary>
+    /// ROCKET BOARD flames shooting out of the back of the board (or of the treads: "shift" moves them).
+    /// They flicker longer and shorter really fast.
+    /// </summary>
+    void DrawRocketFlames(Vector2 shift)
     {
         float tip = -95 - 25 * Mathf.Abs(Mathf.Sin(time * 40f)); // the end of the flame
-        DrawColoredPolygon(new[]
-        {
-            new Vector2(-50, -30), new Vector2(-64, -27), new Vector2(tip, -20), new Vector2(-64, -13), new Vector2(-50, -10),
-        }, new Color(1f, 0.55f, 0.1f)); // orange outside
+        outerFlame[0] = new Vector2(-50, -30) + shift;
+        outerFlame[1] = new Vector2(-64, -27) + shift;
+        outerFlame[2] = new Vector2(tip, -20) + shift;
+        outerFlame[3] = new Vector2(-64, -13) + shift;
+        outerFlame[4] = new Vector2(-50, -10) + shift;
+        DrawColoredPolygon(outerFlame, new Color(1f, 0.55f, 0.1f)); // orange outside
         float middleTip = -50 + (tip + 50) * 0.6f;
-        DrawColoredPolygon(new[]
-        {
-            new Vector2(-50, -25), new Vector2(-58, -23), new Vector2(middleTip, -20), new Vector2(-58, -17), new Vector2(-50, -15),
-        }, new Color(1f, 0.9f, 0.3f)); // yellow, hotter inside
+        innerFlame[0] = new Vector2(-50, -25) + shift;
+        innerFlame[1] = new Vector2(-58, -23) + shift;
+        innerFlame[2] = new Vector2(middleTip, -20) + shift;
+        innerFlame[3] = new Vector2(-58, -17) + shift;
+        innerFlame[4] = new Vector2(-50, -15) + shift;
+        DrawColoredPolygon(innerFlame, new Color(1f, 0.9f, 0.3f)); // yellow, hotter inside
     }
 
     /// <summary>A tiny red-and-white parachute over his head, with 4 strings down to the top of his head.</summary>
@@ -1006,15 +1038,14 @@ public partial class Robot : Node2D
         DrawCircle(new Vector2(-0.7f, -123.7f), 0.8f, new Color(0.5f, 0.5f, 0.6f));
         Shapes.RoundRect(this, new Rect2(-6, -67, 12, 3), 1.5f, ScreenColor);
 
-        DrawFace();
+        // The eyes sit a little to the right, because Bolt-E is looking where it's going.
+        DrawFace(new Vector2(-10, -97), new Vector2(12, -97));
     }
 
-    void DrawFace()
+    /// <summary>The eyes on the face screen, with every face: X eyes, booting, hearts, stars, happy, blinking or normal.</summary>
+    void DrawFace(Vector2 leftEye, Vector2 rightEye)
     {
-        // The eyes sit a little to the right, because Bolt-E is looking where it's going.
-        var leftEye = new Vector2(-10, -97);
-        var rightEye = new Vector2(12, -97);
-
+        var eye = EyeSize; // (Bolt-E's eyes are 13 x 15, COZMOS and VECKTOR's a bit bigger)
         if (Crashed)
         {
             Shapes.XEye(this, leftEye, 6, EyeColor);
@@ -1035,6 +1066,11 @@ public partial class Robot : Node2D
             Shapes.Star(this, leftEye, 8, turn, StarGold);
             Shapes.Star(this, rightEye, 8, turn, StarGold);
         }
+        else if ((happyTimer > 0 || !OnGround) && BodyKind == RobotBody.Vecktor)
+        {
+            SquintEye(leftEye, eye);
+            SquintEye(rightEye, eye);
+        }
         else if (happyTimer > 0 || !OnGround)
         {
             Shapes.HappyEye(this, leftEye, 8, EyeColor, 5f);
@@ -1042,14 +1078,25 @@ public partial class Robot : Node2D
         }
         else if (blinkTimer < 0)
         {
-            SquareEye(leftEye, 15, 3);
-            SquareEye(rightEye, 15, 3);
+            SquareEye(leftEye, eye.X + 2, 3);
+            SquareEye(rightEye, eye.X + 2, 3);
         }
         else
         {
-            SquareEye(leftEye, 13, 15);
-            SquareEye(rightEye, 13, 15);
+            SquareEye(leftEye, eye.X, eye.Y);
+            SquareEye(rightEye, eye.X, eye.Y);
         }
+    }
+
+    /// <summary>
+    /// VECKTOR's happy squint: his eyes stay rounded squares, just flatter and pushed up, with a smile-shaped bite
+    /// out of the bottom.
+    /// </summary>
+    void SquintEye(Vector2 center, Vector2 eye)
+    {
+        var middle = center + new Vector2(0, -2);
+        SquareEye(middle, eye.X + 1, eye.Y * 0.6f);
+        Shapes.Ellipse(this, middle + new Vector2(0, eye.Y * 0.4f), new Vector2(eye.X * 0.42f, eye.Y * 0.22f), ScreenColor);
     }
 
     /// <summary>The face screen starting up: "loading..." dots light up one by one, then the eyes open.</summary>
@@ -1057,16 +1104,18 @@ public partial class Robot : Node2D
     {
         if (faceAge < 0.35f)
         {
+            float middleX = (leftEye.X + rightEye.X) / 2; // the dots sit between the eyes
             for (int i = 0; i < 3; i++)
             {
                 bool lit = faceAge >= i * 0.1f; // a new dot every 0.1 seconds
-                DrawCircle(new Vector2(-10 + 11 * i, -97), 2.5f, lit ? EyeColor : new Color(EyeColor, 0.25f));
+                DrawCircle(new Vector2(middleX + 11 * (i - 1), leftEye.Y), 2.5f, lit ? EyeColor : new Color(EyeColor, 0.25f));
             }
             return;
         }
-        float open = Mathf.Lerp(2f, 15f, Mathf.Clamp((faceAge - 0.35f) / 0.25f, 0, 1)); // the eyes open from a thin line
-        SquareEye(leftEye, 13, open);
-        SquareEye(rightEye, 13, open);
+        var eye = EyeSize;
+        float open = Mathf.Lerp(2f, eye.Y, Mathf.Clamp((faceAge - 0.35f) / 0.25f, 0, 1)); // the eyes open from a thin line
+        SquareEye(leftEye, eye.X, open);
+        SquareEye(rightEye, eye.X, open);
     }
 
     /// <summary>A glowing, rounded-square eye.</summary>

@@ -9,6 +9,12 @@ public enum Board { Classic, Skateboard, HotDog, Rainbow, Cloud }
 /// <summary>What floats out behind Bolt-E while he rides (Robot.DrawTrail draws them).</summary>
 public enum Trail { None, Sparkles, Hearts, Rainbow }
 
+/// <summary>
+/// Which robot is wearing the look: Bolt-E (the hoverboard robot with headphones), or one of the two little tank-tread
+/// robots with a forklift arm, COZMOS and VECKTOR (they're drawn in RobotBodies.cs).
+/// </summary>
+public enum RobotBody { BoltE, Cozmos, Vecktor }
+
 /// <summary>How a look is won: bolts in the Bolt Bank, Big Rusty wins (all games together), or the farthest world reached.</summary>
 public enum UnlockBy { Bolts, BossesBeaten, World }
 
@@ -17,7 +23,17 @@ public enum UnlockBy { Bolts, BossesBeaten, World }
 /// and what it takes to win it ("Need": how many bolts, Big Rusty wins, or which world).
 /// </summary>
 public record Look(string Id, string Name, Color Body, Color Bezel, Color Screen, Color Eyes, Color Headphones, Color Accent,
-                   Color BoardColor, Hat Hat, Board Board, Trail Trail, bool RainbowEyes, UnlockBy By, int Need);
+                   Color BoardColor, Hat Hat, Board Board, Trail Trail, bool RainbowEyes, UnlockBy By, int Need)
+{
+    /// <summary>Which robot this look is: Bolt-E (most looks), COZMOS or VECKTOR.</summary>
+    public RobotBody BodyKind { get; init; } = RobotBody.BoltE;
+
+    /// <summary>The robot's own name, like "BOLT-E" (it's in "BOLT-E IS BACK!").</summary>
+    public string RobotName => Looks.RobotName(BodyKind);
+
+    /// <summary>True for a look everyone has from the very start (0 bolts), like CLASSIC, COZMOS and VECKTOR.</summary>
+    public bool FreeFromStart => By == UnlockBy.Bolts && Need == 0;
+}
 
 /// <summary>
 /// ALL OF BOLT-E'S LOOKS! Invent your own look!
@@ -31,6 +47,11 @@ public record Look(string Id, string Name, Color Body, Color Bezel, Color Screen
 ///
 /// The looks are in the order the picker shows them. "Need" is how many bolts it takes to win one
 /// (try smaller numbers to win them faster!), except for RUSTY JR. (Big Rusty wins) and ASTRONAUT (a world).
+///
+/// The last two aren't Bolt-E at all: they're two little tank-tread robots, COZMOS and VECKTOR! For them the 7 colors
+/// mean: body (head and body), bezel (the side panels and the forklift arm's middle), screen (the face), eyes,
+/// "headphones" (the red disc or gold panel on the side of the head, and the dots on the wheels), accent (sparks and
+/// music notes), and board (the round wheels inside the treads). They ride on treads, so the Board is ignored.
 /// </summary>
 public static class Looks
 {
@@ -123,6 +144,28 @@ public static class Looks
               new(0.92f, 0.93f, 0.96f), new(0.6f, 0.62f, 0.7f), new(0.04f, 0.05f, 0.07f), new(0.35f, 0.95f, 0.95f),
               new(0.95f, 0.5f, 0.15f), new(0.3f, 0.6f, 1f), new(0.85f, 0.86f, 0.9f))
             with { Hat = Hat.SpaceHelmet, Board = Board.Cloud, By = UnlockBy.World },
+
+        // 16. COZMOS: a little white tank-tread robot with a forklift arm, a red disc on the side of his head, and BLUE eyes.
+        //     Everyone has him from the start (0 bolts)!
+        Paint("cozmos", "COZMOS", 0,
+              new(0.95f, 0.95f, 0.93f), new(0.74f, 0.74f, 0.7f), new(0.03f, 0.03f, 0.04f), new(0.3f, 0.75f, 1f),
+              new(0.9f, 0.15f, 0.15f), new(0.35f, 0.75f, 1f), new(0.98f, 0.98f, 0.96f))
+            with { BodyKind = RobotBody.Cozmos },
+
+        // 17. VECKTOR: COZMOS's shiny black cousin, with a gold panel on the side of his head and GREEN eyes.
+        //     Everyone has him from the start too!
+        Paint("vecktor", "VECKTOR", 0,
+              new(0.14f, 0.14f, 0.16f), new(0.36f, 0.37f, 0.4f), new(0.02f, 0.02f, 0.03f), new(0.3f, 1f, 0.55f),
+              new(0.86f, 0.74f, 0.5f), new(0.35f, 1f, 0.6f), new(0.32f, 0.32f, 0.35f))
+            with { BodyKind = RobotBody.Vecktor },
+    };
+
+    /// <summary>Each robot's own name (try changing these!).</summary>
+    public static string RobotName(RobotBody body) => body switch
+    {
+        RobotBody.Cozmos => "COZMOS",
+        RobotBody.Vecktor => "VECKTOR",
+        _ => "BOLT-E",
     };
 
     /// <summary>
@@ -137,9 +180,10 @@ public static class Looks
             Body = body, Bezel = bezel, Screen = screen, Eyes = eyes, Headphones = headphones, Accent = accent, BoardColor = board,
         };
 
-    /// <summary>Dresses Bolt-E in a look: all 7 colors, the hat, the board, the trail and the eyes.</summary>
+    /// <summary>Dresses Bolt-E in a look: which robot he is, all 7 colors, the hat, the board, the trail and the eyes.</summary>
     public static void Apply(Robot robot, Look look)
     {
+        robot.BodyKind = look.BodyKind;
         robot.BodyColor = look.Body;
         robot.BezelColor = look.Bezel;
         robot.ScreenColor = look.Screen;
