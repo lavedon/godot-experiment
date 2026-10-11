@@ -182,7 +182,8 @@ public partial class Robot : Node2D
     public bool CanMove;            // true during a boss fight
     public float MoveInput;         // -1 = left, 0 = stay, 1 = right (from the controls)
     public float HomeX = 240;       // where Bolt-E normally rides
-    const float RideSpeed = 430f;   // how fast it rides left and right
+    public const float RideSpeed = 430f;   // how fast it rides left and right (VROOMBA's vacuum pulls a bit slower than this)
+    public const float LeftEdge = 70, RightEdge = 1210; // he can't ride farther than this (the edges of the screen)
     const float RideAcceleration = 2800f;
     float velocityX;
     float facing = 1;               // 1 = facing right, -1 = facing left
@@ -528,7 +529,7 @@ public partial class Robot : Node2D
             velocityX = Mathf.Abs(toHome) < 2 ? 0 : Mathf.Sign(toHome) * Mathf.Min(320f, Mathf.Abs(toHome) * 4f);
             facing = 1;
         }
-        Position = new Vector2(Mathf.Clamp(Position.X + velocityX * dt, 70, 1210), Position.Y);
+        Position = new Vector2(Mathf.Clamp(Position.X + velocityX * dt, LeftEdge, RightEdge), Position.Y);
         Scale = new Vector2(facing, 1) * Size; // flip the drawing to face the other way (and make MEGA Bolt-E giant)
     }
 

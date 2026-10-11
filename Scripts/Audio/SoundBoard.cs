@@ -10,6 +10,7 @@ public enum Sfx
     NewWorld,
     Unlock,
     PassFlag,
+    RevUp, Zoom, WallBonk, VacuumHum, BeepBoop, Spit, // VROOMBA
 }
 
 /// <summary>
@@ -75,12 +76,19 @@ public partial class SoundBoard : Node
         AddEffect(Sfx.NewWorld, SoundEffects.NewWorld(), -7f);
         AddEffect(Sfx.Unlock, SoundEffects.Unlock(), -6f);
         AddEffect(Sfx.PassFlag, SoundEffects.PassFlag(), -8f);
+        AddEffect(Sfx.RevUp, SoundEffects.RevUp(), -9f, voices: 1);
+        AddEffect(Sfx.Zoom, SoundEffects.Zoom(), -8f);
+        AddEffect(Sfx.WallBonk, SoundEffects.WallBonk(), -4f);
+        AddEffect(Sfx.VacuumHum, SoundEffects.VacuumHum(), -12f, voices: 1, loop: true); // (hums until the vacuum switches off)
+        AddEffect(Sfx.BeepBoop, SoundEffects.BeepBoop(), -8f, voices: 1);
+        AddEffect(Sfx.Spit, SoundEffects.Spit(), -9f, voices: 3);
     }
 
-    void AddEffect(Sfx name, float[] sound, float volumeDb, int voices = 2)
+    void AddEffect(Sfx name, float[] sound, float volumeDb, int voices = 2, bool loop = false)
     {
-        // "voices" = how many copies can play at the same time (so quick bolts don't cut each other off)
-        var player = new AudioStreamPlayer { Stream = Synth.ToAudioStream(sound), VolumeDb = volumeDb, MaxPolyphony = voices };
+        // "voices" = how many copies can play at the same time (so quick bolts don't cut each other off).
+        // loop = it plays again and again until Stop (like VROOMBA's vacuum hum).
+        var player = new AudioStreamPlayer { Stream = Synth.ToAudioStream(sound, loop), VolumeDb = volumeDb, MaxPolyphony = voices };
         AddChild(player);
         effects[name] = player;
     }
@@ -93,6 +101,12 @@ public partial class SoundBoard : Node
         player.Play();
         timesPlayed[name] = TimesPlayed(name) + 1;
     }
+
+    /// <summary>Stops a sound effect that's still playing (like VROOMBA's vacuum when it switches off).</summary>
+    public void Stop(Sfx name) => effects[name].Stop();
+
+    /// <summary>True while this sound effect is playing (the self-test reads this).</summary>
+    public bool IsPlaying(Sfx name) => effects[name].Playing;
 
     /// <summary>Plays the music at this speed and normal volume (if the music is switched on).</summary>
     void PlayMusicAt(float pitch)

@@ -6,8 +6,8 @@ using Godot;
 /// More of Main lives in other files: Main.Batteries.cs (spare batteries and the magic rebuild),
 /// Main.PowerUps.cs (rainbow ? boxes and their powers), Main.Worlds.cs (the World Tour: a new world after every
 /// Big Rusty win), Main.Looks.cs (the Bolt Bank and Bolt-E's looks), Main.Family.cs (the family race: who's playing,
-/// and the flags on the road), Main.Driver.cs (Dad drives Big Rusty with the number keys) and Main.SelfTest.cs
-/// (grown-up testing code).
+/// and the flags on the road), Main.Driver.cs (Dad drives Big Rusty with a second controller), Main.Vroomba.cs
+/// (VROOMBA, the second boss, and how the bosses take turns) and Main.SelfTest.cs (grown-up testing code).
 /// </summary>
 public partial class Main : Node2D
 {
@@ -45,7 +45,7 @@ public partial class Main : Node2D
     readonly List<Blast> blasts = new();
     readonly List<Shockwave> shockwaves = new();
     readonly List<Laser> lasers = new();
-    Boss? boss;
+    BossBase? boss;          // Big Rusty or VROOMBA (see BossBase.cs)
     ScorePopups popups = null!;
 
     float speed;
@@ -69,6 +69,8 @@ public partial class Main : Node2D
 
     bool rumbleOn = true;    // controller shaking
     bool watchingControllers; // true once we listen for controllers being plugged in
+    int controllerOne;       // Bolt-E's controller (the kid's): the first one plugged in. Any other one is a SECOND controller.
+    int lastBuzzedPad = -1;  // the controller that was asked to shake last (the self-test reads this: it never really shakes one)
 
     float speedToGetBackTo;  // after a boss fight (or a magic rebuild) the world speeds back up to this
     int runNumber;           // goes up every time the world is cleared, so old delayed things are skipped (see Later)
@@ -89,8 +91,10 @@ public partial class Main : Node2D
     {
         if (!SelfTestArgsOk()) return; // the self-test refuses to start without a safe scratch database (see Main.SelfTest.cs)
 
+        controllerOne = PickBoltEsController(); // the first controller plugged in is Bolt-E's (see "Controls" below)
         SetUpControls();
         OpenDatabase();
+        if (!selfTesting) PutGameOnItsScreen(); // the TV, if one is plugged in (F9 swaps screens)
 
         robot = new Robot { GroundY = GroundY, Position = new Vector2(RobotX, GroundY), ZIndex = 10 };
         AddChild(robot);
@@ -122,7 +126,7 @@ public partial class Main : Node2D
         if (database is null)
             hud.ShowWarning("Could not open the score database, so scores won't be saved this time.");
 
-        // Notice when a game controller is plugged in or unplugged.
+        // Notice when a game controller is plugged in or unplugged (and which one is Bolt-E's then).
         Input.JoyConnectionChanged += OnControllerPluggedOrUnplugged;
         watchingControllers = true;
         UpdateControllerStatus();
@@ -142,10 +146,11 @@ public partial class Main : Node2D
     /// The stick has to be pushed more than halfway (0.6) for those, and one push is one step. (Not the A and D keys:
     /// the menus say "(A)" for the controller's A button, so the A key must not do something else there.)
     /// "player_prev" / "player_next": LB / RB on a controller (and TAB for the next one): who's playing, on the menus.
-    /// "drive_..." : the number keys 1 to 4 (on the top row or the number pad) and H, for Dad (or Mom) to drive
-    /// Big Rusty in a boss fight (see Main.Driver.cs). Only keys: a controller can never drive him.
+    /// The keyboard and the mouse work for everything. The controller buttons and the stick here are on Bolt-E's own
+    /// controller (controller one, the first one plugged in: see PickControllerOne). A SECOND controller never moves
+    /// Bolt-E: it can only drive Big Rusty in a boss fight (see Main.Driver.cs).
     /// </summary>
-    static void SetUpControls()
+    void SetUpControls()
     {
         AddAction("jump",
             KeyPress(Key.Space), KeyPress(Key.Up), KeyPress(Key.W),
@@ -164,17 +169,70 @@ public partial class Main : Node2D
         AddAction("player_next", KeyPress(Key.Tab), ControllerButton(JoyButton.RightShoulder));
         AddAction("player_prev", ControllerButton(JoyButton.LeftShoulder));
 
-        // Dad drives Big Rusty (keys nobody else uses, so the kid's controls never change)
-        AddAction("drive_fireballs", KeyPress(Key.Key1), KeyPress(Key.Kp1));
-        AddAction("drive_helpers", KeyPress(Key.Key2), KeyPress(Key.Kp2));
-        AddAction("drive_pound", KeyPress(Key.Key3), KeyPress(Key.Kp3));
-        AddAction("drive_laser", KeyPress(Key.Key4), KeyPress(Key.Kp4));
-        AddAction("drive_laugh", KeyPress(Key.H));
+        // Godot's own menu actions (ui_left, ui_select... every ui_ action with controller buttons) listen to Bolt-E's
+        // controller only too, so a second controller can never press a menu button or reach the name box
+        BindControllerOne(controllerOne);
     }
 
-    static InputEventJoypadMotion Stick(float direction) => new() { Axis = JoyAxis.LeftX, AxisValue = direction, Device = AnyDevice };
+    /// <summary>Everything Bolt-E does (the kid's actions). Their controller buttons and stick only listen to controller one.</summary>
+    static readonly string[] KidActions = { "jump", "start", "music", "left", "right", "menu_left", "menu_right", "player_next", "player_prev" };
+
+    // A button, or the left stick, on Bolt-E's controller (controller one)
+    InputEventJoypadButton ControllerButton(JoyButton button) => new() { ButtonIndex = button, Device = controllerOne };
+    InputEventJoypadMotion Stick(float direction) => new() { Axis = JoyAxis.LeftX, AxisValue = direction, Device = controllerOne };
 
     static float Rand(float min, float max) => (float)GD.RandRange(min, max);
+
+    /// <summary>Full screen <-> window. (The game always starts in full screen: see window/size/mode in project.godot.)</summary>
+    static void ToggleFullScreen()
+    {
+        bool full = DisplayServer.WindowGetMode() is DisplayServer.WindowMode.Fullscreen or DisplayServer.WindowMode.ExclusiveFullscreen;
+        DisplayServer.WindowSetMode(full ? DisplayServer.WindowMode.Windowed : DisplayServer.WindowMode.Fullscreen);
+    }
+
+    // ---------- Which screen the game is on ----------
+    // With two screens (like a laptop plus a TV), the game starts full screen on the OTHER screen, not the main one,
+    // so grown-ups can keep their work on the laptop. F9 swaps, and the game remembers the choice ("screen" setting).
+
+    /// <summary>
+    /// Which screen the game should be on. count = how many screens, main = the main (laptop) screen,
+    /// choice = the saved setting: "main" means the main screen, anything else means the other screen.
+    /// </summary>
+    static int PickGameScreen(int count, int main, string? choice)
+    {
+        if (count <= 1 || choice == "main") return main;
+        for (int screen = 0; screen < count; screen++)
+            if (screen != main) return screen; // the first screen that isn't the main one (the TV!)
+        return main;
+    }
+
+    /// <summary>Moves the game to its screen when it starts.</summary>
+    void PutGameOnItsScreen()
+    {
+        int screen = PickGameScreen(DisplayServer.GetScreenCount(), DisplayServer.GetPrimaryScreen(), database?.GetSetting("screen"));
+        MoveToScreen(screen);
+    }
+
+    /// <summary>F9: the game hops to the other screen, and remembers it.</summary>
+    void SwapScreens()
+    {
+        if (DisplayServer.GetScreenCount() <= 1) return;
+        bool onMain = DisplayServer.WindowGetCurrentScreen() == DisplayServer.GetPrimaryScreen();
+        string choice = onMain ? "other" : "main";
+        database?.SetSetting("screen", choice);
+        MoveToScreen(PickGameScreen(DisplayServer.GetScreenCount(), DisplayServer.GetPrimaryScreen(), choice));
+    }
+
+    /// <summary>Puts the window on a screen. (A full-screen window has to become a normal window for a moment to move.)</summary>
+    static void MoveToScreen(int screen)
+    {
+        if (DisplayServer.WindowGetCurrentScreen() == screen) return;
+        var mode = DisplayServer.WindowGetMode();
+        bool full = mode is DisplayServer.WindowMode.Fullscreen or DisplayServer.WindowMode.ExclusiveFullscreen;
+        if (full) DisplayServer.WindowSetMode(DisplayServer.WindowMode.Windowed);
+        DisplayServer.WindowSetCurrentScreen(screen);
+        if (full) DisplayServer.WindowSetMode(mode);
+    }
 
     void ToggleMusic()
     {
@@ -192,30 +250,107 @@ public partial class Main : Node2D
     }
 
     static InputEventKey KeyPress(Key key) => new() { PhysicalKeycode = key, Device = AnyDevice };
-    static InputEventJoypadButton ControllerButton(JoyButton button) => new() { ButtonIndex = button, Device = AnyDevice };
+
+    // ---------- Which controller is whose? ----------
+
+    /// <summary>
+    /// Which controller is Bolt-E's (controller one), from the numbers of the controllers that are plugged in:
+    /// the lowest number that Godot knows is a real game controller. (Some keyboards, mice and steering wheels pretend to
+    /// be a controller too, and those must never steal Bolt-E!) If Godot knows none of them: the lowest number.
+    /// Nothing plugged in: 0, so the first controller that gets plugged in works right away.
+    /// </summary>
+    static int PickControllerOne(IReadOnlyList<int> connected, Func<int, bool> isKnown)
+    {
+        var lowestFirst = connected.OrderBy(device => device).ToList();
+        foreach (int device in lowestFirst)
+            if (isKnown(device)) return device;
+        return lowestFirst.Count > 0 ? lowestFirst[0] : 0;
+    }
+
+    /// <summary>
+    /// Bolt-E's controller right now. (During the self-test it's always its pretend controller 99, so a real one can't
+    /// change a test. Only a test that pretends some controllers are plugged in changes it: see testPluggedIn.)
+    /// </summary>
+    int PickBoltEsController() =>
+        selfTesting && testPluggedIn is null ? SelfTestDevice : PickControllerOne(PluggedInControllers(), PadIsKnown);
+
+    /// <summary>The numbers of the controllers that are plugged in right now. (A test can pretend: see testPluggedIn.)</summary>
+    IReadOnlyList<int> PluggedInControllers() => testPluggedIn ?? Input.GetConnectedJoypads().ToList();
+
+    /// <summary>
+    /// Is this a real game controller that Godot knows (Godot knows where all its buttons are)? Phantom joysticks, some
+    /// steering wheels, and keyboards or mice that say they're a controller aren't. They can't drive Big Rusty, and the
+    /// title card doesn't count them. (The self-test's pretend controllers 99 and 98 count as real ones, and a test can
+    /// pretend: see testKnownPads.)
+    /// </summary>
+    bool PadIsKnown(int device)
+    {
+        if (testKnownPads is not null) return testKnownPads(device);
+        if (selfTesting && device is SelfTestDevice or SelfTestSecondPad) return true;
+        return Input.IsJoyKnown(device);
+    }
+
+    /// <summary>
+    /// Makes "device" Bolt-E's controller: from now on, the controller buttons and the stick of the kid's actions (and of
+    /// Godot's own ui_ actions) only listen to it. The keyboard and the mouse aren't changed. Anything that was held down
+    /// on the old controller is let go, so nothing stays stuck down (like Bolt-E riding right all by himself).
+    /// </summary>
+    void BindControllerOne(int device)
+    {
+        controllerOne = device;
+        foreach (var action in InputMap.GetActions())
+        {
+            string name = action;
+            if (!KidActions.Contains(name) && !name.StartsWith("ui_")) continue;
+            bool hasControllerParts = false;
+            foreach (var input in InputMap.ActionGetEvents(action))
+            {
+                if (input is not (InputEventJoypadButton or InputEventJoypadMotion)) continue;
+                input.Device = device; // (this changes the button inside the action itself)
+                hasControllerParts = true;
+            }
+            if (hasControllerParts) Input.ActionRelease(action);
+        }
+    }
 
     void OnControllerPluggedOrUnplugged(long device, bool connected) => UpdateControllerStatus();
 
+    /// <summary>
+    /// A controller was plugged in or unplugged: which one is Bolt-E's now (his controls follow it when it changed),
+    /// and the title card's controller line.
+    /// </summary>
     void UpdateControllerStatus()
     {
-        var controllers = Input.GetConnectedJoypads();
-        if (controllers.Count == 0)
-        {
-            hud.SetControllerName(null);
-            return;
-        }
-        string name = Input.GetJoyName(controllers[0]);
-        if (name.Contains("XInput", StringComparison.OrdinalIgnoreCase))
-            name = "Xbox controller"; // Windows calls every Xbox controller "XInput Controller"
-        hud.SetControllerName(name);
+        int one = PickBoltEsController();
+        if (one != controllerOne) BindControllerOne(one);
+
+        // The controllers' names, Bolt-E's first. Only real controllers count (and Bolt-E's own, of course), so a
+        // phantom one that Godot doesn't know never makes the title card say "2 controllers!"
+        var names = PluggedInControllers().Where(device => device == one || PadIsKnown(device))
+                                          .OrderBy(device => device == one ? 0 : 1).ThenBy(device => device)
+                                          .Select(ControllerName).ToList();
+        hud.SetControllers(names);
     }
 
-    /// <summary>Makes every connected controller shake. "weak" is a fast buzz, "strong" is a big rumble (0 to 1).</summary>
-    void Rumble(float weak, float strong, float seconds)
+    /// <summary>A controller's name. (Windows calls every Xbox controller "XInput Controller".)</summary>
+    static string ControllerName(int device)
     {
-        if (!rumbleOn) return;
-        foreach (int device in Input.GetConnectedJoypads())
-            Input.StartJoyVibration(device, weak, strong, seconds);
+        string name = Input.GetJoyName(device);
+        return name.Contains("XInput", StringComparison.OrdinalIgnoreCase) ? "Xbox controller" : name;
+    }
+
+    /// <summary>
+    /// Makes Bolt-E's controller shake (only his: Dad's controller doesn't buzz for every bolt the kid grabs).
+    /// "weak" is a fast buzz, "strong" is a big rumble (0 to 1).
+    /// </summary>
+    void Rumble(float weak, float strong, float seconds) => Buzz(controllerOne, weak, strong, seconds);
+
+    /// <summary>Makes one controller shake, if it's plugged in (and the rumble is on).</summary>
+    void Buzz(int pad, float weak, float strong, float seconds)
+    {
+        lastBuzzedPad = pad;
+        if (rumbleOn && Input.GetConnectedJoypads().Contains(pad))
+            Input.StartJoyVibration(pad, weak, strong, seconds);
     }
 
     void OpenDatabase()
@@ -275,6 +410,7 @@ public partial class Main : Node2D
         shockwaves.Clear();
         lasers.Clear();
         boss = null;
+        sounds.Stop(Sfx.VacuumHum); // (VROOMBA's vacuum, if it was still humming)
         popups.Clear();
         particles.Clear();
         runNumber++;
@@ -339,6 +475,8 @@ public partial class Main : Node2D
         stomps = 0;
         stompCombo = 0;
         bossesBeaten = 0;
+        gameNumber++;          // the bosses take turns: who comes first depends on the game number (see Main.Vroomba.cs)
+        bossFightNumber = 0;
         nextBossAt = FirstBossAt;
         bossWarningShown = false;
         nextBoxAt = PowerUps.FirstBoxAt;
@@ -456,8 +594,31 @@ public partial class Main : Node2D
 
     public override void _UnhandledInput(InputEvent e)
     {
-        // During the self-test only its pretend presses count, so a real controller can't mess up the tests
-        if (selfTesting && e.Device != SelfTestDevice) return;
+        // During the self-test only its pretend presses count (from its pretend controller one, and its pretend second
+        // controller), so a real controller or keyboard can't mess up the tests
+        if (selfTesting && e.Device != SelfTestDevice && e.Device != SelfTestSecondPad) return;
+
+        // A SECOND controller (any controller that isn't Bolt-E's) never moves Bolt-E: in a boss fight it drives
+        // Big Rusty, and that's all it does (see Main.Driver.cs). A phantom one that Godot doesn't know does nothing.
+        if ((e is InputEventJoypadButton or InputEventJoypadMotion) && e.Device != controllerOne)
+        {
+            SecondControllerInput(e);
+            return;
+        }
+
+        // F11 switches between full screen (how the game always starts) and a window, and back again
+        if (e is InputEventKey { Pressed: true, Echo: false, PhysicalKeycode: Key.F11 })
+        {
+            ToggleFullScreen();
+            return;
+        }
+
+        // F9 moves the game to the other screen (when there are two), and remembers it for next time
+        if (e is InputEventKey { Pressed: true, Echo: false, PhysicalKeycode: Key.F9 })
+        {
+            SwapScreens();
+            return;
+        }
 
         // While someone types a name, the keyboard is for typing. (A controller always works.)
         if (e is InputEventKey && hud.IsTypingName) return;
@@ -495,9 +656,6 @@ public partial class Main : Node2D
             }
         }
 
-        // In a Big Rusty fight, Dad (or Mom) can drive him with the keys 1 to 4 and H (see Main.Driver.cs)
-        if (DriverKeyPressed(e)) return;
-
         // On the menus, D-pad up never starts a game (it's easy to press by accident while pressing left or right)
         if ((state is GameState.Title or GameState.GameOver) && e is InputEventJoypadButton { ButtonIndex: JoyButton.DpadUp }) return;
 
@@ -532,8 +690,11 @@ public partial class Main : Node2D
         }
     }
 
-    /// <summary>Left (-1) to right (1) from the arrow keys, A / D, D-pad or stick. (The self-test pretends with testMoveAxis.)</summary>
-    float MoveAxis() => selfTesting ? testMoveAxis : Input.GetAxis("left", "right");
+    /// <summary>
+    /// Left (-1) to right (1) from the arrow keys, A / D, or the D-pad or stick of Bolt-E's controller.
+    /// (The self-test pretends with testMoveAxis, except in the test that checks the real controls: see testRealStick.)
+    /// </summary>
+    float MoveAxis() => selfTesting && !testRealStick ? testMoveAxis : Input.GetAxis("left", "right");
 
     /// <summary>Is jump being held down? (Never during the self-test, so a real controller can't change a test.)</summary>
     bool JumpHeld() => !selfTesting && Input.IsActionPressed("jump");
@@ -560,6 +721,7 @@ public partial class Main : Node2D
             distance += speed * boost * dt;
             SpawnThings(dt);
             UpdatePowerUps(dt); // (see Main.PowerUps.cs)
+            UpdateVroomba(dt);  // VROOMBA's vacuum pulls Bolt-E and the bolts (see Main.Vroomba.cs)
             CheckBumps();
             hud.SetScore(Score, boltsCollected, bestScore);
             CheckForHighScore(); // NEW HIGH SCORE! right away (see Main.Family.cs)
@@ -663,10 +825,10 @@ public partial class Main : Node2D
             var enemy = enemies[i];
             if (enemy.Chaser && !enemy.Squashed)
             {
-                // Big Rusty's helpers chase Bolt-E
+                // Big Rusty's helpers (and VROOMBA's dust bunnies) chase Bolt-E
                 float direction = robot.Position.X < enemy.Position.X ? -1 : 1;
                 enemy.Facing = direction;
-                enemy.Position += new Vector2(direction * 150f * dt - move, 0);
+                enemy.Position += new Vector2(direction * enemy.ChaseSpeed * dt - move, 0);
             }
             else
             {
@@ -875,6 +1037,7 @@ public partial class Main : Node2D
         sounds.Play(Sfx.BossHit);
         shake = 0.25f;
         Rumble(0.6f, 0.6f, 0.25f);
+        if (boss.DriverControlled) BuzzTheDriver(); // Dad feels the stomp on his controller too (see Main.Driver.cs)
         Burst(new Vector2(boss.Position.X, boss.Top + 10), 16, new Color(1f, 0.85f, 0.3f), 260f);
         hud.ShowBossBar(boss.Health);
         if (boss.IsBeaten)
@@ -898,7 +1061,7 @@ public partial class Main : Node2D
         bonusPoints += PointsForBeatingBoss;
         popups.Add($"+{PointsForBeatingBoss}", boss!.Position + new Vector2(0, -200), new Color(1f, 0.85f, 0.2f), 46);
         // (When Dad was driving him: "YOU BEAT DAD'S BIG RUSTY!" - see Main.Driver.cs)
-        hud.ShowBanner(boss.DriverControlled ? $"YOU BEAT {DriverShortName}'S {Boss.DisplayName}!" : $"YOU BEAT {Boss.DisplayName}!",
+        hud.ShowBanner(boss.DriverControlled ? $"YOU BEAT {DriverShortName}'S {boss.DisplayName}!" : $"YOU BEAT {boss.DisplayName}!",
                        new Color(1f, 0.85f, 0.2f));
         sounds.Play(Sfx.Explosion);
         sounds.Play(Sfx.Victory);
@@ -917,7 +1080,10 @@ public partial class Main : Node2D
         spawnCountdown = 1200; // a little rest before obstacles come back
     }
 
-    void SpawnBoss()
+    /// <summary>
+    /// A boss arrives! With no kind given, the bosses take turns (see Main.Vroomba.cs): BIG RUSTY or VROOMBA.
+    /// </summary>
+    void SpawnBoss(BossKind? kind = null)
     {
         EndPowerUp(quiet: true); // (just in case: powers already end when the boss warning sounds)
 
@@ -925,7 +1091,7 @@ public partial class Main : Node2D
         // keep aiming for that speed instead of the slow speed right now.)
         speedToGetBackTo = Mathf.Max(speedToGetBackTo, Mathf.Max(speed, StartSpeed));
 
-        // Big Rusty's arrival blows away anything still on the screen
+        // The boss's arrival blows away anything still on the screen
         foreach (var o in obstacles)
         {
             Burst(o.Position + new Vector2(0, -30), 10, Colors.White, 200f);
@@ -940,8 +1106,40 @@ public partial class Main : Node2D
         enemies.Clear();
         PuffAway(boxes, _ => true); // (no ? boxes in a boss fight)
 
+        bossFightNumber++;
+        BossBase theBoss = (kind ?? NextBossKind()) == BossKind.Vroomba ? MakeVroomba() : MakeBigRusty();
+        boss = theBoss;
+
+        // What every boss does: gets angry, pops, blows up and his pieces bounce
+        theBoss.GotAngry += phase =>
+        {
+            hud.ShowBanner(phase == 2 ? $"{theBoss.DisplayName} IS ANGRY!" : $"{theBoss.DisplayName} IS FURIOUS!", new Color(1f, 0.35f, 0.25f));
+            sounds.Play(Sfx.Roar, theBoss is Vroomba ? 1.5f : 1f); // (VROOMBA's roar is a higher, robot-vacuum "GRRR!")
+            sounds.SetMusicSpeed((phase == 2 ? 1.15f : 1.22f) * CurrentWorld.MusicSpeed);
+            shake = 0.35f;
+            Rumble(0.5f, 0.6f, 0.5f);
+        };
+        theBoss.Popped += at =>
+        {
+            Burst(at, 10, new Color(1f, 0.8f, 0.3f), 260f);
+            sounds.Play(Sfx.Explosion, Rand(1.8f, 2.4f));
+            shake = 0.2f;
+        };
+        theBoss.BlewUp += BossBeaten;
+        theBoss.PieceBounced += bigPiece => sounds.Play(Sfx.Clink, bigPiece ? Rand(0.45f, 0.6f) : Rand(1.1f, 1.5f));
+
+        AddChild(theBoss);
+        hud.SetBossBarName(theBoss.DisplayName); // (nobody drives a new Big Rusty yet: see Main.Driver.cs)
+        driverPad = -1;
+        hud.ShowBossBar(theBoss.Health);
+        hud.ShowHint("Ride left and right with  ← →  or the stick!");
+        sounds.SetBossMusic(true, 1.1f * CurrentWorld.MusicSpeed); // a dedicated battle theme for every boss
+    }
+
+    /// <summary>BIG RUSTY flies in, dressed up for the world! (Everything only he does is hooked up here.)</summary>
+    Boss MakeBigRusty()
+    {
         var rusty = new Boss { GroundY = GroundY, ZIndex = 5, Outfit = CurrentWorld.RustyOutfit }; // dressed up for the world!
-        boss = rusty;
 
         rusty.Laughed += () =>
         {
@@ -990,28 +1188,7 @@ public partial class Main : Node2D
             Rumble(0.7f, 0.9f, 0.35f);
             Burst(new Vector2(x, GroundY), 24, new Color(0.85f, 0.75f, 0.6f), 320f);
         };
-        rusty.GotAngry += phase =>
-        {
-            hud.ShowBanner(phase == 2 ? $"{Boss.DisplayName} IS ANGRY!" : $"{Boss.DisplayName} IS FURIOUS!", new Color(1f, 0.35f, 0.25f));
-            sounds.Play(Sfx.Roar);
-            sounds.SetMusicSpeed((phase == 2 ? 1.15f : 1.22f) * CurrentWorld.MusicSpeed);
-            shake = 0.35f;
-            Rumble(0.5f, 0.6f, 0.5f);
-        };
-        rusty.Popped += at =>
-        {
-            Burst(at, 10, new Color(1f, 0.8f, 0.3f), 260f);
-            sounds.Play(Sfx.Explosion, Rand(1.8f, 2.4f));
-            shake = 0.2f;
-        };
-        rusty.BlewUp += BossBeaten;
-        rusty.PieceBounced += bigPiece => sounds.Play(Sfx.Clink, bigPiece ? Rand(0.45f, 0.6f) : Rand(1.1f, 1.5f));
-
-        AddChild(rusty);
-        hud.SetBossBarName(Boss.DisplayName); // (nobody drives a new Big Rusty yet: see Main.Driver.cs)
-        hud.ShowBossBar(rusty.Health);
-        hud.ShowHint("Ride left and right with  ← →  or the stick!");
-        sounds.SetBossMusic(true, 1.1f * CurrentWorld.MusicSpeed); // a dedicated battle theme for every boss
+        return rusty;
     }
 
     // ---------- Making new obstacles, enemies and bolts ----------

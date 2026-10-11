@@ -15,10 +15,14 @@ using Microsoft.Data.Sqlite;
 public partial class Main
 {
     const int SelfTestDevice = 99;          // the self-test's pretend presses come from this "device" (real ones are 0, 1, 2...)
+    const int SelfTestSecondPad = 98;       // ...and its pretend SECOND controller (the one that can drive Big Rusty)
     const string W16 = "WWWWWWWWWWWWWWWW";  // the widest name you can type: 16 W's (W is the fattest letter)
 
     bool selfTesting;             // true when the game was started with --selftest
     float testMoveAxis;           // the self-test's pretend stick: -1 = left, 0 = stay, 1 = right
+    bool testRealStick;           // true while a test rides Bolt-E with the real controls (the pretend controllers' D-pad and stick)
+    List<int>? testPluggedIn;     // the controllers a test pretends are plugged in (null = ask Godot: see PluggedInControllers)
+    Func<int, bool>? testKnownPads; // ...and which ones it pretends Godot knows (null = ask Godot: see PadIsKnown)
     string selfTestDbPath = "";   // the scratch database the self-test uses
     string currentTest = "";      // the test that's running right now (printed with every check)
     int passedChecks, failedChecks;
@@ -207,7 +211,7 @@ public partial class Main
                 (nameof(DrivenCrashWaits), DrivenCrashWaits),
                 (nameof(YouBeatDadsRusty), YouBeatDadsRusty),
                 (nameof(DadGotYou), DadGotYou),
-                (nameof(DriveKeysOnly), DriveKeysOnly),
+                (nameof(DriveButtonsOnly), DriveButtonsOnly),
                 (nameof(DriverWordsFit), DriverWordsFit),
                 // The final fixes (after the whole update was reviewed)
                 (nameof(LaughsCantStallTheFight), LaughsCantStallTheFight),
@@ -223,6 +227,27 @@ public partial class Main
                 (nameof(NewGameHasNoOldBoxes), NewGameHasNoOldBoxes),
                 (nameof(NoTickWithNobodyElse), NoTickWithNobodyElse),
                 (nameof(OnlyTodayCounts), OnlyTodayCounts),
+                // The computer drives Big Rusty, unless a SECOND controller is plugged in
+                (nameof(ComputerDrivesWithOneController), ComputerDrivesWithOneController),
+                (nameof(SecondControllerTakesOver), SecondControllerTakesOver),
+                (nameof(SecondControllerNeverMovesBoltE), SecondControllerNeverMovesBoltE),
+                (nameof(ControllerOneFollowsThePlugs), ControllerOneFollowsThePlugs),
+                (nameof(TwoControllerTitleLine), TwoControllerTitleLine),
+                // Only real controllers drive Big Rusty, and Dad's words follow his buttons
+                (nameof(PhantomPadsCantDrive), PhantomPadsCantDrive),
+                (nameof(DriveWordsFollowTheButtons), DriveWordsFollowTheButtons),
+                // With a TV plugged in, the game goes on the TV
+                (nameof(GameScreenPick), GameScreenPick),
+                // VROOMBA, the second boss (the bosses take turns)
+                (nameof(BossesTakeTurns), BossesTakeTurns),
+                (nameof(VroombaZoomsAndBonks), VroombaZoomsAndBonks),
+                (nameof(StompVroomba), StompVroomba),
+                (nameof(VroombaSucks), VroombaSucks),
+                (nameof(DustBunnies), DustBunnies),
+                (nameof(BeatVroomba), BeatVroomba),
+                (nameof(VroombaCantBeDriven), VroombaCantBeDriven),
+                (nameof(VroombaTauntOnRebuild), VroombaTauntOnRebuild),
+                (nameof(VroombaDrawsInEveryPhase), VroombaDrawsInEveryPhase),
             };
 
             // Audio checks run last, keeping the existing tests' random seeds unchanged as bosses are added.
@@ -241,6 +266,10 @@ public partial class Main
                 GD.Seed((ulong)(12345 + i));
                 GoToTitle();
                 testMoveAxis = 0;
+                testRealStick = false;
+                testPluggedIn = null;
+                testKnownPads = null;
+                testTakeTurns = false;
                 Engine.TimeScale = 1;
                 await Wait(0.2);
 
@@ -1771,7 +1800,7 @@ public partial class Main
         ChangeWorld(1);
         robot.BlinkTime = 1e9f; // (nothing Big Rusty does can crash Bolt-E in this test)
         SpawnBoss();
-        var rusty = boss!;
+        var rusty = (Boss)boss!;
         Check(rusty.Outfit == BossOutfit.PartyHat && rusty.OutfitOnHead, "in Candy Land Big Rusty wears a party hat");
         await Wait(2);
         Check(Mathf.Abs(sounds.MusicPitch - 1.1f * 1.05f) < 0.01f, $"the fight music is 1.1 times Candy Land's speed (pitch {sounds.MusicPitch:0.000})");
@@ -1785,9 +1814,9 @@ public partial class Main
         rusty.LoseHealth(4); // (the rest of his health)
         Check(await WaitUntil(() => rusty.HasBlownUp, 3), "he breaks down and blows up");
         Check(rusty.HatFlewOff && !rusty.OutfitOnHead, "his party hat flies off as its own piece");
-        Check(hud.BannerText == $"YOU BEAT {Boss.DisplayName}!" && bossesBeaten == 1, $"'{hud.BannerText}'");
+        Check(hud.BannerText == $"YOU BEAT {Boss.RustyName}!" && bossesBeaten == 1, $"'{hud.BannerText}'");
         await Wait(1);
-        Check(worldNumber == 1 && hud.BannerText == $"YOU BEAT {Boss.DisplayName}!", "a second later it's still Candy Land, so the victory words show first");
+        Check(worldNumber == 1 && hud.BannerText == $"YOU BEAT {Boss.RustyName}!", "a second later it's still Candy Land, so the victory words show first");
         Check(Mathf.Abs(sounds.MusicPitch - 1.05f) < 0.01f, $"the music goes back to Candy Land's speed (pitch {sounds.MusicPitch:0.000})");
 
         Check(await WaitUntil(() => worldNumber == 2, 2), "then on to the next world");
@@ -1813,7 +1842,7 @@ public partial class Main
             robot.BlinkTime = 1e9f;
             int errorsBefore = SelfTestLogger.Errors;
             SpawnBoss();
-            var rusty = boss!;
+            var rusty = (Boss)boss!;
             string world = CurrentWorld.Name;
             Check(rusty.Outfit == outfits[i] && rusty.OutfitOnHead, $"in {world} Big Rusty wears: {rusty.Outfit}");
             await Wait(2); // he flies in and laughs
@@ -2185,12 +2214,12 @@ public partial class Main
         SeedRun(name, bolts: 0, bosses: 1);
         hud.SetPlayerName(name);
         Look rustyJr = Looks.All[13], astronaut = Looks.All[14];
-        Check(!Unlocked(rustyJr) && Goal(rustyJr) == "Beat BIG RUSTY 3 times (2/3)", $"after 2 Big Rusty wins: '{Goal(rustyJr)}'");
+        Check(!Unlocked(rustyJr) && Goal(rustyJr) == "Beat 3 bosses (2/3)", $"after 2 Big Rusty wins: '{Goal(rustyJr)}'");
         Check(!Unlocked(astronaut) && Goal(astronaut) == "Ride to THE MOON!", $"ASTRONAUT: '{Goal(astronaut)}'");
         BrowseLook(-1);
         BrowseLook(-1);
         var picker = hud.LookPicker;
-        Check(picker.LookName == "RUSTY JR." && picker.Locked && picker.Goal == "Beat BIG RUSTY 3 times (2/3)",
+        Check(picker.LookName == "RUSTY JR." && picker.Locked && picker.Goal == "Beat 3 bosses (2/3)",
               $"the picker shows {picker.LookName}: '{picker.Goal}'");
 
         // The third Big Rusty win, in a real game
@@ -3170,7 +3199,7 @@ public partial class Main
     // ---------- Dad drives Big Rusty ----------
 
     /// <summary>
-    /// Nobody touches Dad's keys: Big Rusty fights exactly like before. He flies in, laughs and starts shooting by himself
+    /// Nobody touches the second controller: Big Rusty fights exactly like before. He flies in, laughs and starts shooting by himself
     /// (he never stops to wait for orders), with no blue cap and no thinking dots, and his bar just says "BIG RUSTY".
     /// </summary>
     async Task NobodyDrivingIsUnchanged()
@@ -3189,13 +3218,13 @@ public partial class Main
         Check(!rusty.DriverControlled, "nobody is driving Big Rusty");
         Check(went == "Entering -> Laughing -> Shooting", $"he went {went}");
         Check(!capSeen && !dotsSeen, "no blue cap and no thinking dots");
-        Check(hud.BossBarShowing && hud.BossBarName == Boss.DisplayName, $"his bar says '{hud.BossBarName}'");
+        Check(hud.BossBarShowing && hud.BossBarName == Boss.RustyName, $"his bar says '{hud.BossBarName}'");
     }
 
     /// <summary>
-    /// In Candy Land Dad presses 3 in the middle of the fight: "DAD IS DRIVING BIG RUSTY!", a laugh, Dad's blue cap
-    /// instead of the party hat, "BIG RUSTY (DAD)" on his bar, and Dad's keys as a tip. Rusty is busy shooting, so it
-    /// says "Wait...". When the thinking dots show, 3 makes him GROUND POUND right away, with a little tick.
+    /// In Candy Land Dad presses A on the second controller in the middle of the fight: "DAD IS DRIVING BIG RUSTY!", a
+    /// laugh, Dad's blue cap instead of the party hat, "BIG RUSTY (DAD)" on his bar, and Dad's buttons as a tip. Rusty is
+    /// busy shooting, so it says "Wait...". When the thinking dots show, A makes him GROUND POUND right away, with a tick.
     /// </summary>
     async Task DadTakesOver()
     {
@@ -3205,13 +3234,12 @@ public partial class Main
         Check(rusty.OutfitDrawn && !rusty.CapDrawn, "he wears his party hat");
         int laughs = sounds.TimesPlayed(Sfx.Laugh), ticks = sounds.TimesPlayed(Sfx.Tick);
 
-        await Press("drive_pound");
-        await Release("drive_pound");
-        Check(rusty.DriverControlled, "pressing 3 takes over");
-        Check(hud.BannerShowing && hud.BannerText == $"{DriverShortName} IS DRIVING {Boss.DisplayName}!" && hud.BannerColor == new Color(1f, 0.6f, 0.15f),
+        await SecondPadButton(JoyButton.A);
+        Check(rusty.DriverControlled, "pressing A on the second controller takes over");
+        Check(hud.BannerShowing && hud.BannerText == $"{DriverShortName} IS DRIVING {Boss.RustyName}!" && hud.BannerColor == new Color(1f, 0.6f, 0.15f),
               $"orange words: '{hud.BannerText}'");
-        Check(hud.BossBarName == $"{Boss.DisplayName} ({DriverShortName})", $"his bar says '{hud.BossBarName}'");
-        Check(hud.HintShowing && hud.HintText == "1 fireballs  2 helpers  3 POUND  4 laser  H laugh", $"Dad's keys as a tip: '{hud.HintText}'");
+        Check(hud.BossBarName == $"{Boss.RustyName} ({DriverShortName})", $"his bar says '{hud.BossBarName}'");
+        Check(hud.HintShowing && hud.HintText == "X fireballs  Y helpers  A POUND  B laser  LB laugh", $"Dad's buttons as a tip: '{hud.HintText}'");
         Check(sounds.TimesPlayed(Sfx.Laugh) == laughs + 1, "Big Rusty laughs");
         Check(rusty.CurrentMove == "Shooting" && popups.Texts.Contains("Wait...") && sounds.TimesPlayed(Sfx.Tick) == ticks,
               "he's still busy shooting, so it says 'Wait...' (and no tick)");
@@ -3229,11 +3257,9 @@ public partial class Main
         await NextFrame();
         await NextFrame();
         Check(facedLeft && rusty.Scale.X < 0 && rusty.CurrentMove == "WaitingForDriver", "while he waits, he turns around to face Bolt-E");
-        await Press("drive_pound");
-        await Wait(0.1);
-        Check(rusty.CurrentMove == "PoundRise", $"3: GROUND POUND, right away ({rusty.CurrentMove})");
+        await SecondPadButton(JoyButton.A);
+        Check(rusty.CurrentMove == "PoundRise", $"A: GROUND POUND, right away ({rusty.CurrentMove})");
         Check(sounds.TimesPlayed(Sfx.Tick) == ticks + 1 && Mathf.IsEqualApprox(sounds.PitchOf(Sfx.Tick), 0.8f), "a little low tick says OK");
-        await Release("drive_pound");
     }
 
     /// <summary>
@@ -3244,12 +3270,12 @@ public partial class Main
     {
         var rusty = StartBossFight("TDriveBusy");
         Check(await WaitUntil(() => rusty.CurrentMove == "Shooting", 5), "he starts shooting by himself");
-        await TapKey(Key.Key1); // (the 1 on top of the keyboard)
-        Check(rusty.DriverControlled && popups.Texts.Contains("Wait..."), "1 takes over, and he's busy: 'Wait...'");
+        await SecondPadButton(JoyButton.X); // (fireballs, on the second controller)
+        Check(rusty.DriverControlled && popups.Texts.Contains("Wait..."), "X takes over, and he's busy: 'Wait...'");
         var answers = new[] { BossMove.Fireballs, BossMove.Helpers, BossMove.Pound, BossMove.Laser, BossMove.Laugh }
             .Select(move => rusty.Request(move)).ToList();
         Check(answers.All(answer => answer == DriveAnswer.Busy), $"every order while he's shooting is Busy: {string.Join(", ", answers)}");
-        await TapKey(Key.Kp3); // (the number pad's 3)
+        await SecondPadButton(JoyButton.A); // (a ground pound)
         Check(rusty.CurrentMove == "Shooting", "he keeps on shooting");
         Check(await WaitUntil(() => rusty.CurrentMove == "WaitingForDriver", 6), "when he's done, he waits for Dad's order");
         await Wait(0.2);
@@ -3284,7 +3310,7 @@ public partial class Main
     }
 
     /// <summary>
-    /// The fair-play rule: after 2 attacks Big Rusty is TIRED. Then fireballs get "TIRED! Press 3!", but he can still
+    /// The fair-play rule: after 2 attacks Big Rusty is TIRED. Then fireballs get "TIRED! Press A!", but he can still
     /// laugh, and the GROUND POUND works. After the pound he's dizzy (stomp him!) and not tired any more.
     /// </summary>
     async Task TiredRule()
@@ -3297,15 +3323,15 @@ public partial class Main
               "he shoots, then waits again");
         Check(!rusty.IsTired, "after 1 attack he's not tired yet");
         int ticks = sounds.TimesPlayed(Sfx.Tick);
-        await TapKey(Key.Key1);
-        Check(sounds.TimesPlayed(Sfx.Tick) == ticks + 1 && rusty.CurrentMove == "Shooting", "2nd order (the key 1): fireballs, OK (tick!)");
+        await SecondPadButton(JoyButton.X);
+        Check(sounds.TimesPlayed(Sfx.Tick) == ticks + 1 && rusty.CurrentMove == "Shooting", "2nd order (the second controller's X): fireballs, OK (tick!)");
         Check(await WaitUntil(() => rusty.CurrentMove == "WaitingForDriver", 6), "he shoots, then waits again");
 
         Check(rusty.IsTired && rusty.AttacksSincePound == 2, $"2 attacks in a row: he's TIRED ({rusty.AttacksSincePound} attacks)");
         Check(rusty.Request(BossMove.Fireballs) == DriveAnswer.Tired, "more fireballs: TIRED!");
-        await TapKey(Key.Key1);
-        Check(popups.Texts.Contains("TIRED! Press 3!") && sounds.TimesPlayed(Sfx.Tick) == ticks + 1 && rusty.CurrentMove == "WaitingForDriver",
-              "the key 1: 'TIRED! Press 3!' over his head, and nothing happens");
+        await SecondPadButton(JoyButton.X);
+        Check(popups.Texts.Contains("TIRED! Press A!") && sounds.TimesPlayed(Sfx.Tick) == ticks + 1 && rusty.CurrentMove == "WaitingForDriver",
+              "X: 'TIRED! Press A!' over his head, and nothing happens");
         var laugh = rusty.Request(BossMove.Laugh);
         var pound = rusty.Request(BossMove.Pound); // (asked right after the laugh, so the pound is the order that happens)
         Check(laugh != DriveAnswer.Tired, $"a laugh is never too tiring ({laugh})");
@@ -3325,14 +3351,14 @@ public partial class Main
         rusty.LoseHealth(2); // ANGRY (as if he was stomped twice): fireballs, helpers, then a ground pound
         Check(await WaitUntil(() => rusty.CurrentMove == "DroppingHelpers", 12) && rusty.AttacksSincePound == 2,
               $"by himself he shoots, then drops helpers: 2 attacks in a row ({rusty.AttacksSincePound})");
-        await TapKey(Key.Key2); // (Dad takes over: he's busy, so "Wait...")
+        await SecondPadButton(JoyButton.Y); // (Dad takes over: he's busy, so "Wait...")
         Check(rusty.DriverControlled && !rusty.IsTired && rusty.AttacksSincePound == 0,
               $"Dad takes over: Rusty's own attacks don't count, so he isn't TIRED ({rusty.AttacksSincePound} attacks)");
     }
 
     /// <summary>
     /// Big Rusty's moves come with his moods. Phase 1: the helpers and the laser say "Not yet!". ANGRY: the helpers
-    /// work (the number pad's 2), the laser still doesn't. FURIOUS: 4 fires the giant laser.
+    /// work (Y), the laser still doesn't. FURIOUS: B fires the giant laser.
     /// </summary>
     async Task LaserNeedsFurious()
     {
@@ -3341,44 +3367,44 @@ public partial class Main
         Check(await WaitUntil(() => rusty.CurrentMove == "WaitingForDriver", 5), "he waits for Dad's order");
         Check(rusty.Request(BossMove.Laser) == DriveAnswer.NotYet, "phase 1: the laser says 'Not yet!'");
         Check(rusty.Request(BossMove.Helpers) == DriveAnswer.NotYet, "phase 1: the helpers say 'Not yet!' too");
-        await TapKey(Key.Key4);
-        Check(popups.Texts.Contains("Not yet!") && rusty.CurrentMove == "WaitingForDriver", "the key 4: 'Not yet!' over his head, and he keeps waiting");
+        await SecondPadButton(JoyButton.B);
+        Check(popups.Texts.Contains("Not yet!") && rusty.CurrentMove == "WaitingForDriver", "B: 'Not yet!' over his head, and he keeps waiting");
 
         rusty.LoseHealth(2); // ANGRY (as if he was stomped twice)
         Check(await WaitUntil(() => rusty.CurrentMove == "WaitingForDriver", 4) && rusty.Phase == 2, "ANGRY, and waiting for Dad's order");
         Check(rusty.Request(BossMove.Laser) == DriveAnswer.NotYet, "ANGRY: still no laser");
         int enemiesBefore = enemies.Count;
-        await TapKey(Key.Kp2);
+        await SecondPadButton(JoyButton.Y);
         Check(rusty.CurrentMove == "DroppingHelpers" && await WaitUntil(() => enemies.Count > enemiesBefore, 1),
-              "ANGRY: the number pad's 2 drops a Pup-Bot helper");
+              "ANGRY: Y drops a Pup-Bot helper");
 
         rusty.LoseHealth(2); // FURIOUS
         Check(await WaitUntil(() => rusty.CurrentMove == "WaitingForDriver", 4) && rusty.Phase == 3, "FURIOUS, and waiting for Dad's order");
-        await TapKey(Key.Key4);
-        Check(rusty.CurrentMove == "Laser" && await WaitUntil(() => lasers.Count > 0, 1.5), "FURIOUS: 4 fires the giant laser");
+        await SecondPadButton(JoyButton.B);
+        Check(rusty.CurrentMove == "Laser" && await WaitUntil(() => lasers.Count > 0, 1.5), "FURIOUS: B fires the giant laser");
     }
 
-    /// <summary>H makes Big Rusty laugh "HA HA HA!". For 2 seconds he can't laugh again ("Wait..."), then he can.</summary>
+    /// <summary>LB makes Big Rusty laugh "HA HA HA!". For 2 seconds he can't laugh again (RB says "Wait..."), then he can.</summary>
     async Task LaughCooldown()
     {
         var rusty = StartBossFight("TDriveLaugh");
         rusty.TakeControl();
         Check(await WaitUntil(() => rusty.CurrentMove == "WaitingForDriver", 5), "he waits for Dad's order");
         int laughs = sounds.TimesPlayed(Sfx.Laugh);
-        await TapKey(Key.H);
-        Check(rusty.CurrentMove == "Laughing" && popups.Texts.Contains("HA HA HA!") && sounds.TimesPlayed(Sfx.Laugh) == laughs + 1, "H: HA HA HA!");
+        await SecondPadButton(JoyButton.LeftShoulder);
+        Check(rusty.CurrentMove == "Laughing" && popups.Texts.Contains("HA HA HA!") && sounds.TimesPlayed(Sfx.Laugh) == laughs + 1, "LB: HA HA HA!");
         Check(await WaitUntil(() => rusty.CurrentMove == "WaitingForDriver", 2.5), "then he waits for Dad again");
         Check(rusty.Request(BossMove.Laugh) == DriveAnswer.Busy, "laughing again right away: Busy");
-        await TapKey(Key.H);
+        await SecondPadButton(JoyButton.RightShoulder);
         Check(popups.Texts.Contains("Wait...") && rusty.CurrentMove == "WaitingForDriver" && sounds.TimesPlayed(Sfx.Laugh) == laughs + 1,
-              "the key H: 'Wait...', and no laugh");
+              "RB: 'Wait...', and no laugh");
         await Wait(0.5);
         Check(rusty.Request(BossMove.Laugh) == DriveAnswer.Ok, "2 seconds after the last laugh he can laugh again");
     }
 
     /// <summary>
     /// Dad's ground pound works just like Big Rusty's own: his shadow follows Bolt-E, he slams down, and then he's DIZZY,
-    /// so Bolt-E can stomp him. When he's FURIOUS, Dad's 3 makes him pound twice, and he's dizzy after the second one.
+    /// so Bolt-E can stomp him. When he's FURIOUS, Dad's A makes him pound twice, and he's dizzy after the second one.
     /// </summary>
     async Task DriverStillDizzy()
     {
@@ -3388,8 +3414,8 @@ public partial class Main
         Check(await WaitUntil(() => rusty.CurrentMove == "WaitingForDriver", 5) && rusty.Phase == 3, "FURIOUS, and waiting for Dad's order");
         var slams = new List<float>();
         rusty.Slammed += x => slams.Add(x);
-        await TapKey(Key.Key3);
-        Check(rusty.CurrentMove == "PoundRise", $"3: GROUND POUND! ({rusty.CurrentMove})");
+        await SecondPadButton(JoyButton.A);
+        Check(rusty.CurrentMove == "PoundRise", $"A: GROUND POUND! ({rusty.CurrentMove})");
         Check(await WaitUntil(() => slams.Count == 1, 4), "he slams down");
         float boltE = robot.Position.X, aim = Mathf.Clamp(boltE, 270, 1030);
         Check(Mathf.Abs(slams[0] - aim) < 40, $"right where Bolt-E is: his shadow followed him (he landed at x {slams[0]:0}, Bolt-E is at x {boltE:0})");
@@ -3399,7 +3425,7 @@ public partial class Main
 
     /// <summary>
     /// Bolt-E crashes while Dad drives Big Rusty: Rusty laughs and waits until Bolt-E is back together (fair play, like
-    /// always). Dad's keys do nothing while Bolt-E is in pieces, and afterwards the thinking dots come back.
+    /// always). Dad's buttons do nothing while Bolt-E is in pieces, and afterwards the thinking dots come back.
     /// </summary>
     async Task DrivenCrashWaits()
     {
@@ -3410,10 +3436,10 @@ public partial class Main
         Check(Bonk(null) && state == GameState.Rebuilding, "Bolt-E crashes (with a spare battery)");
         Check(rusty.CurrentMove == "Recovering", $"HA HA HA! Big Rusty floats back to his spot and waits ({rusty.CurrentMove})");
         int ticks = sounds.TimesPlayed(Sfx.Tick);
-        await TapKey(Key.Key1);
-        await TapKey(Key.Key3);
+        await SecondPadButton(JoyButton.X);
+        await SecondPadButton(JoyButton.A);
         Check(sounds.TimesPlayed(Sfx.Tick) == ticks && !popups.Texts.Contains("Wait...") && rusty.CurrentMove == "Recovering",
-              "Dad's keys do nothing while Bolt-E is in pieces");
+              "Dad's buttons do nothing while Bolt-E is in pieces");
         Check(await WaitUntil(() => state == GameState.Playing, 4), "Bolt-E is back");
         robot.BlinkTime = 1e9f;
         await Wait(0.3);
@@ -3431,12 +3457,12 @@ public partial class Main
     {
         var rusty = StartBossFight("TDriveBeaten", world: 1); // (in Candy Land he wears a party hat)
         Check(await WaitUntil(() => rusty.CanBeDriven, 3), "Big Rusty flew in");
-        await TapKey(Key.Key3);
-        Check(rusty.DriverControlled && hud.BossBarName == $"{Boss.DisplayName} ({DriverShortName})", $"Dad drives him ('{hud.BossBarName}')");
+        await SecondPadButton(JoyButton.A);
+        Check(rusty.DriverControlled && hud.BossBarName == $"{Boss.RustyName} ({DriverShortName})", $"Dad drives him ('{hud.BossBarName}')");
         int bonus = bonusPoints, beaten = bossesBeaten, boltsBefore = bolts.Count;
         rusty.LoseHealth(Boss.MaxHealth); // (as if Bolt-E stomped him 6 times)
         Check(await WaitUntil(() => rusty.HasBlownUp, 3), "he breaks down and blows up");
-        Check(hud.BannerShowing && hud.BannerText == $"YOU BEAT {DriverShortName}'S {Boss.DisplayName}!", $"'{hud.BannerText}'");
+        Check(hud.BannerShowing && hud.BannerText == $"YOU BEAT {DriverShortName}'S {Boss.RustyName}!", $"'{hud.BannerText}'");
         Check(bossesBeaten == beaten + 1 && bonusPoints == bonus + PointsForBeatingBoss && bolts.Count >= boltsBefore + 12,
               $"+{bonusPoints - bonus} and a rainbow of {bolts.Count - boltsBefore} bolts, like always");
         Check(rusty.CapFlewOff && !rusty.HatFlewOff, "Dad's cap flies off as its own piece (no party hat)");
@@ -3445,7 +3471,7 @@ public partial class Main
         Check(rusty.CapDrawn && !rusty.OutfitDrawn, "the cap flies around, and the party hat never shows");
         Check(await WaitUntil(() => boss is null, 5), "his pieces are cleared away");
         SpawnBoss();
-        Check(boss is { DriverControlled: false } && hud.BossBarName == Boss.DisplayName, $"the next Big Rusty is nobody's: his bar says '{hud.BossBarName}'");
+        Check(boss is { DriverControlled: false } && hud.BossBarName == Boss.RustyName, $"the next Big Rusty is nobody's: his bar says '{hud.BossBarName}'");
     }
 
     /// <summary>
@@ -3473,7 +3499,7 @@ public partial class Main
         if (drive)
         {
             await WaitUntil(() => rusty.CanBeDriven, 3);
-            await TapKey(Key.Key3);
+            await SecondPadButton(JoyButton.A);
         }
         if (beatHimFirst) rusty.LoseHealth(Boss.MaxHealth);
         spareBatteries = 0;
@@ -3485,57 +3511,50 @@ public partial class Main
     }
 
     /// <summary>
-    /// Dad's keys are 1 to 4 (on top of the keyboard and on the number pad) and H: nothing else, and no other action
-    /// uses them. They do nothing on the title screen, on the road, or while Big Rusty flies in, and a controller can
-    /// never drive him. The kid's controller works just like before, even while Dad drives.
+    /// Only the second controller's X, Y, A, B, LB and RB drive Big Rusty: its other buttons (START, BACK, the D-pad...)
+    /// and its stick never do, and no key on the keyboard and no button of Bolt-E's own controller ever does. Dad's
+    /// buttons do nothing on the title screen, on the road, or while Big Rusty flies in. The kid's controller works just
+    /// like before, even while Dad drives.
     /// </summary>
-    async Task DriveKeysOnly()
+    async Task DriveButtonsOnly()
     {
-        var dadKeys = new Dictionary<string, Key[]>
-        {
-            ["drive_fireballs"] = new[] { Key.Key1, Key.Kp1 },
-            ["drive_helpers"] = new[] { Key.Key2, Key.Kp2 },
-            ["drive_pound"] = new[] { Key.Key3, Key.Kp3 },
-            ["drive_laser"] = new[] { Key.Key4, Key.Kp4 },
-            ["drive_laugh"] = new[] { Key.H },
-        };
-        foreach (var (action, keys) in dadKeys)
-        {
-            var events = InputMap.ActionGetEvents(action);
-            var bound = events.OfType<InputEventKey>().Select(key => key.PhysicalKeycode).OrderBy(key => key).ToList();
-            Check(events.Count == keys.Length && events.All(input => input is InputEventKey) && bound.SequenceEqual(keys.OrderBy(key => key)),
-                  $"{action} is only the keys {string.Join(" and ", bound)}");
-        }
-        var allDadKeys = dadKeys.Values.SelectMany(keys => keys).ToHashSet();
-        string[] otherActions = { "jump", "start", "music", "left", "right", "menu_left", "menu_right", "player_next", "player_prev" };
-        var clashes = otherActions.Where(action => InputMap.ActionGetEvents(action).OfType<InputEventKey>()
-                                            .Any(key => allDadKeys.Contains(key.PhysicalKeycode) || allDadKeys.Contains(key.Keycode))).ToList();
-        Check(clashes.Count == 0, $"no other action uses Dad's keys {string.Join(", ", clashes)}");
+        var dadsButtons = new[] { JoyButton.X, JoyButton.Y, JoyButton.A, JoyButton.B, JoyButton.LeftShoulder, JoyButton.RightShoulder };
+        var mapped = DriveButtons.Select(pair => pair.Button).OrderBy(button => button).ToList();
+        Check(mapped.SequenceEqual(dadsButtons.OrderBy(button => button)), $"Dad's buttons are X, Y, A, B, LB and RB ({string.Join(", ", mapped)})");
+        Check(!InputMap.GetActions().Any(action => ((string)action).StartsWith("drive_")), "there are no keyboard driving actions any more");
 
-        await TapKey(Key.Key1);
-        await TapKey(Key.H);
-        Check(state == GameState.Title, "on the title screen Dad's keys do nothing (no game starts)");
+        await SecondPadButton(JoyButton.X);
+        await SecondPadButton(JoyButton.LeftShoulder);
+        Check(state == GameState.Title, "on the title screen Dad's buttons do nothing (no game starts)");
 
         PlayAs("TDriveKeys");
         StartGame();
         QuietRoad();
         robot.BlinkTime = 1e9f;
         int ticks = sounds.TimesPlayed(Sfx.Tick);
-        await TapKey(Key.Key3);
-        Check(sounds.TimesPlayed(Sfx.Tick) == ticks && !popups.Texts.Any(), "on the road (no Big Rusty) Dad's keys do nothing");
+        await SecondPadButton(JoyButton.A);
+        Check(sounds.TimesPlayed(Sfx.Tick) == ticks && !popups.Texts.Any(), "on the road (no Big Rusty) Dad's buttons do nothing");
 
         SpawnBoss();
-        var rusty = boss!;
-        await TapKey(Key.Key3);
+        var rusty = (Boss)boss!;
+        await SecondPadButton(JoyButton.A);
         Check(rusty.CurrentMove == "Entering" && !rusty.DriverControlled, "while Big Rusty flies in, Dad can't take over yet");
         Check(await WaitUntil(() => rusty.CanBeDriven, 2), "he flew in");
         for (int button = 0; button <= (int)JoyButton.Touchpad; button++)
             if ((JoyButton)button != JoyButton.Back) await PressButton((JoyButton)button); // (BACK switches the music)
         await StickX(1);
         await StickX(0);
-        Check(!rusty.DriverControlled && hud.BossBarName == Boss.DisplayName, "no controller button can drive him");
-        await TapKey(Key.Kp1);
-        Check(rusty.DriverControlled, "the number pad's 1 takes over");
+        Check(!rusty.DriverControlled && hud.BossBarName == Boss.RustyName, "no button of Bolt-E's own controller can drive him");
+        for (int button = 0; button <= (int)JoyButton.Touchpad; button++)
+            if (!dadsButtons.Contains((JoyButton)button)) await SecondPadButton((JoyButton)button);
+        await SecondPadStick(1);
+        await SecondPadStick(0);
+        foreach (var key in new[] { Key.Key1, Key.Key2, Key.Key3, Key.Key4, Key.Kp1, Key.Kp3, Key.H })
+            await TapKey(key);
+        Check(!rusty.DriverControlled && hud.BossBarName == Boss.RustyName,
+              "the second controller's other buttons and stick can't drive him, and neither can the old keys 1-4 and H");
+        await SecondPadButton(JoyButton.X);
+        Check(rusty.DriverControlled, "the second controller's X takes over");
         Check(await WaitUntil(() => robot.OnGround, 3), "Bolt-E is on the ground");
         int jumps = sounds.TimesPlayed(Sfx.Jump);
         await PressButton(JoyButton.A);
@@ -3544,20 +3563,20 @@ public partial class Main
 
     /// <summary>
     /// Dad's words fit: the big words across the screen (the label is 1280 px wide), the tip, the name on Big Rusty's bar
-    /// (400 px wide) and "DAD GOT YOU!" on the results card (at least 800 px wide). They follow DriverName, so a family
-    /// that changes it to GRANDMA finds out here if it still fits.
+    /// (400 px wide) and "DAD GOT YOU!" on the results card (at least 800 px wide). They follow DriverName (and the tip
+    /// follows DriveButtons), so a family that changes it to GRANDMA finds out here if it still fits.
     /// </summary>
     async Task DriverWordsFit()
     {
         await NextFrame();
         float Wide(string text, int size) => ThemeDB.FallbackFont.GetStringSize(text, HorizontalAlignment.Left, -1, size).X;
-        float driving = Wide($"{DriverShortName} IS DRIVING {Boss.DisplayName}!", 60);
-        float beaten = Wide($"YOU BEAT {DriverShortName}'S {Boss.DisplayName}!", 60);
-        float tip = Wide("1 fireballs  2 helpers  3 POUND  4 laser  H laugh", 28);
-        float bar = Wide($"{Boss.DisplayName} ({DriverShortName})", 26);
+        float driving = Wide($"{DriverShortName} IS DRIVING {Boss.RustyName}!", 60);
+        float beaten = Wide($"YOU BEAT {DriverShortName}'S {Boss.RustyName}!", 60);
+        float tip = Wide(DriveTip(), 28); // (made from DriveButtons: "X fireballs  Y helpers  A POUND  B laser  LB laugh")
+        float bar = Wide($"{Boss.RustyName} ({DriverShortName})", 26);
         float gotYou = Wide($"{DriverShortName} GOT YOU!", 64);
         Check(driving < 1240 && beaten < 1240, $"the big words fit across the screen ({driving:0} and {beaten:0} px of 1280)");
-        Check(tip < 1240, $"the tip with Dad's keys fits ({tip:0} px of 1280)");
+        Check(tip < 1240, $"the tip with Dad's buttons fits ({tip:0} px of 1280)");
         Check(bar < 390, $"the name on his bar fits ({bar:0} px of 400)");
         Check(gotYou < 780, $"'{DriverShortName} GOT YOU!' fits on the results card ({gotYou:0} px of 800)");
     }
@@ -3565,9 +3584,9 @@ public partial class Main
     // ---------- The final fixes (after the whole update was reviewed) ----------
 
     /// <summary>
-    /// Dad can't stop the fight by pressing H over and over. Two laughs in a row, then a 3rd H says "Wait..." until Big
-    /// Rusty has done a real move: Dad's pick (like fireballs), or his own brain's after 3 seconds. Then H works again.
-    /// And however long Dad keeps pressing H, Rusty still attacks, gets TIRED, does his ground pound and gets dizzy:
+    /// Dad can't stop the fight by pressing LB over and over. Two laughs in a row, then a 3rd LB says "Wait..." until Big
+    /// Rusty has done a real move: Dad's pick (like fireballs), or his own brain's after 3 seconds. Then LB works again.
+    /// And however long Dad keeps pressing LB, Rusty still attacks, gets TIRED, does his ground pound and gets dizzy:
     /// the kid always gets his chance to stomp him.
     /// </summary>
     async Task LaughsCantStallTheFight()
@@ -3576,43 +3595,43 @@ public partial class Main
         rusty.TakeControl();
         Check(await WaitUntil(() => rusty.CurrentMove == "WaitingForDriver", 5), "he waits for Dad's order");
 
-        // Dad presses H again and again (10 times a second) for at most this many seconds, or until "stop".
+        // Dad presses LB (laugh) again and again (10 times a second) for at most this many seconds, or until "stop".
         // Returns how many times Big Rusty laughed.
-        async Task<int> PressHAgainAndAgain(double seconds, Func<bool>? stop = null)
+        async Task<int> PressLaughAgainAndAgain(double seconds, Func<bool>? stop = null)
         {
             int laughsBefore = sounds.TimesPlayed(Sfx.Laugh);
             var timeUp = GetTree().CreateTimer(seconds, true, false, true);
-            while (timeUp.TimeLeft > 0 && stop?.Invoke() != true) await TapKey(Key.H);
+            while (timeUp.TimeLeft > 0 && stop?.Invoke() != true) await SecondPadButton(JoyButton.LeftShoulder);
             return sounds.TimesPlayed(Sfx.Laugh) - laughsBefore;
         }
 
         // 1. Two laughs in a row, then "Wait..." (without the rule, a 3rd laugh would come after about 4 seconds)
-        int laughed = await PressHAgainAndAgain(5.5);
-        Check(laughed == Boss.LaughsInARow, $"H, H, H...: he laughs {laughed} times in a row ({Boss.LaughsInARow} is the most)");
+        int laughed = await PressLaughAgainAndAgain(5.5);
+        Check(laughed == Boss.LaughsInARow, $"LB, LB, LB...: he laughs {laughed} times in a row ({Boss.LaughsInARow} is the most)");
         Check(rusty.CurrentMove == "WaitingForDriver" && rusty.Request(BossMove.Laugh) == DriveAnswer.Busy && popups.Texts.Contains("Wait..."),
-              "then H says 'Wait...': first a real move has to come");
-        await TapKey(Key.Key1);
-        Check(rusty.CurrentMove == "Shooting", $"Dad presses 1: fireballs, a real move ({rusty.CurrentMove})");
+              "then LB says 'Wait...': first a real move has to come");
+        await SecondPadButton(JoyButton.X);
+        Check(rusty.CurrentMove == "Shooting", $"Dad presses X: fireballs, a real move ({rusty.CurrentMove})");
         Check(await WaitUntil(() => rusty.CurrentMove == "WaitingForDriver", 6), "he shoots, then waits for Dad again");
-        Check(rusty.Request(BossMove.Laugh) == DriveAnswer.Ok, "after Dad's real move, H works again");
+        Check(rusty.Request(BossMove.Laugh) == DriveAnswer.Ok, "after Dad's real move, LB works again");
 
-        // 2. Now Dad only presses H: after the 2nd laugh in a row, Rusty's own brain picks a real move after 3 seconds
+        // 2. Now Dad only presses LB: after the 2nd laugh in a row, Rusty's own brain picks a real move after 3 seconds
         Check(await WaitUntil(() => rusty.CurrentMove == "Laughing", 0.5), "HA HA HA! (1 in a row)");
-        laughed = await PressHAgainAndAgain(10, () => rusty.CurrentMove == "Shooting");
+        laughed = await PressLaughAgainAndAgain(10, () => rusty.CurrentMove == "Shooting");
         Check(rusty.CurrentMove == "Shooting" && laughed == 1,
               $"one more laugh, then his own brain picks fireballs ({rusty.CurrentMove}, after {laughed} more laugh)");
         Check(await WaitUntil(() => rusty.CurrentMove == "WaitingForDriver", 6), "he shoots, then waits for Dad again");
         Check(rusty.IsTired && rusty.Request(BossMove.Laugh) == DriveAnswer.Ok,
-              "after his own brain's real move, H works again (and he's TIRED now: 2 attacks)");
+              "after his own brain's real move, LB works again (and he's TIRED now: 2 attacks)");
 
-        // 3. Dad keeps on pressing H: Rusty still has to do his ground pound, and then he's dizzy
+        // 3. Dad keeps on pressing LB: Rusty still has to do his ground pound, and then he's dizzy
         Check(await WaitUntil(() => rusty.CurrentMove == "Laughing", 0.5), "HA HA HA!");
-        await PressHAgainAndAgain(15, () => rusty.CanBeStomped);
-        Check(rusty.CanBeStomped, $"however long Dad presses H, the ground pound comes and he's dizzy: stomp him! ({rusty.CurrentMove})");
+        await PressLaughAgainAndAgain(15, () => rusty.CanBeStomped);
+        Check(rusty.CanBeStomped, $"however long Dad presses LB, the ground pound comes and he's dizzy: stomp him! ({rusty.CurrentMove})");
     }
 
     /// <summary>
-    /// Dad's little words ("Wait...", "TIRED! Press 3!", "Not yet!") never float up into Big Rusty's health bar at the top
+    /// Dad's little words ("Wait...", "TIRED! Press A!", "Not yet!") never float up into Big Rusty's health bar at the top
     /// of the screen: not while he's way up high for a ground pound over the middle of the road, and not while he flies
     /// back to his spot. At his spot, they pop up right over his head. Pressing again and again doesn't stack them up.
     /// </summary>
@@ -3623,7 +3642,7 @@ public partial class Main
         Check(await WaitUntil(() => rusty.CurrentMove == "WaitingForDriver", 5), "he waits for Dad's order");
         var bar = hud.BossBarRect;
         var font = ThemeDB.FallbackFont;
-        string[] dadsWords = { "Wait...", "TIRED! Press 3!", "Not yet!" };
+        string[] dadsWords = { "Wait...", "TIRED! Press A!", "Not yet!" };
         int looks = 0;
         var tooHigh = new List<string>();
 
@@ -3641,19 +3660,19 @@ public partial class Main
         }
 
         // 1. At his spot: right over his head
-        await TapKey(Key.Key2); // (helpers, but he isn't ANGRY yet: "Not yet!")
+        await SecondPadButton(JoyButton.Y); // (helpers, but he isn't ANGRY yet: "Not yet!")
         var notYet = popups.Spots.FirstOrDefault(spot => spot.Text == "Not yet!");
         Check(notYet.Text is not null && Mathf.Abs(notYet.At.X - rusty.Position.X) < 1 && Mathf.Abs(notYet.At.Y - (rusty.Position.Y - 260)) < 15,
               $"at his spot, 'Not yet!' pops up right over his head (at {notYet.At.X:0}, {notYet.At.Y:0})");
 
-        // 2. A ground pound over the middle of the road (under the bar), and Dad presses 1 again and again while he's busy
+        // 2. A ground pound over the middle of the road (under the bar), and Dad presses X again and again while he's busy
         robot.Position = new Vector2(640, GroundY); // (Bolt-E is in the middle, so Rusty's shadow follows him there)
-        await TapKey(Key.Key3);
-        Check(rusty.CurrentMove == "PoundRise", $"3: up he goes for a ground pound ({rusty.CurrentMove})");
+        await SecondPadButton(JoyButton.A);
+        Check(rusty.CurrentMove == "PoundRise", $"A: up he goes for a ground pound ({rusty.CurrentMove})");
         GiveOrder(BossMove.Fireballs);
         GiveOrder(BossMove.Fireballs);
         GiveOrder(BossMove.Fireballs);
-        Check(popups.Texts.Count(text => text == "Wait...") == 1, "pressing 1 three times quickly: just one 'Wait...', not a stack of them");
+        Check(popups.Texts.Count(text => text == "Wait...") == 1, "pressing X three times quickly: just one 'Wait...', not a stack of them");
         var highUp = new List<(float FromRusty, float Y)>(); // (words that popped up while he was way up high)
         for (int frame = 0; frame < 4 * 60; frame++)
         {
@@ -3685,7 +3704,7 @@ public partial class Main
 
     /// <summary>
     /// After the giant laser Big Rusty is down low. While he waits for Dad's order he floats back up to his spot smoothly,
-    /// and if Dad quickly picks something (here H), he still floats up smoothly: never a big jump in one go. Lasers count
+    /// and if Dad quickly picks something (here a laugh), he still floats up smoothly: never a big jump in one go. Lasers count
     /// as attacks for the TIRED rule too: after 2 lasers, a 3rd one gets "TIRED!".
     /// </summary>
     async Task SmoothRiseAfterLaser()
@@ -3710,7 +3729,7 @@ public partial class Main
         }
 
         // 1. A laser, and then Dad picks nothing
-        Check(rusty.Request(BossMove.Laser) == DriveAnswer.Ok, "4: the giant laser");
+        Check(rusty.Request(BossMove.Laser) == DriveAnswer.Ok, "B: the giant laser");
         Check(await WaitUntil(() => rusty.CurrentMove == "Laser", 0.5) && await WaitUntil(() => rusty.CurrentMove == "WaitingForDriver", 4),
               "he fires it, then waits for Dad's order");
         Check(rusty.Position.Y > GroundY - 80, $"(right after the laser he's still down low: y {rusty.Position.Y:0})");
@@ -3719,13 +3738,13 @@ public partial class Main
         Check(step < 15, $"while he waits, he floats back up smoothly (the biggest step in one frame: {step:0} px)");
         Check(Mathf.Abs(endY - hoverY) <= 13 && rusty.CurrentMove == "WaitingForDriver", $"...all the way up to his spot (y {endY:0}, his spot is {hoverY:0})");
 
-        // 2. Another laser, and this time Dad picks H right away, while he's still down low
-        Check(rusty.Request(BossMove.Laser) == DriveAnswer.Ok, "4 again: another giant laser");
+        // 2. Another laser, and this time Dad picks a laugh right away, while he's still down low
+        Check(rusty.Request(BossMove.Laser) == DriveAnswer.Ok, "B again: another giant laser");
         Check(await WaitUntil(() => rusty.CurrentMove == "Laser", 0.5) && await WaitUntil(() => rusty.CurrentMove == "WaitingForDriver", 4),
               "he fires it, then waits for Dad's order");
         Check(rusty.IsTired && rusty.Request(BossMove.Laser) == DriveAnswer.Tired,
-              $"2 lasers in a row: he's TIRED, so a 3rd laser gets 'TIRED! Press 3!' ({rusty.AttacksSincePound} attacks)");
-        Check(rusty.Request(BossMove.Laugh) == DriveAnswer.Ok, "H, right away (he's still down low)");
+              $"2 lasers in a row: he's TIRED, so a 3rd laser gets 'TIRED! Press A!' ({rusty.AttacksSincePound} attacks)");
+        Check(rusty.Request(BossMove.Laugh) == DriveAnswer.Ok, "LB, right away (he's still down low)");
         (step, endY) = await WatchHeight(45);
         Check(rusty.CurrentMove == "Laughing", $"he laughs ({rusty.CurrentMove})");
         Check(step < 15, $"...and floats back up smoothly while he laughs, never a jump (the biggest step in one frame: {step:0} px)");
@@ -4064,8 +4083,8 @@ public partial class Main
 
     /// <summary>
     /// "Today" really means today: a game from long ago (even with the best score of all) is never in today's scores,
-    /// the results card's Today line, or the "Beat ... from today!" tip. (This test is the last one, because it saves the
-    /// best score of all in the scratch database.)
+    /// the results card's Today line, or the "Beat ... from today!" tip. (This test comes after every test that saves a
+    /// game or checks the high score, because it saves the best score of all in the scratch database.)
     /// </summary>
     async Task OnlyTodayCounts()
     {
@@ -4110,6 +4129,944 @@ public partial class Main
         cmd.Parameters.AddWithValue("$name", name);
         cmd.Parameters.AddWithValue("$score", score);
         cmd.ExecuteNonQuery();
+    }
+
+    // ---------- The computer drives Big Rusty, unless a SECOND controller is plugged in ----------
+    // (These tests never save a game or look at the high score, so they can come after OnlyTodayCounts.)
+
+    /// <summary>
+    /// With just one controller (Bolt-E's), the computer drives Big Rusty, exactly like the original fight. Dad's old keys
+    /// (1 to 4, on top of the keyboard and on the number pad, and H) aren't part of any action any more, and tapping them
+    /// in a fight does nothing: nobody takes over, and he goes Entering -> Laughing -> Shooting like always.
+    /// </summary>
+    async Task ComputerDrivesWithOneController()
+    {
+        var oldKeys = new[] { Key.Key1, Key.Key2, Key.Key3, Key.Key4, Key.Kp1, Key.Kp2, Key.Kp3, Key.Kp4, Key.H };
+        var gameActions = InputMap.GetActions().Select(action => (string)action).Where(action => !action.StartsWith("ui_")).ToList();
+        var usingOldKeys = gameActions.Where(action => InputMap.ActionGetEvents(action).OfType<InputEventKey>()
+                                          .Any(key => oldKeys.Contains(key.PhysicalKeycode) || oldKeys.Contains(key.Keycode))).ToList();
+        Check(!gameActions.Any(action => action.StartsWith("drive_")) && usingOldKeys.Count == 0,
+              $"no drive_ actions, and no action uses 1-4, the number pad's 1-4 or H (the actions: {string.Join(", ", gameActions)})");
+
+        var rusty = StartBossFight("TComputerDrives");
+        var moves = new List<string>();
+        bool capSeen = false, dotsSeen = false;
+        int keysTapped = 0; // (every key goes down, then up: 2 for each key)
+        for (int frame = 0; frame < 5 * 60; frame++) // 5 seconds
+        {
+            if (moves.Count == 0 || moves[^1] != rusty.CurrentMove) moves.Add(rusty.CurrentMove);
+            capSeen |= rusty.CapDrawn;
+            dotsSeen |= rusty.DotsDrawn > 0;
+            // As soon as Big Rusty could be driven (he flew in and laughs), Dad taps every one of his old keys
+            if (rusty.CanBeDriven && keysTapped < oldKeys.Length * 2 && frame % 2 == 0)
+            {
+                var key = oldKeys[keysTapped / 2];
+                Input.ParseInputEvent(new InputEventKey { Keycode = key, PhysicalKeycode = key, Pressed = keysTapped % 2 == 0, Device = SelfTestDevice });
+                keysTapped++;
+            }
+            await NextFrame();
+        }
+        string went = string.Join(" -> ", moves);
+        Check(keysTapped == oldKeys.Length * 2, "Dad tapped 1, 2, 3, 4, the number pad's 1 to 4, and H while Big Rusty laughed");
+        Check(!rusty.DriverControlled && hud.BossBarName == Boss.RustyName,
+              $"nobody took over: the computer drives him (his bar says '{hud.BossBarName}')");
+        Check(went == "Entering -> Laughing -> Shooting", $"he went {went}, like always");
+        Check(!capSeen && !dotsSeen && !popups.Texts.Any(text => text is "Wait..." or "Not yet!" or "TIRED! Press A!"),
+              "no blue cap, no thinking dots, and none of Dad's little words");
+    }
+
+    /// <summary>
+    /// A second controller is plugged in. In a fight its first button press (here A) takes over: "DAD IS DRIVING BIG
+    /// RUSTY!", "BIG RUSTY (DAD)" on his bar and Dad's buttons as a tip. Then every button gives its move: Y (helpers) and
+    /// B (laser) say "Not yet!" while he isn't angry enough, LB and RB laugh, A does the GROUND POUND, once he's ANGRY Y
+    /// drops helpers (and B is still "Not yet!"), and X shoots fireballs. A bolt only buzzes Bolt-E's controller, and when
+    /// Bolt-E stomps Dad's Big Rusty, Dad's controller gives a little buzz too.
+    /// </summary>
+    async Task SecondControllerTakesOver()
+    {
+        var rusty = StartBossFight("TSecondPad");
+        Check(await WaitUntil(() => rusty.CanBeDriven, 3) && rusty.CurrentMove == "Laughing" && !rusty.DriverControlled,
+              $"Big Rusty flew in, and the computer drives him ({rusty.CurrentMove})");
+        int laughs = sounds.TimesPlayed(Sfx.Laugh);
+        await SecondPadButton(JoyButton.A);
+        Check(rusty.DriverControlled, "the second controller's A takes over");
+        Check(hud.BannerShowing && hud.BannerText == $"{DriverShortName} IS DRIVING {Boss.RustyName}!", $"the big words: '{hud.BannerText}'");
+        Check(hud.BossBarName == $"{Boss.RustyName} ({DriverShortName})", $"his bar says '{hud.BossBarName}'");
+        Check(hud.HintShowing && hud.HintText == "X fireballs  Y helpers  A POUND  B laser  LB laugh", $"Dad's buttons as a tip: '{hud.HintText}'");
+        Check(sounds.TimesPlayed(Sfx.Laugh) == laughs + 1 && rusty.CurrentMove == "Laughing" && popups.Texts.Contains("Wait..."),
+              "Big Rusty laughs, and he's still busy laughing, so the A says 'Wait...'");
+        Check(robot.OnGround, "and Bolt-E didn't jump");
+
+        // What one button of the second controller does: Dad's little words, or else the move Big Rusty makes
+        async Task<string> Answer(JoyButton button)
+        {
+            popups.Clear();
+            await SecondPadButton(button);
+            return popups.Texts.FirstOrDefault(text => text is "Wait..." or "Not yet!" or "TIRED! Press A!") ?? rusty.CurrentMove;
+        }
+
+        Check(await WaitUntil(() => rusty.CurrentMove == "WaitingForDriver", 3), "after laughing he waits for Dad's order");
+        string y = await Answer(JoyButton.Y), b = await Answer(JoyButton.B);
+        Check(y == "Not yet!" && b == "Not yet!" && rusty.CurrentMove == "WaitingForDriver",
+              $"before he's ANGRY: Y (helpers) says '{y}', B (laser) says '{b}', and he keeps waiting");
+
+        laughs = sounds.TimesPlayed(Sfx.Laugh);
+        string lb = await Answer(JoyButton.LeftShoulder);
+        Check(lb == "Laughing" && sounds.TimesPlayed(Sfx.Laugh) == laughs + 1, $"LB: HA HA HA! ({lb})");
+        Check(await WaitUntil(() => rusty.CurrentMove == "WaitingForDriver", 2.5), "then he waits again");
+        await Wait(0.5); // (he can laugh again 2 seconds after the last laugh)
+        string rb = await Answer(JoyButton.RightShoulder);
+        Check(rb == "Laughing" && sounds.TimesPlayed(Sfx.Laugh) == laughs + 2, $"RB: HA HA HA! too ({rb})");
+        Check(await WaitUntil(() => rusty.CurrentMove == "WaitingForDriver", 2.5), "then he waits again");
+        string a = await Answer(JoyButton.A);
+        Check(a == "PoundRise", $"A: GROUND POUND ({a})");
+
+        // Bolt-E grabs a bolt: only his own controller buzzes. He stomps Dad's dizzy Big Rusty: Dad feels it too.
+        Check(await WaitUntil(() => rusty.CanBeStomped, 4), "he slams down, and he's dizzy");
+        lastBuzzedPad = -1;
+        GotBolt(robot.Position);
+        Check(lastBuzzedPad == SelfTestDevice, $"a bolt only buzzes Bolt-E's controller (controller {lastBuzzedPad})");
+        StompBoss(); // (as if Bolt-E landed on his head)
+        Check(rusty.Health == Boss.MaxHealth - 1 && lastBuzzedPad == SelfTestSecondPad,
+              $"a stomp on Dad's Big Rusty buzzes Dad's controller too (controller {lastBuzzedPad})");
+
+        rusty.LoseHealth(1); // ANGRY now (as if he was stomped twice)
+        Check(await WaitUntil(() => rusty.CurrentMove == "WaitingForDriver", 4) && rusty.Phase == 2, "ANGRY, and waiting for Dad's order");
+        b = await Answer(JoyButton.B);
+        int enemiesBefore = enemies.Count;
+        y = await Answer(JoyButton.Y);
+        Check(b == "Not yet!" && y == "DroppingHelpers" && await WaitUntil(() => enemies.Count > enemiesBefore, 1),
+              $"ANGRY: B (laser) still says '{b}', and Y drops a Pup-Bot helper ({y})");
+        rusty.LoseHealth(1); // (as if he was stomped again: he flies back up, still ANGRY)
+        Check(await WaitUntil(() => rusty.CurrentMove == "WaitingForDriver", 3), "he waits for Dad's order again");
+        string x = await Answer(JoyButton.X);
+        Check(x == "Shooting", $"X: fireballs ({x})");
+    }
+
+    /// <summary>
+    /// The second controller never moves Bolt-E. On the title screen its START and A don't start a game, its BACK
+    /// doesn't switch the music, its LB / RB don't switch the player, and its D-pad and stick don't change his look
+    /// (each press is checked on its own).
+    /// On the road its A, B, X, Y and D-pad up don't make him jump, and in the arena its stick and D-pad don't ride him
+    /// (and its A drives Big Rusty instead). The very same presses on Bolt-E's own controller still do all of that.
+    /// </summary>
+    async Task SecondControllerNeverMovesBoltE()
+    {
+        PlayAs("TNeverMoves");
+        LoadPlayer(celebrate: false);
+        await NextFrame();
+        string player = hud.PlayerName;
+        int look = lookIndex, nextLook = (lookIndex + 1) % Looks.All.Length;
+        bool music = sounds.MusicOn;
+        Check(state == GameState.Title && hud.PlayerCount >= 2, $"the title screen, with {hud.PlayerCount} people to pick from");
+
+        // 1. On the title screen the second controller does nothing at all. Every press is checked on its own, so two
+        //    presses that got through can't undo each other (like LB and then RB, or LEFT and then RIGHT).
+        bool NothingChanged() => state == GameState.Title && sounds.MusicOn == music && hud.PlayerName == player && lookIndex == look;
+        string WhatShows() => $"{state}, music {(sounds.MusicOn ? "on" : "off")}, {hud.PlayerName}, look {lookIndex}";
+        var titlePresses = new (JoyButton Button, string Does)[]
+        {
+            (JoyButton.Start, "START doesn't start a game"),
+            (JoyButton.A, "A doesn't start a game"),
+            (JoyButton.Back, "BACK doesn't switch the music"),
+            (JoyButton.LeftShoulder, "LB alone doesn't switch the player"),
+            (JoyButton.RightShoulder, "RB alone doesn't switch the player"),
+            (JoyButton.DpadLeft, "D-pad LEFT alone doesn't change Bolt-E's look"),
+            (JoyButton.DpadRight, "D-pad RIGHT alone doesn't change Bolt-E's look"),
+        };
+        foreach (var (button, does) in titlePresses)
+        {
+            await SecondPadButton(button);
+            Check(NothingChanged(), $"the second controller's {does}, and nothing else changes either ({WhatShows()})");
+        }
+        await SecondPadStick(1);
+        Check(NothingChanged(), $"its stick doesn't change Bolt-E's look ({WhatShows()})");
+        await SecondPadStick(0);
+
+        // ...but the same presses on Bolt-E's own controller still work
+        await PressButton(JoyButton.Back);
+        bool switched = sounds.MusicOn != music;
+        await PressButton(JoyButton.Back);
+        Check(switched && sounds.MusicOn == music, "Bolt-E's controller: BACK switches the music (and back again)");
+        await PressButton(JoyButton.RightShoulder);
+        string next = hud.PlayerName;
+        await PressButton(JoyButton.LeftShoulder);
+        Check(next != player && hud.PlayerName == player, $"RB picks the next player ({next}), and LB goes back ({hud.PlayerName})");
+        await PressButton(JoyButton.DpadRight);
+        int dpadLook = lookIndex;
+        await PressButton(JoyButton.DpadLeft);
+        await StickX(0.9f);
+        int stickLook = lookIndex;
+        await StickX(0);
+        await StickX(-0.9f);
+        await StickX(0);
+        Check(dpadLook == nextLook && stickLook == nextLook && lookIndex == look, "the D-pad and the stick change his look (and back)");
+
+        // 2. On the road the second controller's A, B, X, Y and D-pad up never make Bolt-E jump (his own A does)
+        await PressButton(JoyButton.Start);
+        Check(state == GameState.Playing, "Bolt-E's START starts a game");
+        QuietRoad();
+        robot.BlinkTime = 1e9f;
+        int jumps = sounds.TimesPlayed(Sfx.Jump);
+        bool onTheGround = robot.OnGround;
+        foreach (var button in new[] { JoyButton.A, JoyButton.B, JoyButton.X, JoyButton.Y, JoyButton.DpadUp })
+        {
+            await SecondPadButton(button);
+            onTheGround &= robot.OnGround;
+        }
+        Check(onTheGround && sounds.TimesPlayed(Sfx.Jump) == jumps, "the second controller's A, B, X, Y and D-pad up never make Bolt-E jump");
+        await PressButton(JoyButton.A);
+        Check(sounds.TimesPlayed(Sfx.Jump) == jumps + 1 && !robot.OnGround, "Bolt-E's own A makes him jump");
+        Check(await WaitUntil(() => robot.OnGround, 3), "...and he lands");
+
+        // Two safety nets: even if the kid's actions listened to every controller (like before this feature), the second
+        // controller still couldn't move Bolt-E, because _UnhandledInput hands its presses to Big Rusty first
+        foreach (string action in KidActions)
+            foreach (var input in InputMap.ActionGetEvents(action))
+                if (input is InputEventJoypadButton or InputEventJoypadMotion) input.Device = AnyDevice;
+        try
+        {
+            jumps = sounds.TimesPlayed(Sfx.Jump);
+            await SecondPadButton(JoyButton.A);
+            await SecondPadButton(JoyButton.Back);
+            Check(robot.OnGround && sounds.TimesPlayed(Sfx.Jump) == jumps && sounds.MusicOn == music,
+                  "even if every controller could press the kid's buttons, the second controller's A doesn't jump and its BACK doesn't switch the music");
+        }
+        finally
+        {
+            BindControllerOne(SelfTestDevice); // (back to normal: only controller one, 99)
+        }
+
+        // 3. In the arena the second controller's stick and D-pad never ride Bolt-E (his own do). This part uses the real
+        //    controls, like the game does (not the self-test's pretend testMoveAxis).
+        SpawnBoss();
+        var rusty = (Boss)boss!;
+        testRealStick = true;
+        try
+        {
+            await Wait(0.2);
+            float x = robot.Position.X;
+            await SecondPadStick(1);
+            await Wait(0.3);
+            await SecondPadStick(0);
+            await HoldButton(JoyButton.DpadRight, down: true, SelfTestSecondPad);
+            await Wait(0.3);
+            await HoldButton(JoyButton.DpadRight, down: false, SelfTestSecondPad);
+            Check(robot.CanMove && Mathf.Abs(robot.Position.X - x) < 1,
+                  $"the second controller's stick and D-pad don't ride him (x {x:0} -> {robot.Position.X:0})");
+
+            x = robot.Position.X;
+            await StickX(1);
+            await Wait(0.3);
+            await StickX(0);
+            await Wait(0.3); // (he slows down and stops)
+            float rodeRight = robot.Position.X - x;
+            x = robot.Position.X;
+            await HoldButton(JoyButton.DpadLeft, down: true, SelfTestDevice);
+            await Wait(0.3);
+            await HoldButton(JoyButton.DpadLeft, down: false, SelfTestDevice);
+            await Wait(0.3);
+            float rodeLeft = x - robot.Position.X;
+            Check(rodeRight > 60 && rodeLeft > 60, $"Bolt-E's own stick rides him right ({rodeRight:0} px), and his D-pad left ({rodeLeft:0} px)");
+        }
+        finally
+        {
+            testRealStick = false;
+        }
+
+        Check(await WaitUntil(() => rusty.CanBeDriven, 3) && robot.OnGround, "Big Rusty flew in (and Bolt-E is on the ground)");
+        jumps = sounds.TimesPlayed(Sfx.Jump);
+        await SecondPadButton(JoyButton.A);
+        Check(rusty.DriverControlled && robot.OnGround && sounds.TimesPlayed(Sfx.Jump) == jumps,
+              "in a fight the second controller's A drives Big Rusty, and Bolt-E doesn't jump");
+    }
+
+    /// <summary>
+    /// Which controller is Bolt-E's: the lowest number that Godot knows is a real controller (so a pretend one, like some
+    /// keyboards and steering wheels, can't steal it), or else the lowest number, or 0 when nothing is plugged in.
+    /// When it changes, the controller buttons and sticks of all the kid's actions (and of Godot's own ui_ actions) follow
+    /// it, the keyboard and the mouse stay the same, and a button held down on the old controller doesn't stay stuck down.
+    /// During the self-test, a real controller being plugged in never changes it. But pretend plugs do, through the game's
+    /// real plug code: a phantom at 0, then the kid's real controller plugged in as 1, then unplugged: 0, then 1, then 0.
+    /// </summary>
+    async Task ControllerOneFollowsThePlugs()
+    {
+        int[] plugged = { 3, 1, 7 };
+        Check(PickControllerOne(plugged, _ => true) == 1, "3, 1 and 7 are plugged in, all real controllers: Bolt-E's is 1 (the lowest)");
+        Check(PickControllerOne(plugged, device => device == 7) == 7, "only 7 is a controller Godot knows: Bolt-E's is 7");
+        Check(PickControllerOne(plugged, _ => false) == 1, "Godot knows none of them: Bolt-E's is the lowest, 1");
+        Check(PickControllerOne(Array.Empty<int>(), _ => true) == 0, "nothing plugged in: 0 (so the first one plugged in works right away)");
+
+        string[] kidActions = { "jump", "start", "music", "left", "right", "menu_left", "menu_right", "player_next", "player_prev" };
+        bool IsControllerPart(InputEvent input) => input is InputEventJoypadButton or InputEventJoypadMotion;
+        // Every controller button and stick in every action (the kid's actions and Godot's own ui_ actions)
+        List<InputEvent> AllControllerParts() =>
+            InputMap.GetActions().SelectMany(action => InputMap.ActionGetEvents(action)).Where(IsControllerPart).ToList();
+        // How many controller buttons and sticks each of the kid's actions has, like "jump 5"
+        string KidParts() => string.Join(", ", kidActions.Select(action => $"{action} {InputMap.ActionGetEvents(action).Count(IsControllerPart)}"));
+        // The keys and the mouse button of the kid's actions
+        List<InputEvent> KeysAndMouse() => kidActions.SelectMany(action => InputMap.ActionGetEvents(action)).Where(input => !IsControllerPart(input)).ToList();
+
+        var parts = AllControllerParts();
+        string kidParts = KidParts();
+        int keys = KeysAndMouse().Count;
+        var uiActions = InputMap.GetActions().Select(action => (string)action)
+            .Where(action => action.StartsWith("ui_") && InputMap.ActionGetEvents(action).Any(IsControllerPart)).ToList();
+        Check(kidActions.All(action => InputMap.ActionGetEvents(action).Any(IsControllerPart)) && uiActions.Count >= 4,
+              $"the kid's actions have controller parts ({kidParts}), and so do Godot's {string.Join(", ", uiActions)}");
+        Check(controllerOne == SelfTestDevice && parts.All(input => input.Device == SelfTestDevice),
+              $"during the self-test all {parts.Count} of them listen to its pretend controller 99 only");
+
+        // Bolt-E's controller holds RIGHT on the D-pad... and then a different controller becomes Bolt-E's
+        PlayAs("TPlugs");
+        StartGame();
+        QuietRoad();
+        await HoldButton(JoyButton.DpadRight, down: true, SelfTestDevice);
+        bool heldBefore = Input.IsActionPressed("right");
+        try
+        {
+            BindControllerOne(5);
+            Check(heldBefore && !Input.IsActionPressed("right"), "RIGHT held on the old controller is let go: it doesn't stay stuck down");
+            Check(controllerOne == 5 && AllControllerParts().All(input => input.Device == 5) && KidParts() == kidParts,
+                  "after BindControllerOne(5) every controller part listens to controller 5 (and none got lost)");
+            Check(KeysAndMouse().Count == keys && KeysAndMouse().All(input => input.Device == AnyDevice),
+                  $"the {keys} keys and the mouse button still work from any keyboard and mouse");
+            Check(Mathf.IsEqualApprox(InputMap.ActionGetDeadzone("menu_left"), 0.6f) && Mathf.IsEqualApprox(InputMap.ActionGetDeadzone("menu_right"), 0.6f),
+                  "the stick still has to be pushed more than halfway (0.6) on the menus");
+            var aFrom5 = new InputEventJoypadButton { ButtonIndex = JoyButton.A, Pressed = true, Device = 5 };
+            var aFrom99 = new InputEventJoypadButton { ButtonIndex = JoyButton.A, Pressed = true, Device = SelfTestDevice };
+            Check(aFrom5.IsActionPressed("jump") && !aFrom99.IsActionPressed("jump"), "now A on controller 5 is a jump, and A on controller 99 isn't");
+        }
+        finally
+        {
+            BindControllerOne(SelfTestDevice);
+            await HoldButton(JoyButton.DpadRight, down: false, SelfTestDevice);
+        }
+        Check(controllerOne == SelfTestDevice && AllControllerParts().All(input => input.Device == SelfTestDevice) && KidParts() == kidParts,
+              "bound back to 99: every controller part listens to it again");
+
+        // A real controller plugged in (or out) while the self-test runs never changes Bolt-E's controller
+        OnControllerPluggedOrUnplugged(0, true);
+        Check(controllerOne == SelfTestDevice && AllControllerParts().All(input => input.Device == SelfTestDevice),
+              "a controller plugged in during the self-test doesn't change Bolt-E's controller (99)");
+
+        // Now pretend plugs, through the game's real plug code (Godot's "a controller was plugged in or out" signal):
+        // a phantom at 0 that Godot doesn't know, then the kid's real controller is plugged in as 1, then it's unplugged
+        // again. Bolt-E's controller and all his controls follow: 0, then 1, then 0.
+        bool AllOn(int device) => controllerOne == device && AllControllerParts().All(input => input.Device == device) && KidParts() == kidParts;
+        void Plug(int device, bool connected, params int[] pluggedIn)
+        {
+            testPluggedIn = pluggedIn.ToList();
+            Input.Singleton.EmitSignal(Input.SignalName.JoyConnectionChanged, device, connected);
+        }
+        try
+        {
+            testKnownPads = device => device == 1; // (0 is the phantom)
+            Plug(0, connected: true, 0);
+            Check(AllOn(0), $"a phantom is plugged in as 0, and nothing else: Bolt-E's controls listen to it, the lowest (controller {controllerOne})");
+            Plug(1, connected: true, 0, 1);
+            Check(AllOn(1), $"the kid's real controller is plugged in as 1: Bolt-E's controls follow it, a real one comes first (controller {controllerOne})");
+            Plug(1, connected: false, 0);
+            Check(AllOn(0), $"it's unplugged again: back to 0 (controller {controllerOne})");
+        }
+        finally
+        {
+            testPluggedIn = null;
+            testKnownPads = null;
+            BindControllerOne(SelfTestDevice);
+            UpdateControllerStatus(); // (the title card's controller line too)
+            Check(AllOn(SelfTestDevice), "no more pretend plugs: back to the self-test's controller 99");
+        }
+    }
+
+    /// <summary>
+    /// The title card's controller line: with 2 controllers plugged in it says the 2nd one can drive Big Rusty (with 3,
+    /// the others can). It replaces the usual words in the same line, so the title card doesn't get any bigger and still
+    /// fits on the screen with the biggest everything. With 1 controller or none, it says what it always said.
+    /// </summary>
+    async Task TwoControllerTitleLine()
+    {
+        try
+        {
+            // The biggest title card (like CardsFit): 5 Family Champions with the widest name, and the widest name picked
+            hud.ShowTitle(FakeFamily(5, W16, 99999));
+            hud.SetPlayers(new List<string> { W16, "TPB" }, W16);
+            hud.SetControllers(new List<string>());
+            await Wait(0.2);
+            var usualCard = hud.TitleCardRect;
+            Check(hud.ControllerLineText == "Got a game controller? Plug it in to play with it!", $"no controller: '{hud.ControllerLineText}'");
+            hud.SetControllers(new List<string> { "Xbox controller" });
+            Check(hud.ControllerLineText == "Controller connected: Xbox controller!   A, B, X, Y = jump   ·   START = go!",
+                  $"1 controller: '{hud.ControllerLineText}'");
+
+            foreach (int count in new[] { 2, 3 })
+            {
+                hud.SetControllers(Enumerable.Repeat("Xbox controller", count).ToList());
+                await Wait(0.2);
+                string expected = count == 2
+                    ? $"2 controllers!  The 1st one plays Bolt-E, and the 2nd one can drive {Boss.RustyName}!"
+                    : $"3 controllers!  The 1st one plays Bolt-E, and the others can drive {Boss.RustyName}!";
+                float wide = ThemeDB.FallbackFont.GetStringSize(hud.ControllerLineText, HorizontalAlignment.Left, -1, 20).X;
+                Check(hud.ControllerLineText == expected, $"{count} controllers: '{hud.ControllerLineText}' ({wide:0} px)");
+                CheckCardFits(hud.TitleCardRect, $"title card ({count} controllers)");
+                Check(hud.TitleCardRect == usualCard,
+                      $"...and the title card is just as big as with the usual line ({hud.TitleCardRect.Size.X:0} x {hud.TitleCardRect.Size.Y:0}): no new rows");
+            }
+        }
+        finally
+        {
+            UpdateControllerStatus(); // (back to the controllers that are really plugged in)
+        }
+    }
+
+    // ---------- Only real controllers drive Big Rusty, and Dad's words follow his buttons ----------
+
+    /// <summary>
+    /// Only a real game controller (one that Godot knows) can drive Big Rusty. A phantom one (a pretend joystick, a
+    /// steering wheel, a keyboard that says it's a controller: here the pretend device 97) can't take over and can't give
+    /// orders, but the very same buttons on a real second controller (98) can. And the title card doesn't count a
+    /// phantom: a phantom and one real controller never say "2 controllers!" (two real ones do).
+    /// </summary>
+    async Task PhantomPadsCantDrive()
+    {
+        const int Phantom = 97;
+        Check(PadIsKnown(SelfTestDevice) && PadIsKnown(SelfTestSecondPad) && !PadIsKnown(Phantom),
+              "during the self-test its pretend controllers 99 and 98 count as real ones, and 97 is a phantom");
+
+        // 1. The title card's controller line, with pretend plugs, through the game's real controller check
+        string twoControllers = $"2 controllers!  The 1st one plays Bolt-E, and the 2nd one can drive {Boss.RustyName}!";
+        try
+        {
+            testPluggedIn = new List<int> { 0, 1 };
+            testKnownPads = device => device == 1; // (0 is a phantom)
+            UpdateControllerStatus();
+            Check(controllerOne == 1 && hud.ControllerLineText != twoControllers,
+                  $"a phantom (0) and a real controller (1): Bolt-E's is 1, and it doesn't say 2 controllers ('{hud.ControllerLineText}')");
+            testKnownPads = _ => true; // (now both are real)
+            UpdateControllerStatus();
+            Check(hud.ControllerLineText == twoControllers, $"two real controllers: '{hud.ControllerLineText}'");
+        }
+        finally
+        {
+            testPluggedIn = null;
+            testKnownPads = null;
+            BindControllerOne(SelfTestDevice);
+            UpdateControllerStatus();
+            Check(controllerOne == SelfTestDevice, "no more pretend plugs: back to the self-test's controller 99");
+        }
+
+        // 2. In a fight. (The presses go straight to SecondControllerInput, where every second controller's presses end
+        //    up, because the self-test's own filter at the top of _UnhandledInput would stop device 97 even sooner.)
+        InputEventJoypadButton ButtonDown(JoyButton button, int device) => new() { ButtonIndex = button, Pressed = true, Device = device };
+        var rusty = StartBossFight("TPhantom");
+        Check(await WaitUntil(() => rusty.CanBeDriven, 3), "Big Rusty flew in");
+        int laughs = sounds.TimesPlayed(Sfx.Laugh);
+        SecondControllerInput(ButtonDown(JoyButton.A, Phantom));
+        await Wait(0.1);
+        Check(!rusty.DriverControlled && hud.BossBarName == Boss.RustyName && sounds.TimesPlayed(Sfx.Laugh) == laughs,
+              "the phantom's A doesn't take over: the computer keeps driving");
+        SecondControllerInput(ButtonDown(JoyButton.A, SelfTestSecondPad));
+        await Wait(0.1);
+        Check(rusty.DriverControlled && hud.BossBarName == $"{Boss.RustyName} ({DriverShortName})",
+              "the same A on a real second controller (98) takes over");
+
+        Check(await WaitUntil(() => rusty.CurrentMove == "WaitingForDriver", 3), "he waits for Dad's order");
+        SecondControllerInput(ButtonDown(JoyButton.X, Phantom));
+        await Wait(0.1);
+        Check(rusty.CurrentMove == "WaitingForDriver", $"the phantom's X gives no order: he keeps waiting ({rusty.CurrentMove})");
+        SecondControllerInput(ButtonDown(JoyButton.X, SelfTestSecondPad));
+        await Wait(0.1);
+        Check(rusty.CurrentMove == "Shooting", $"Dad's X does: fireballs ({rusty.CurrentMove})");
+    }
+
+    /// <summary>
+    /// Dad's tip and his "TIRED!" words are made from DriveButtons, so they stay right when a family swaps the buttons.
+    /// With the normal buttons they are exactly "X fireballs  Y helpers  A POUND  B laser  LB laugh" and "TIRED! Press A!".
+    /// Swapped around (A = fireballs, X and LB = GROUND POUND, RB laughs and comes first), the tip still names each move
+    /// once, in the usual order, with the first button that does it, and a TIRED Big Rusty says "TIRED! Press X!".
+    /// </summary>
+    /// <summary>Which screen the game starts on: the other screen (the TV) when there are two, unless "main" was picked with F9.</summary>
+    async Task GameScreenPick()
+    {
+        await NextFrame();
+        Check(PickGameScreen(1, 0, null) == 0, "one screen: the game is on it");
+        Check(PickGameScreen(2, 0, null) == 1, "two screens: the game goes on the other one (the TV)");
+        Check(PickGameScreen(2, 1, null) == 0, "two screens, main is screen 1: the game goes on screen 0");
+        Check(PickGameScreen(2, 0, "main") == 0, "F9 picked the main screen: it stays there");
+        Check(PickGameScreen(2, 0, "other") == 1, "F9 picked the other screen: the TV");
+        Check(PickGameScreen(3, 1, null) == 0, "three screens: the first one that isn't the main one");
+    }
+
+    async Task DriveWordsFollowTheButtons()
+    {
+        await NextFrame();
+        const string NormalTip = "X fireballs  Y helpers  A POUND  B laser  LB laugh";
+        Check(DriveTip() == NormalTip && TiredWords() == "TIRED! Press A!", $"the normal buttons: '{DriveTip()}' and '{TiredWords()}'");
+
+        var normalButtons = DriveButtons.ToArray();
+        try
+        {
+            // The family swaps the buttons around
+            var swapped = new (JoyButton, BossMove)[]
+            {
+                (JoyButton.RightShoulder, BossMove.Laugh),
+                (JoyButton.Y, BossMove.Helpers),
+                (JoyButton.X, BossMove.Pound),
+                (JoyButton.B, BossMove.Laser),
+                (JoyButton.A, BossMove.Fireballs),
+                (JoyButton.LeftShoulder, BossMove.Pound),
+            };
+            swapped.CopyTo(DriveButtons, 0);
+            const string SwappedTip = "A fireballs  Y helpers  X POUND  B laser  RB laugh";
+
+            var rusty = StartBossFight("TDriveWords");
+            Check(await WaitUntil(() => rusty.CanBeDriven, 3), "Big Rusty flew in");
+            await SecondPadButton(JoyButton.A); // (A is fireballs now)
+            Check(rusty.DriverControlled && hud.HintShowing && hud.HintText == SwappedTip, $"Dad's tip follows his buttons: '{hud.HintText}'");
+
+            // Two attacks with A (fireballs), and he's TIRED
+            for (int attack = 1; attack <= Boss.AttacksBeforeHeMustPound; attack++)
+            {
+                await WaitUntil(() => rusty.CurrentMove == "WaitingForDriver", 6);
+                await SecondPadButton(JoyButton.A);
+            }
+            Check(await WaitUntil(() => rusty.CurrentMove == "WaitingForDriver", 6) && rusty.IsTired,
+                  $"A, A: fireballs twice, and he's TIRED ({rusty.AttacksSincePound} attacks)");
+            popups.Clear();
+            await SecondPadButton(JoyButton.A);
+            string said = string.Join(", ", popups.Texts);
+            Check(said == "TIRED! Press X!", $"more fireballs: the words tell Dad to press X ('{said}')");
+            await SecondPadButton(JoyButton.X);
+            Check(rusty.CurrentMove == "PoundRise", $"and X really does the GROUND POUND ({rusty.CurrentMove})");
+        }
+        finally
+        {
+            normalButtons.CopyTo(DriveButtons, 0);
+        }
+        Check(DriveTip() == NormalTip, "the normal buttons are back");
+    }
+
+    // ---------- VROOMBA, the second boss (the bosses take turns) ----------
+
+    /// <summary>
+    /// The bosses take turns: game 1 starts with BIG RUSTY, game 2 with VROOMBA, game 3 with Big Rusty... and every next
+    /// fight in a game is the other boss. During the self-test SpawnBoss() always brings Big Rusty (so every old test
+    /// keeps its boss), unless a test asks for the taking-turns rule: then it follows the rule like a real game.
+    /// </summary>
+    async Task BossesTakeTurns()
+    {
+        await NextFrame();
+        string[] expected =
+        {
+            "BigRusty Vroomba BigRusty", // game 1
+            "Vroomba BigRusty Vroomba",  // game 2
+            "BigRusty Vroomba BigRusty", // game 3
+            "Vroomba BigRusty Vroomba",  // game 4
+        };
+        for (int game = 1; game <= expected.Length; game++)
+        {
+            string bosses = string.Join(" ", Enumerable.Range(1, 3).Select(fight => BossForFight(game, fight)));
+            Check(bosses == expected[game - 1], $"game {game}, fights 1-3: {bosses}");
+        }
+
+        // The self-test's SpawnBoss() brings Big Rusty, whatever game it is
+        PlayAs("TTurns");
+        StartGame();
+        QuietRoad();
+        robot.BlinkTime = 1e9f;
+        int game1 = gameNumber;
+        SpawnBoss();
+        Check(boss is Boss, $"during the self-test SpawnBoss() brings Big Rusty (game {game1}, fight {bossFightNumber})");
+
+        // Like a real game: the taking-turns rule
+        testTakeTurns = true;
+        try
+        {
+            GoToTitle();
+            StartGame();
+            QuietRoad();
+            robot.BlinkTime = 1e9f;
+            int game2 = gameNumber;
+            Check(game2 == game1 + 1 && bossFightNumber == 0, $"a new game counts up: game {game2}");
+            SpawnBoss();
+            var first = boss is Vroomba ? BossKind.Vroomba : BossKind.BigRusty;
+            Check(first == BossForFight(game2, 1) && hud.BossBarName == boss!.DisplayName,
+                  $"game {game2}'s first boss follows the rule: {first} ('{hud.BossBarName}' on his bar)");
+            boss!.QueueFree();
+            boss = null;
+            SpawnBoss();
+            var second = boss is Vroomba ? BossKind.Vroomba : BossKind.BigRusty;
+            Check(second != first && second == BossForFight(game2, 2), $"the next fight is the other boss: {second}");
+
+            GoToTitle();
+            StartGame();
+            QuietRoad();
+            robot.BlinkTime = 1e9f;
+            SpawnBoss();
+            var nextGame = boss is Vroomba ? BossKind.Vroomba : BossKind.BigRusty;
+            Check(nextGame != first, $"the next game starts with the other boss: {nextGame}");
+        }
+        finally
+        {
+            testTakeTurns = false;
+        }
+    }
+
+    /// <summary>
+    /// VROOMBA rolls in from the right edge, BEEP BOOPs, revs up (a "!" and an engine sound) and ZOOMS across the
+    /// ground. Bolt-E standing in his way (no spare battery, not blinking) crashes, and VROOMBA rolls away. In a new
+    /// game he zooms past Bolt-E (safe while blinking), facing the way he drives, BONKS into the wall (a thud and a
+    /// shake), bounces back a little and lies upside down, dizzy: touching him then never hurts.
+    /// </summary>
+    async Task VroombaZoomsAndBonks()
+    {
+        var vroomba = StartVroombaFight("TVroomZoom");
+        Check(vroomba.CurrentMove == "Entering" && vroomba.Position.X > 1280, $"he rolls in from the right edge (x {vroomba.Position.X:0})");
+        Check(hud.BossBarShowing && hud.BossBarName == Vroomba.VroombaName && vroomba.Health == BossBase.MaxHealth,
+              $"his health bar says '{hud.BossBarName}' (6 health)");
+        Check(!vroomba.IsDangerous && !vroomba.CanBeStomped, "while he rolls in he's harmless");
+        int revs = sounds.TimesPlayed(Sfx.RevUp), zooms = sounds.TimesPlayed(Sfx.Zoom), beeps = sounds.TimesPlayed(Sfx.BeepBoop);
+        Check(await WaitUntil(() => vroomba.CurrentMove == "BeepBoop", 3) && sounds.TimesPlayed(Sfx.BeepBoop) == beeps + 1,
+              "then a happy BEEP BOOP!");
+        Check(await WaitUntil(() => vroomba.CurrentMove == "Revving", 3), "then he revs up");
+        await NextFrame();
+        await NextFrame();
+        Check(vroomba.WarningDrawn && vroomba.IsDangerous && sounds.TimesPlayed(Sfx.RevUp) == revs + 1,
+              "a '!' over him and a rising engine sound (and touching him is a crash)");
+        Check(vroomba.Position.X > 1000 && vroomba.Facing < 0 && vroomba.Position.Y == GroundY,
+              $"on the ground at the far side, facing Bolt-E (x {vroomba.Position.X:0})");
+        Check(await WaitUntil(() => vroomba.CurrentMove == "Zooming", 1.5) && sounds.TimesPlayed(Sfx.Zoom) == zooms + 1, "ZOOM! (with a whoosh)");
+
+        spareBatteries = 0;
+        bestScore = 1_000_000; // (so it isn't a new high score)
+        robot.BlinkTime = 0;
+        robot.Position = new Vector2(vroomba.Position.X - 300, GroundY); // right in his way
+        Check(await WaitUntil(() => state == GameState.GameOver, 1.5), "Bolt-E standing in his way crashes (Bonk!)");
+        Check(vroomba.CurrentMove == "FlyingAway", $"out of batteries: VROOMBA rolls away ({vroomba.CurrentMove})");
+        Check(await WaitUntil(() => boss is null, 4), "...right off the screen");
+
+        // A new game: Bolt-E is safe (blinking) and stays where he is
+        GoToTitle();
+        vroomba = StartVroombaFight("TVroomBonk");
+        var bonks = new List<Vector2>();
+        vroomba.BonkedWall += at => bonks.Add(at);
+        Check(await FastForwardUntil(() => vroomba.CurrentMove == "Zooming", 5), "he zooms");
+        float startX = vroomba.Position.X;
+        await Wait(0.2);
+        Check(vroomba.Position.X < startX - 50 && vroomba.Facing < 0 && vroomba.Scale.X < 0 && vroomba.Position.Y == GroundY,
+              "along the ground to the left, facing the way he drives");
+        int thuds = sounds.TimesPlayed(Sfx.WallBonk);
+        Check(await WaitUntil(() => vroomba.CurrentMove == "WallBonk", 3), "BONK! into the wall");
+        Check(bonks.Count == 1 && bonks[0].X == 0 && sounds.TimesPlayed(Sfx.WallBonk) == thuds + 1 && shake > 0,
+              "the left wall (the edge of the screen), with a thud and a shake");
+        Check(await WaitUntil(() => vroomba.CanBeStomped, 1) && vroomba.CurrentMove == "Dizzy", "he's DIZZY: stomp him now!");
+        float x = vroomba.Position.X;
+        Check(x > Vroomba.HalfWidth + 20 && x < Vroomba.HalfWidth + 80, $"he bounced back a little off the wall (x {x:0})");
+        await NextFrame();
+        Check(vroomba.UpsideDown && vroomba.MovesDrawn.Contains("Dizzy"), "upside down, wheels in the air");
+        robot.BlinkTime = 0;
+        robot.Position = new Vector2(vroomba.Position.X, GroundY); // right inside him
+        await Wait(0.3);
+        Check(state == GameState.Playing && !robot.Crashed && !vroomba.IsDangerous, "touching him while he's dizzy never hurts");
+    }
+
+    /// <summary>
+    /// While VROOMBA is dizzy, Bolt-E comes down on top of him: STOMP! Health 6 -> 5, +50, a CLANG, the health bar and a
+    /// bounce, just like stomping Big Rusty. He's Hurt (not dizzy any more): he flips back over, rolls to the side far
+    /// from Bolt-E, and does his next attack (phase 1: ZOOM, then SUCK).
+    /// </summary>
+    async Task StompVroomba()
+    {
+        var vroomba = StartVroombaFight("TVroomStomp");
+        Check(await FastForwardUntil(() => vroomba.CanBeStomped, 9), "VROOMBA zooms, bonks the wall and is dizzy");
+        int bonus = bonusPoints, clangs = sounds.TimesPlayed(Sfx.BossHit);
+        Check(await StompFromAbove(vroomba), "Bolt-E comes down on top of him: STOMP!");
+        Check(vroomba.Health == BossBase.MaxHealth - 1 && vroomba.CurrentMove == "Hurt" && !vroomba.CanBeStomped,
+              $"health {vroomba.Health}, and he's {vroomba.CurrentMove} (not dizzy any more)");
+        Check(bonusPoints == bonus + PointsPerBossHit && sounds.TimesPlayed(Sfx.BossHit) == clangs + 1 && popups.Texts.Contains($"+{PointsPerBossHit}"),
+              $"+{bonusPoints - bonus} and a CLANG, like a Big Rusty stomp");
+        Check(hud.BossBarShowing && !robot.OnGround && !robot.IsFalling, "the health bar shows, and Bolt-E bounces up");
+        float boltE = robot.Position.X;
+        Check(!vroomba.IsDangerous, "while he's hurt he's harmless");
+        Check(await WaitUntil(() => vroomba.CurrentMove != "Hurt", 3), "he flips back over and rolls away");
+        float farSide = boltE < 640 ? Vroomba.RightSpot : Vroomba.LeftSpot;
+        Check(Mathf.Abs(vroomba.Position.X - farSide) < 5, $"to the side far from Bolt-E (x {vroomba.Position.X:0})");
+        Check(vroomba.CurrentMove == "Sucking", $"then his next attack: SUCK ({vroomba.CurrentMove})");
+    }
+
+    /// <summary>
+    /// SUCK! Bolt-E standing still drifts toward VROOMBA (riding away is faster than the pull), every loose bolt in the
+    /// arena flies into his mouth (YUM!), and the suck ends with a ZOOM. Stomping him makes half of the swallowed bolts
+    /// fountain back out (they land in the arena), and when he's beaten all the rest come out: none is ever lost.
+    /// </summary>
+    async Task VroombaSucks()
+    {
+        var vroomba = StartVroombaFight("TVroomSuck");
+        int hums = sounds.TimesPlayed(Sfx.VacuumHum);
+        Check(await FastForwardUntil(() => vroomba.Sucking, 12), "phase 1: a ZOOM, then SUCK! His vacuum switches on");
+        Check(sounds.TimesPlayed(Sfx.VacuumHum) == hums + 1 && sounds.IsPlaying(Sfx.VacuumHum) && vroomba.IsDangerous,
+              "a whooshing hum (and touching him is a crash)");
+
+        // Three bolts up high (Bolt-E can't reach them), and Bolt-E standing still far away
+        int collected = boltsCollected, loose = bolts.Count;
+        AddBolt(vroomba.Position.X - 250, GroundY - 250);
+        AddBolt(vroomba.Position.X - 200, GroundY - 270);
+        AddBolt(vroomba.Position.X - 150, GroundY - 250);
+        float startX = robot.Position.X;
+        await Wait(0.5);
+        float drift = (robot.Position.X - startX) * Mathf.Sign(vroomba.Position.X - startX);
+        float pull = Vroomba.SuckPull * Robot.RideSpeed * 0.5f;
+        Check(drift > pull * 0.8f && drift < pull * 1.2f, $"Bolt-E standing still drifts toward him ({drift:0} px in 0.5 s, about {pull:0})");
+        Check(vroomba.WindDrawn, "a swirl of wind lines in front of him");
+        Check(vroomba.Swallowed == 3 && bolts.Count == loose && boltsCollected == collected, $"every loose bolt flew into his mouth ({vroomba.Swallowed} swallowed)");
+        Check(popups.Texts.Contains("YUM!"), "YUM!");
+
+        float away = -Mathf.Sign(vroomba.Position.X - robot.Position.X);
+        testMoveAxis = away;
+        await Wait(0.3);
+        float ridingFrom = robot.Position.X;
+        await Wait(0.4);
+        testMoveAxis = 0;
+        Check((robot.Position.X - ridingFrom) * away > 50, $"riding away is faster than the pull ({(robot.Position.X - ridingFrom) * away:0} px away in 0.4 s)");
+
+        Check(sounds.IsPlaying(Sfx.VacuumHum), "more than a second later the vacuum still hums (the hum loops)");
+        Check(await WaitUntil(() => vroomba.CurrentMove == "Revving", 3) && !vroomba.Sucking, "the suck ends with a ZOOM, like always");
+        Check(!sounds.IsPlaying(Sfx.VacuumHum), "and the hum stops when the vacuum switches off");
+        Check(await FastForwardUntil(() => vroomba.CanBeStomped, 5), "BONK: dizzy");
+        int before = bolts.Count + boltsCollected;
+        Check(await StompFromAbove(vroomba), "STOMP!");
+        Check(vroomba.Swallowed == 1 && vroomba.BoltsGivenBack == 2 && bolts.Count + boltsCollected == before + 2,
+              $"half of the swallowed bolts fountain back out ({vroomba.BoltsGivenBack} out, {vroomba.Swallowed} still inside)");
+        await Wait(1.3);
+        Check(bolts.All(bolt => bolt.Velocity == Vector2.Zero && bolt.Position.X > 0 && bolt.Position.X < ScreenWidth),
+              "they land in the arena (grab them!)");
+
+        vroomba.LoseHealth(BossBase.MaxHealth);
+        Check(await WaitUntil(() => vroomba.HasBlownUp, 3), "beaten: he blows up");
+        Check(vroomba.Swallowed == 0 && vroomba.BoltsGivenBack == 3, "and all the rest come out: no bolt is lost");
+    }
+
+    /// <summary>
+    /// ANGRY VROOMBA spits out 2 dust bunnies (ptoo!) that land and hop after Bolt-E, then zooms. A dust bunny can be
+    /// stomped (a normal +25 stomp), and bumping into one is a crash. FURIOUS, he spits out 3, and his TURBO zoom is
+    /// faster and goes there and back first; only the last zoom bonks, so he still ends up dizzy.
+    /// </summary>
+    async Task DustBunnies()
+    {
+        var vroomba = StartVroombaFight("TVroomBunny");
+        Check(await WaitUntil(() => vroomba.CurrentMove == "BeepBoop", 3), "VROOMBA rolled in");
+        vroomba.LoseHealth(2); // ANGRY (as if he was stomped twice)
+        Check(await WaitUntil(() => vroomba.CurrentMove == "GettingAngry", 3) && hud.BannerText == $"{Vroomba.VroombaName} IS ANGRY!",
+              $"he gets ANGRY: '{hud.BannerText}'");
+        int spits = sounds.TimesPlayed(Sfx.Spit);
+        Check(await WaitUntil(() => vroomba.CurrentMove == "Spitting", 3), "ANGRY: his first attack is DUST BUNNIES");
+        Check(await WaitUntil(() => vroomba.CurrentMove == "Revving", 3), "then he revs up for a zoom, like after every attack");
+        var bunnies = enemies.Where(enemy => enemy.Kind == EnemyKind.DustBunny).ToList();
+        Check(bunnies.Count == Vroomba.BunniesWhenAngry && sounds.TimesPlayed(Sfx.Spit) == spits + 2 && bunnies.All(bunny => bunny.Chaser),
+              $"he spat out {bunnies.Count} dust bunnies (ptoo!) that chase Bolt-E");
+        var bunny = bunnies[0];
+        Check(await WaitUntil(() => bunny.Position.Y >= GroundY, 2), "a dust bunny lands");
+        float gap = Mathf.Abs(bunny.Position.X - robot.Position.X);
+        await Wait(0.3);
+        float closer = gap - Mathf.Abs(bunny.Position.X - robot.Position.X), expected = DustBunnyChase * 0.3f;
+        Check(closer > expected * 0.7f && closer < expected * 1.3f, $"and hops after Bolt-E ({closer:0} px closer in 0.3 s, about {expected:0})");
+
+        // Bolt-E jumps, and comes down on the dust bunny
+        int stompsBefore = stomps, bonus = bonusPoints;
+        Check(robot.Jump() && await WaitUntil(() => robot.IsFalling, 1), "Bolt-E jumps");
+        bunny.Position = new Vector2(robot.Position.X, GroundY);
+        Check(await WaitUntil(() => bunny.Squashed, 1.5), "and lands on the dust bunny: squashed!");
+        Check(stomps == stompsBefore + 1 && bonusPoints == bonus + PointsPerStomp, $"a normal stomp: +{bonusPoints - bonus}");
+
+        // Bumping into a dust bunny is a crash (while VROOMBA is dizzy, so it's the dust bunny that does it)
+        Check(await FastForwardUntil(() => vroomba.CanBeStomped, 6), "VROOMBA zoomed and is dizzy");
+        PuffAway(enemies, _ => true);
+        AddDustBunny(robot.Position + new Vector2(80, -20), -1);
+        var other = enemies[^1];
+        Check(await WaitUntil(() => robot.OnGround && other.Position.Y >= GroundY, 2), "a dust bunny lands next to Bolt-E");
+        other.Position = new Vector2(robot.Position.X + 10, GroundY);
+        robot.BlinkTime = 0;
+        Check(await WaitUntil(() => state == GameState.Rebuilding, 1), "a dust bunny bumping into Bolt-E is a crash");
+        Check(await WaitUntil(() => state == GameState.Playing, 4), "Bolt-E is back");
+        robot.BlinkTime = 1e9f;
+        PuffAway(enemies, _ => true);
+
+        // FURIOUS: 3 dust bunnies, and a TURBO zoom
+        vroomba.LoseHealth(2);
+        Check(await WaitUntil(() => vroomba.CurrentMove == "GettingAngry", 3) && hud.BannerText == $"{Vroomba.VroombaName} IS FURIOUS!",
+              $"FURIOUS: '{hud.BannerText}'");
+        spits = sounds.TimesPlayed(Sfx.Spit);
+        var bonks = new List<Vector2>();
+        vroomba.BonkedWall += at => bonks.Add(at);
+        Check(await WaitUntil(() => vroomba.CurrentMove == "Revving", 5) && sounds.TimesPlayed(Sfx.Spit) == spits + Vroomba.BunniesWhenFurious,
+              $"he spits out {sounds.TimesPlayed(Sfx.Spit) - spits} dust bunnies");
+        Check(await WaitUntil(() => vroomba.CurrentMove == "Zooming", 2) && vroomba.ZoomsLeft == Vroomba.TurboZooms,
+              $"TURBO! This zoom goes there, back and there again ({vroomba.ZoomsLeft} zooms)");
+        var moves = new List<string>();
+        float fastest = 0;
+        for (int frame = 0; frame < 6 * 60 && !vroomba.CanBeStomped; frame++)
+        {
+            if (moves.Count == 0 || moves[^1] != vroomba.CurrentMove) moves.Add(vroomba.CurrentMove);
+            fastest = Mathf.Max(fastest, vroomba.ZoomingSpeed);
+            await NextFrame();
+        }
+        moves.Add(vroomba.CurrentMove);
+        string went = string.Join(" -> ", moves);
+        Check(went == "Zooming -> Turning -> Zooming -> Turning -> Zooming -> WallBonk -> Dizzy", $"he went {went}");
+        Check(Mathf.IsEqualApprox(fastest, Vroomba.TurboSpeed) && Vroomba.TurboSpeed > Vroomba.ZoomSpeed, $"faster than before ({fastest:0} px/s)");
+        Check(bonks.Count == 1, $"only the last zoom bonks the wall ({bonks.Count} bonk)");
+        Check(vroomba.Phase == 3 && Mathf.Max(Vroomba.ShortestDizzy, Vroomba.FuriousDizzySeconds) < Vroomba.DizzySeconds,
+              "he's dizzy a bit shorter when he's FURIOUS (but never under 1.8 seconds)");
+    }
+
+    /// <summary>
+    /// Beating VROOMBA: he shakes and pops, then blows apart into his lid, CLEAN button, bumper, brushes and wheels (and a
+    /// big dust cloud), and every bolt he swallowed comes out. "YOU BEAT VROOMBA!", +250, the rainbow of bolts, and it
+    /// counts as a boss beaten. 2.2 seconds later the World Tour moves on, like after a Big Rusty win. No engine errors
+    /// while his pieces fly, and the saved game counts him.
+    /// </summary>
+    async Task BeatVroomba()
+    {
+        var vroomba = StartVroombaFight("TVroomBeat");
+        Check(await WaitUntil(() => vroomba.CurrentMove != "Entering", 3), "VROOMBA rolled in");
+        for (int i = 0; i < 3; i++) vroomba.Swallow(); // (as if his vacuum gobbled up 3 bolts)
+        int bonus = bonusPoints, beaten = bossesBeaten, loose = bolts.Count + boltsCollected;
+        int jingles = sounds.TimesPlayed(Sfx.NewWorld), errors = SelfTestLogger.Errors;
+        vroomba.LoseHealth(BossBase.MaxHealth); // (as if Bolt-E stomped him 6 times)
+        Check(vroomba.IsBeaten && vroomba.CurrentMove == "Exploding" && !vroomba.IsDangerous, "he shakes and pops");
+        Check(await WaitUntil(() => vroomba.HasBlownUp, 3), "then he blows up");
+        Check(hud.BannerText == $"YOU BEAT {Vroomba.VroombaName}!", $"'{hud.BannerText}'");
+        Check(bossesBeaten == beaten + 1 && bonusPoints == bonus + PointsForBeatingBoss, $"+{bonusPoints - bonus}, and it counts as a boss beaten");
+        Check(bolts.Count + boltsCollected >= loose + 12 + 3 && vroomba.Swallowed == 0 && vroomba.BoltsGivenBack == 3,
+              $"the rainbow of bolts, and the 3 swallowed bolts come out ({bolts.Count + boltsCollected - loose} new bolts)");
+        foreach (string piece in new[] { "lid", "button", "bumper", "brush", "wheel" })
+            Check(vroomba.HasPiece(piece), $"his {piece} flies off");
+        await Wait(1);
+        Check(worldNumber == 0 && hud.BannerText == $"YOU BEAT {Vroomba.VroombaName}!", "a second later it's still Sunny Hills, so the victory words show first");
+        Check(await WaitUntil(() => worldNumber == 1, 2) && hud.BannerText == "WELCOME TO CANDY LAND!" && sounds.TimesPlayed(Sfx.NewWorld) == jingles + 1,
+              $"then on to the next world, like after a Big Rusty win: '{hud.BannerText}'");
+        Check(await WaitUntil(() => boss is null, 4), "his pieces are cleared away");
+        Check(SelfTestLogger.Errors == errors, "no engine errors while his pieces fly");
+
+        spareBatteries = 0;
+        bestScore = 1_000_000;
+        robot.BlinkTime = 0;
+        Check(Bonk(null) && state == GameState.GameOver, "game over");
+        Check(await WaitUntil(() => hud.ResultsShowing, 3) &&
+              AskDatabase(selfTestDbPath, "SELECT bosses_defeated FROM runs WHERE player_name = $name COLLATE NOCASE ORDER BY id DESC LIMIT 1;",
+                          ("$name", hud.PlayerName)) == 1,
+              "the saved game counts VROOMBA as a boss beaten");
+        Check(database?.StatsFor(hud.PlayerName).BossesBeaten >= 1, "and so do the stats on the results card ('bosses beaten')");
+    }
+
+    /// <summary>
+    /// Nobody can drive VROOMBA: the second controller's A, X, LB (and the others) do nothing in his fight. No takeover
+    /// banner, no "Wait...", no tick, and his bar just says VROOMBA.
+    /// </summary>
+    async Task VroombaCantBeDriven()
+    {
+        var vroomba = StartVroombaFight("TVroomDrive");
+        int ticks = sounds.TimesPlayed(Sfx.Tick), laughs = sounds.TimesPlayed(Sfx.Laugh);
+        await SecondPadButton(JoyButton.A); // (while he rolls in)
+        Check(await WaitUntil(() => vroomba.CurrentMove != "Entering", 3), "VROOMBA rolled in");
+        foreach (var button in new[] { JoyButton.A, JoyButton.X, JoyButton.LeftShoulder, JoyButton.Y, JoyButton.B, JoyButton.RightShoulder })
+            await SecondPadButton(button);
+        Check(!vroomba.CanBeDriven && !vroomba.DriverControlled && vroomba.Request(BossMove.Pound) == DriveAnswer.Busy,
+              "VROOMBA can't be driven: the second controller's buttons do nothing");
+        Check(hud.BossBarName == Vroomba.VroombaName && !hud.BannerText.Contains("DRIVING"), $"no takeover banner, and his bar says '{hud.BossBarName}'");
+        Check(sounds.TimesPlayed(Sfx.Tick) == ticks && sounds.TimesPlayed(Sfx.Laugh) == laughs && !popups.Texts.Contains("Wait...") &&
+              driverPad == -1 && !DriverGotYou, "no tick, no laugh, no 'Wait...'");
+    }
+
+    /// <summary>
+    /// Bolt-E crashes (with a spare) while VROOMBA zooms: BEEP BOOP! a happy spin, the dust bunnies close by puff away when
+    /// Bolt-E is back, and VROOMBA waits a moment before attacking again. A crash while he's dizzy never steals the stomp
+    /// chance: no BEEP BOOP, he stays dizzy.
+    /// </summary>
+    async Task VroombaTauntOnRebuild()
+    {
+        var vroomba = StartVroombaFight("TVroomTaunt");
+        Check(await FastForwardUntil(() => vroomba.CurrentMove == "Zooming", 5), "VROOMBA zooms");
+        AddDustBunny(robot.Position + new Vector2(150, -20), -1);
+        AddDustBunny(robot.Position + new Vector2(-100, -20), 1);
+        int beeps = sounds.TimesPlayed(Sfx.BeepBoop);
+        robot.BlinkTime = 0;
+        Check(Bonk(null) && state == GameState.Rebuilding, "Bolt-E crashes, with a spare battery");
+        Check(vroomba.CurrentMove == "BeepBoop" && !vroomba.CanBeStomped && sounds.TimesPlayed(Sfx.BeepBoop) == beeps + 1 && popups.Texts.Contains("BEEP BOOP!"),
+              $"BEEP BOOP! a happy little spin ({vroomba.CurrentMove})");
+        await Wait(0.3);
+        Check(Mathf.Abs(vroomba.Scale.X) < 0.99f, "he spins around");
+        Check(await WaitUntil(() => state == GameState.Playing, 4), "Bolt-E is back");
+        Check(!enemies.Any(enemy => enemy.Kind == EnemyKind.DustBunny), "the dust bunnies close by puffed away");
+        robot.BlinkTime = 1e9f;
+        await Wait(0.4);
+        Check(vroomba.CurrentMove == "Recovering" && !vroomba.IsDangerous, $"VROOMBA still waits a moment after Bolt-E is back ({vroomba.CurrentMove})");
+        Check(await WaitUntil(() => vroomba.CurrentMove != "Recovering", 2.5) && vroomba.IsDangerous, $"then he attacks again ({vroomba.CurrentMove})");
+
+        Check(await FastForwardUntil(() => vroomba.CanBeStomped, 10), "he bonks the wall and is dizzy");
+        PuffAway(enemies, _ => true);
+        spareBatteries = 1;
+        robot.BlinkTime = 0;
+        beeps = sounds.TimesPlayed(Sfx.BeepBoop);
+        Check(Bonk(null) && state == GameState.Rebuilding, "Bolt-E crashes while VROOMBA is dizzy");
+        Check(vroomba.CurrentMove == "Dizzy" && sounds.TimesPlayed(Sfx.BeepBoop) == beeps,
+              $"no BEEP BOOP: he stays dizzy, so Bolt-E can still stomp him ({vroomba.CurrentMove})");
+    }
+
+    /// <summary>
+    /// VROOMBA draws without engine errors in every move and every phase (a whole fight, sped up: ANGRY, FURIOUS, TURBO,
+    /// SUCK, BEEP BOOP, blowing up), rolling away, and in every world.
+    /// </summary>
+    async Task VroombaDrawsInEveryPhase()
+    {
+        int errors = SelfTestLogger.Errors;
+        var drawn = new HashSet<string>();
+
+        // A whole fight, 3 times as fast
+        var vroomba = StartVroombaFight("TVroomDraw");
+        Engine.TimeScale = 3;
+        try
+        {
+            Check(await WaitUntil(() => vroomba.CanBeStomped, 4), "phase 1: a zoom, BONK, dizzy");
+            vroomba.Swallow(); // (so a bolt flies out when he's hurt)
+            vroomba.LoseHealth(2);
+            Check(await WaitUntil(() => vroomba.CanBeStomped, 6) && vroomba.Phase == 2, "ANGRY: dust bunnies, a zoom, BONK, dizzy");
+            vroomba.LoseHealth(2);
+            Check(await WaitUntil(() => vroomba.CanBeStomped, 8) && vroomba.Phase == 3, "FURIOUS: 3 dust bunnies, a TURBO zoom there and back, BONK, dizzy");
+            Check(await WaitUntil(() => vroomba.Sucking, 5), "his dizzy time runs out, he rolls to his spot, and SUCK!");
+            vroomba.Taunt(0.5f);
+            Check(await WaitUntil(() => vroomba.CurrentMove == "Recovering", 2), "BEEP BOOP, and he rolls to his spot");
+        }
+        finally
+        {
+            Engine.TimeScale = 1;
+        }
+        vroomba.LoseHealth(BossBase.MaxHealth);
+        Check(await WaitUntil(() => vroomba.HasBlownUp, 3), "he blows up");
+        await Wait(0.5);
+        drawn.UnionWith(vroomba.MovesDrawn);
+
+        // Every world (and rolling away when Bolt-E is out of batteries)
+        for (int world = 0; world < Worlds.All.Length; world++)
+        {
+            GoToTitle();
+            var inWorld = StartVroombaFight("TVroomWorlds", world);
+            await Wait(0.3);
+            inWorld.DoAttack(VroombaAttack.Suck);
+            await Wait(0.2);
+            inWorld.DoAttack(VroombaAttack.DustBunnies);
+            await Wait(0.5);
+            inWorld.DoAttack(VroombaAttack.Zoom);
+            await Wait(0.2);
+            inWorld.FlyAway();
+            await Wait(0.3);
+            drawn.UnionWith(inWorld.MovesDrawn);
+            Check(SelfTestLogger.Errors == errors, $"VROOMBA in {CurrentWorld.Name} draws without errors");
+        }
+
+        var missing = Vroomba.EveryMove.Where(move => !drawn.Contains(move)).ToList();
+        Check(missing.Count == 0, $"every move was drawn ({drawn.Count} of {Vroomba.EveryMove.Count()}){(missing.Count > 0 ? ": missing " + string.Join(", ", missing) : "")}");
+        Check(SelfTestLogger.Errors == errors, "no engine errors");
     }
 
     /// <summary>Lets Bolt-E crash again and again (he never dodges) and checks every rebuild finishes, until game over.</summary>
@@ -4157,6 +5114,23 @@ public partial class Main
             await NextFrame();
         }
         return true;
+    }
+
+    /// <summary>
+    /// Like WaitUntil, but the game runs 3 times as fast meanwhile (maxGameSeconds is in game seconds). For the long
+    /// waits in a VROOMBA fight, so the self-test stays quick. Time always goes back to normal speed afterwards.
+    /// </summary>
+    async Task<bool> FastForwardUntil(Func<bool> done, double maxGameSeconds)
+    {
+        Engine.TimeScale = 3;
+        try
+        {
+            return await WaitUntil(done, maxGameSeconds / 3);
+        }
+        finally
+        {
+            Engine.TimeScale = 1;
+        }
     }
 
     /// <summary>Watches Bolt-E's size for some frames and lists every size he shows, in order (starting with the size he has now).</summary>
@@ -4212,7 +5186,32 @@ public partial class Main
         if (world > 0) ChangeWorld(world);
         robot.BlinkTime = 1e9f;
         SpawnBoss();
-        return boss!;
+        return (Boss)boss!;
+    }
+
+    /// <summary>
+    /// A new game with nothing on the road, and VROOMBA rolls in right away (in world number "world": 1 = Candy Land).
+    /// Nothing in the fight can crash Bolt-E, unless a test lets it (robot.BlinkTime = 0).
+    /// </summary>
+    Vroomba StartVroombaFight(string name, int world = 0)
+    {
+        PlayAs(name);
+        StartGame();
+        QuietRoad();
+        if (world > 0) ChangeWorld(world);
+        robot.BlinkTime = 1e9f;
+        SpawnBoss(BossKind.Vroomba);
+        return (Vroomba)boss!;
+    }
+
+    /// <summary>Bolt-E jumps straight up from where VROOMBA is, and comes down right on top of him. True if he got stomped.</summary>
+    async Task<bool> StompFromAbove(Vroomba vroomba)
+    {
+        int health = vroomba.Health;
+        await WaitUntil(() => robot.OnGround, 2);
+        robot.Position = new Vector2(vroomba.Position.X, GroundY);
+        robot.Jump();
+        return await WaitUntil(() => vroomba.Health < health, 2);
     }
 
     /// <summary>
@@ -4277,7 +5276,8 @@ public partial class Main
         return Convert.ToInt64(cmd.ExecuteScalar());
     }
 
-    // ---- Pretend input: it comes from device 99, the only device the game listens to during the self-test ----
+    // ---- Pretend input: it comes from device 99 (Bolt-E's pretend controller) or 98 (the pretend second controller),
+    //      the only devices the game listens to during the self-test ----
 
     /// <summary>Presses an action like "jump" or "start" and keeps holding it (see Release).</summary>
     async Task Press(string action) => await SendInput(new InputEventAction { Action = action, Pressed = true });
@@ -4294,6 +5294,21 @@ public partial class Main
 
     /// <summary>Pushes the left stick left (-1) or right (1), or lets it go back to the middle (0).</summary>
     async Task StickX(float value) => await SendInput(new InputEventJoypadMotion { Axis = JoyAxis.LeftX, AxisValue = value });
+
+    /// <summary>Taps a button on the pretend SECOND controller (down, then up): the one that can drive Big Rusty.</summary>
+    async Task SecondPadButton(JoyButton button)
+    {
+        await SendInput(new InputEventJoypadButton { ButtonIndex = button, Pressed = true }, SelfTestSecondPad);
+        await SendInput(new InputEventJoypadButton { ButtonIndex = button, Pressed = false }, SelfTestSecondPad);
+    }
+
+    /// <summary>Pushes the pretend SECOND controller's left stick left (-1) or right (1), or back to the middle (0).</summary>
+    async Task SecondPadStick(float x) =>
+        await SendInput(new InputEventJoypadMotion { Axis = JoyAxis.LeftX, AxisValue = x }, SelfTestSecondPad);
+
+    /// <summary>Holds a controller button down (or lets go of it) on a pretend controller: 99 = Bolt-E's, 98 = the second one.</summary>
+    async Task HoldButton(JoyButton button, bool down, int device) =>
+        await SendInput(new InputEventJoypadButton { ButtonIndex = button, Pressed = down }, device);
 
     /// <summary>Taps a key on the keyboard (down, then up).</summary>
     async Task TapKey(Key key)
@@ -4335,10 +5350,13 @@ public partial class Main
         await SendInput(new InputEventMouseButton { ButtonIndex = MouseButton.Left, Pressed = false, Position = inWindow, GlobalPosition = inWindow });
     }
 
-    /// <summary>Sends one pretend input from device 99. It reaches _UnhandledInput by the next frame.</summary>
-    async Task SendInput(InputEvent input)
+    /// <summary>
+    /// Sends one pretend input from device 99 (or from "device": 98 is the pretend second controller).
+    /// It reaches _UnhandledInput by the next frame.
+    /// </summary>
+    async Task SendInput(InputEvent input, int device = SelfTestDevice)
     {
-        input.Device = SelfTestDevice;
+        input.Device = device;
         Input.ParseInputEvent(input);
         await Wait(0.05);
     }

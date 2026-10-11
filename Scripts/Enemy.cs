@@ -4,6 +4,7 @@ public enum EnemyKind
 {
     PupBot,  // a robot puppy on wheels that zooms toward you (from enemy-1.png)
     EggBot,  // a hoppy egg-shaped robot (from enemy-2.png)
+    DustBunny, // a fluffy grey ball of dust with big eyes: VROOMBA spits them out, and they hop after you
 }
 
 /// <summary>
@@ -14,8 +15,13 @@ public partial class Enemy : Node2D
 {
     public EnemyKind Kind;
 
-    /// <summary>Big Rusty's helpers chase Bolt-E (left or right) instead of just coming from the right.</summary>
+    /// <summary>Big Rusty's helpers (and VROOMBA's dust bunnies) chase Bolt-E (left or right) instead of just coming from the right.</summary>
     public bool Chaser;
+    /// <summary>How fast a chaser goes after Bolt-E (pixels per second).</summary>
+    public float ChaseSpeed = 150f;
+    /// <summary>Set this to throw it (VROOMBA spits out dust bunnies): it flies with this speed, then falls down to GroundY.</summary>
+    public Vector2 Thrown;
+    float flyX;  // how fast it flies sideways while it's thrown
     /// <summary>-1 = facing left (the way it's drawn), 1 = facing right.</summary>
     public float Facing = -1;
     /// <summary>If set, the enemy falls down until it lands on the ground here (helpers are dropped from the sky).</summary>
@@ -31,9 +37,12 @@ public partial class Enemy : Node2D
     /// <summary>How much faster than the ground it moves toward Bolt-E (pixels per second).</summary>
     public float ExtraSpeed => Squashed ? 0 : Kind == EnemyKind.PupBot ? 140f : 30f;
 
-    public Rect2 Hitbox => Kind == EnemyKind.PupBot
-        ? new Rect2(Position + new Vector2(-40, -80), new Vector2(72, 80))
-        : new Rect2(Position + new Vector2(-24, -110 - HopHeight), new Vector2(48, 108));
+    public Rect2 Hitbox => Kind switch
+    {
+        EnemyKind.PupBot => new Rect2(Position + new Vector2(-40, -80), new Vector2(72, 80)),
+        EnemyKind.DustBunny => new Rect2(Position + new Vector2(-25, -50 - HopHeight), new Vector2(50, 48)),
+        _ => new Rect2(Position + new Vector2(-24, -110 - HopHeight), new Vector2(48, 108)),
+    };
 
     /// <summary>The top of its head (land here to stomp it!)</summary>
     public float Top => Hitbox.Position.Y;
@@ -46,17 +55,37 @@ public partial class Enemy : Node2D
     static readonly Color EggWhite = new(0.97f, 0.98f, 0.99f);
     static readonly Color EggTeal = new(0.33f, 0.7f, 0.64f);
     static readonly Color EggEyes = new(0.35f, 0.95f, 0.98f);
+    static readonly Color Fluff = new(0.7f, 0.7f, 0.74f);       // the dust bunny's fluffy grey
+    static readonly Color DarkFluff = new(0.55f, 0.55f, 0.6f);
+
+    // The dust bunny's fluffy tufts all around its round body (made once, not every time it's drawn)
+    static readonly Vector2[] FluffTufts = MakeFluffTufts();
+
+    static Vector2[] MakeFluffTufts()
+    {
+        var tufts = new Vector2[11];
+        for (int i = 0; i < tufts.Length; i++)
+            tufts[i] = new Vector2(0, -24) + Vector2.Right.Rotated(i * Mathf.Tau / tufts.Length) * 19;
+        return tufts;
+    }
 
     float time = (float)GD.RandRange(0.0, 1.0);
     float squashTime;
     Transform2D drawBase = Transform2D.Identity; // where (and how squished) we're drawing right now
 
-    /// <summary>Egg-Bot bounces up and down. This is how high off the ground it is right now.</summary>
+    /// <summary>Egg-Bot (and a dust bunny) bounces up and down. This is how high off the ground it is right now.</summary>
     float HopHeight
     {
         get
         {
-            if (Kind != EnemyKind.EggBot || Squashed) return 0;
+            if (Squashed) return 0;
+            if (Kind == EnemyKind.DustBunny)
+            {
+                if (Position.Y < GroundY - 1) return 0; // (still flying after VROOMBA spat it out)
+                float bunnyHop = time / 0.6f % 1f;
+                return 4f * 42f * bunnyHop * (1f - bunnyHop); // little hops, up to 42 pixels high
+            }
+            if (Kind != EnemyKind.EggBot) return 0;
             float p = time / 0.9f % 1f;      // 0 to 1 through each hop
             return 4f * 80f * p * (1f - p);  // up to 80 pixels high (a nice curvy hop)
         }
@@ -74,11 +103,20 @@ public partial class Enemy : Node2D
         time += dt;
         if (Squashed) squashTime += dt;
 
-        // Falling down after being dropped
-        if (GroundY > 0 && Position.Y < GroundY)
+        // Thrown (a dust bunny spat out by VROOMBA): it flies up and sideways first
+        if (Thrown != Vector2.Zero)
+        {
+            fallSpeed = Thrown.Y;
+            flyX = Thrown.X;
+            Thrown = Vector2.Zero;
+        }
+
+        // Falling down after being dropped (or thrown)
+        if (GroundY > 0 && (Position.Y < GroundY || fallSpeed < 0))
         {
             fallSpeed += 2000f * dt;
-            Position = new Vector2(Position.X, Mathf.Min(GroundY, Position.Y + fallSpeed * dt));
+            Position = new Vector2(Position.X + flyX * dt, Mathf.Min(GroundY, Position.Y + fallSpeed * dt));
+            if (Position.Y >= GroundY) flyX = 0; // landed
         }
 
         Scale = new Vector2(Facing < 0 ? 1 : -1, 1); // turn around to face the other way
@@ -89,9 +127,10 @@ public partial class Enemy : Node2D
     {
         float hop = HopHeight;
 
-        // Shadow on the ground (smaller when hopping high)
-        float shadow = 1f - hop / 200f;
-        DrawSetTransform(Vector2.Zero, 0, new Vector2(shadow, 0.2f * shadow));
+        // Shadow on the ground (smaller when hopping high). A dust bunny's shadow stays on the ground while it flies.
+        float flying = Kind == EnemyKind.DustBunny ? Mathf.Max(0, GroundY - Position.Y) : 0;
+        float shadow = Mathf.Max(0.3f, 1f - (hop + flying) / 200f);
+        DrawSetTransform(new Vector2(0, flying), 0, new Vector2(shadow, 0.2f * shadow));
         DrawCircle(Vector2.Zero, Kind == EnemyKind.PupBot ? 42 : 26, new Color(0, 0, 0, 0.18f));
 
         // Squashed flat like a pancake after a stomp! (it also fades away)
@@ -100,7 +139,7 @@ public partial class Enemy : Node2D
             Modulate = new Color(1, 1, 1, 1f - Mathf.Clamp((squashTime - 0.25f) / 0.2f, 0, 1));
             drawBase = new Transform2D(0, new Vector2(1.35f, 0.3f), 0, Vector2.Zero);
         }
-        else if (Kind == EnemyKind.EggBot)
+        else if (Kind is EnemyKind.EggBot or EnemyKind.DustBunny)
         {
             // Stretch while flying, squish when touching the ground
             float stretch = hop < 8 ? 0.85f : 1.05f;
@@ -113,6 +152,7 @@ public partial class Enemy : Node2D
         DrawSetTransformMatrix(drawBase);
 
         if (Kind == EnemyKind.PupBot) DrawPupBot();
+        else if (Kind == EnemyKind.DustBunny) DrawDustBunny();
         else DrawEggBot(hop);
 
         DrawSetTransform(Vector2.Zero, 0, Vector2.One);
@@ -202,6 +242,43 @@ public partial class Enemy : Node2D
             DrawArc(new Vector2(2.5f, -80), 2.5f, 0.1f, Mathf.Pi - 0.1f, 6, EggEyes, 2, true);
         }
     }
+
+    /// <summary>A fluffy grey ball of dust with two big eyes, two fluffy ears and little feet (it's looking left, at Bolt-E).</summary>
+    void DrawDustBunny()
+    {
+        var body = new Vector2(0, -24);
+
+        // Fluffy ears, then fluffy tufts all around, then the round body on top
+        DrawCircle(new Vector2(-9, -47), 7, DarkFluff);
+        DrawCircle(new Vector2(8, -48), 7, DarkFluff);
+        for (int i = 0; i < FluffTufts.Length; i++)
+            DrawCircle(FluffTufts[i], 8 + i % 3, i % 2 == 0 ? Fluff : DarkFluff);
+        DrawCircle(body, 20, Fluff);
+        DrawCircle(new Vector2(-7, -33), 6, new Color(1, 1, 1, 0.25f)); // a soft shine
+        // Little specks of dust
+        DrawCircle(new Vector2(10, -16), 1.6f, DarkFluff.Darkened(0.3f));
+        DrawCircle(new Vector2(-12, -12), 1.4f, DarkFluff.Darkened(0.3f));
+        DrawCircle(new Vector2(13, -30), 1.2f, DarkFluff.Darkened(0.3f));
+
+        // Two tiny feet
+        DrawCircle(new Vector2(-8, -3), 4.5f, DarkFluff);
+        DrawCircle(new Vector2(8, -3), 4.5f, DarkFluff);
+
+        // Two big eyes (X eyes when it's squashed)
+        foreach (var eye in BunnyEyes)
+        {
+            if (Squashed)
+            {
+                Shapes.XEye(this, eye, 4, Screen);
+                continue;
+            }
+            DrawCircle(eye, 6.5f, Colors.White);
+            DrawCircle(eye + new Vector2(-2, 1), 3.5f, Screen);                // looking at Bolt-E
+            DrawCircle(eye + new Vector2(-3, -0.5f), 1.2f, Colors.White);      // a sparkle
+        }
+    }
+
+    static readonly Vector2[] BunnyEyes = { new(-9, -27), new(5, -27) };
 
     void DrawArm(Vector2 shoulder, float angle)
     {

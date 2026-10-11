@@ -10,6 +10,7 @@ public enum Wave
     Sine,      // the purest, smoothest tone
     Noise,     // "shhhh" (drums, explosions)
     HighNoise, // a sharper, hissier "tsss" (hi-hats)
+    Saw,       // buzzy, like a bee or a vacuum cleaner (VROOMBA!)
 }
 
 /// <summary>
@@ -98,6 +99,7 @@ public static class Synth
                 case Wave.Triangle: sample = 4f * Mathf.Abs(p - 0.5f) - 1f; break;
                 case Wave.Sine: sample = Mathf.Sin(Mathf.Tau * p); break;
                 case Wave.Noise: sample = NextNoise(); break;
+                case Wave.Saw: sample = 2f * p - 1f; break; // a ramp that goes up and drops down, again and again
                 default: // HighNoise: the difference between two noises is extra hissy
                     float noise = NextNoise();
                     sample = (noise - lastNoise) * 0.5f;

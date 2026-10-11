@@ -1,6 +1,6 @@
 using Godot;
 
-/// <summary>The moves Dad (or Mom) can pick with the number keys while driving Big Rusty (see Main.Driver.cs).</summary>
+/// <summary>The moves Dad (or Mom) can pick with the second controller's buttons while driving Big Rusty (see Main.Driver.cs).</summary>
 public enum BossMove { Fireballs, Helpers, Pound, Laser, Laugh }
 
 /// <summary>
@@ -17,14 +17,16 @@ public enum DriveAnswer { Ok, Busy, Tired, NotYet }
 ///   Phase 2 (ANGRY):    more fireballs, drops Pup-Bot helpers, then a ground pound.
 ///   Phase 3 (FURIOUS):  lots of fireballs, a giant laser (stay on the ground!), then TWO ground pounds.
 /// After a ground pound he's dizzy for a moment: that's when you jump on his head!
-/// Dad (or Mom) can DRIVE him with the number keys: then he wears a blue cap, and thinking dots over his head
-/// show when he's waiting for Dad's next order. Fair-play rules keep it winnable (see Request).
+/// Normally the computer drives him. With a second controller plugged in, Dad (or Mom) can DRIVE him with its buttons:
+/// then he wears a blue cap, and thinking dots over his head show when he's waiting for Dad's next order.
+/// Fair-play rules keep it winnable (see Request).
+/// What every boss has (health, phases, stomping, flying away...) is in BossBase.cs. He takes turns with VROOMBA.
 /// Position is the bottom-middle of his hover disc.
 /// </summary>
-public partial class Boss : Node2D
+public partial class Boss : BossBase
 {
-    public const string DisplayName = "BIG RUSTY";
-    public const int MaxHealth = 6;
+    public const string RustyName = "BIG RUSTY";
+    public override string DisplayName => RustyName;
     public const float Size = 1.5f; // how big he is (1 = the size of the drawing below)
 
     // (WaitingForDriver = Dad is driving him, and he's waiting for Dad's next order: the thinking dots show)
@@ -39,8 +41,7 @@ public partial class Boss : Node2D
     public const float DriverWaitBeforeAI = 3f;     // if Dad picks nothing for this many seconds, Rusty's own brain picks the next move
     public const int LaughsInARow = 2;              // Dad can make him laugh this many times in a row, then he has to do a real move first
 
-    /// <summary>True once Dad (or Mom) took over with the number keys (see Main.Driver.cs).</summary>
-    public bool DriverControlled { get; private set; }
+    // (DriverControlled, true once Dad (or Mom) took over with the second controller, is in BossBase.cs)
     BossMove? request;         // Dad's order, waiting to happen (only taken while he waits with his thinking dots)
     int attacksSincePound;     // fireballs, helpers and lasers since his last ground pound
     int laughsSinceRealMove;   // Dad's laughs since Rusty's last real move (fireballs, helpers, laser or ground pound)
@@ -51,7 +52,7 @@ public partial class Boss : Node2D
     /// <summary>He's TIRED after 2 attacks in a row: only a ground pound (or a laugh) works until he has pounded.</summary>
     public bool IsTired => DriverControlled && attacksSincePound >= AttacksBeforeHeMustPound;
     /// <summary>Dad can take over (or give an order) any time, except while he flies in, flies away or blows up.</summary>
-    public bool CanBeDriven => state is not (State.Entering or State.Exploding or State.Defeated or State.FlyingAway);
+    public override bool CanBeDriven => state is not (State.Entering or State.Exploding or State.Defeated or State.FlyingAway);
     /// <summary>Fireballs, helpers and lasers since his last ground pound (the self-test reads this).</summary>
     public int AttacksSincePound => attacksSincePound;
     /// <summary>True if Dad's blue cap was drawn in the last frame (the self-test reads this).</summary>
@@ -63,10 +64,7 @@ public partial class Boss : Node2D
     /// <summary>True when Dad's cap flew off as its own piece when he blew up (the self-test reads this).</summary>
     public bool CapFlewOff => explosion?.HasPart("cap") == true;
 
-    public float GroundY;
-    public float WorldSpeed;   // so his pieces slide along with the ground after he blows up
-    public float TargetX;      // where Bolt-E is, so he can aim at it
-    public int Health { get; private set; } = MaxHealth;
+    // (GroundY, WorldSpeed, TargetX, Health and Phase are in BossBase.cs)
 
     /// <summary>What he dresses up in for the world he's in: a party hat, cool sunglasses, a bobble hat or a space helmet.</summary>
     public BossOutfit Outfit;
@@ -82,33 +80,26 @@ public partial class Boss : Node2D
     /// </summary>
     public bool SunglassesUp => state is State.Dizzy or State.PoundRise or State.Hurt or State.Exploding or State.Defeated;
 
-    /// <summary>1 = normal, 2 = ANGRY, 3 = FURIOUS</summary>
-    public int Phase => Health > 4 ? 1 : Health > 2 ? 2 : 3;
-
     // Things he does that the rest of the game needs to know about
+    // (GotAngry, Laughed, Popped, BlewUp and PieceBounced are in BossBase.cs: every boss has them)
     public event Action<Vector2, float>? Fired;          // a fireball comes out here, going left (-1) or right (1)
     public event Action? Warned;                          // he's about to do a ground pound!
     public event Action<float>? Slammed;                  // he landed a ground pound at this x
     public event Action<Vector2, float>? LaserFired;      // a laser starts here, going left (-1) or right (1)
     public event Action<Vector2>? HelperDropped;          // a Pup-Bot helper drops out here
-    public event Action<int>? GotAngry;                   // he moved to phase 2 or 3
-    public event Action? Laughed;                         // HA HA HA!
-    public event Action<Vector2>? Popped;                 // a little explosion while he's breaking down
-    public event Action? BlewUp;                          // the big KABOOM at the very end
-    public event Action<bool>? PieceBounced;              // one of his pieces hit the ground (true = a big piece)
 
     /// <summary>He can only be stomped while he's dizzy after a ground pound.</summary>
-    public bool CanBeStomped => state == State.Dizzy;
+    public override bool CanBeStomped => state == State.Dizzy;
     /// <summary>Bumping into him hurts at these times. (While dizzy he's harmless: go stomp him!)</summary>
-    public bool IsDangerous => state is State.Laughing or State.Shooting or State.DroppingHelpers or State.Laser
-                                     or State.PoundSlam or State.GettingAngry or State.WaitingForDriver;
+    public override bool IsDangerous => state is State.Laughing or State.Shooting or State.DroppingHelpers or State.Laser
+                                              or State.PoundSlam or State.GettingAngry or State.WaitingForDriver;
     /// <summary>True once his health reaches 0 (he's breaking down or blown up).</summary>
-    public bool IsBeaten => state is State.Exploding or State.Defeated;
-    public bool HasBlownUp => state == State.Defeated;
-    public bool Finished => (state == State.Defeated && stateTime > 3.5f) || (state == State.FlyingAway && Position.Y < -400);
-    public string CurrentMove => state.ToString();
+    public override bool IsBeaten => state is State.Exploding or State.Defeated;
+    public override bool HasBlownUp => state == State.Defeated;
+    public override bool Finished => (state == State.Defeated && stateTime > 3.5f) || (state == State.FlyingAway && Position.Y < -400);
+    public override string CurrentMove => state.ToString();
 
-    public Rect2 Hitbox
+    public override Rect2 Hitbox
     {
         get
         {
@@ -117,7 +108,6 @@ public partial class Boss : Node2D
             return new Rect2(Position + new Vector2(-size.X / 2, -size.Y), size);
         }
     }
-    public float Top => Hitbox.Position.Y;
 
     // ---- Colors ----
     static readonly Color Orange = new(0.97f, 0.58f, 0.12f);
@@ -162,18 +152,12 @@ public partial class Boss : Node2D
         Scale = new Vector2(Size, Size);
     }
 
-    /// <summary>Ouch! Called when Bolt-E lands on his head.</summary>
-    public void Stomp()
-    {
-        if (!CanBeStomped) return;
-        LoseHealth(1);
-    }
-
     /// <summary>
     /// Ouch! He loses some health and gets hurt. With no health left he shakes, pops and blows up.
-    /// (A stomp takes 1. The self-test calls this too, so it doesn't have to wait for him to get dizzy 6 times.)
+    /// (A stomp takes 1: see Stomp in BossBase.cs. The self-test calls this too, so it doesn't have to wait for him to
+    /// get dizzy 6 times.)
     /// </summary>
-    public void LoseHealth(int amount)
+    public override void LoseHealth(int amount)
     {
         Health = Math.Max(0, Health - amount);
         if (Health <= 0)
@@ -188,7 +172,7 @@ public partial class Boss : Node2D
     }
 
     /// <summary>When Bolt-E crashes, Big Rusty flies away.</summary>
-    public void FlyAway()
+    public override void FlyAway()
     {
         if (!IsBeaten) ChangeState(State.FlyingAway);
     }
@@ -198,12 +182,12 @@ public partial class Boss : Node2D
     /// and waits holdSeconds before attacking again, so Bolt-E has time to put himself back together.
     /// (Not while he's dizzy, so he never steals your chance to stomp him!)
     /// </summary>
-    public void Taunt(float holdSeconds)
+    public override void Taunt(float holdSeconds)
     {
         if (state is State.Entering or State.Hurt or State.GettingAngry or State.Dizzy
                   or State.Exploding or State.Defeated or State.FlyingAway) return;
         holdAttacks = holdSeconds;
-        Laughed?.Invoke();
+        TellLaughed();
         ChangeState(State.Recovering);
     }
 
@@ -213,7 +197,7 @@ public partial class Boss : Node2D
     /// Dad (or Mom) takes over! From now on Big Rusty waits for orders (with thinking dots over his head).
     /// The attacks he did by himself before don't count, so Dad's first order is never "TIRED!".
     /// </summary>
-    public void TakeControl()
+    public override void TakeControl()
     {
         DriverControlled = true;
         attacksSincePound = 0;
@@ -228,7 +212,7 @@ public partial class Boss : Node2D
     ///     and only 2 laughs in a row: then he has to do a real move first ("Wait..."). Dad picks one, or after
     ///     3 seconds his own brain does. So laughing over and over can never stop the fight.
     /// </summary>
-    public DriveAnswer Request(BossMove move)
+    public override DriveAnswer Request(BossMove move)
     {
         if (state != State.WaitingForDriver) return DriveAnswer.Busy;
         if (move == BossMove.Laugh && (laughCooldown > 0 || laughsSinceRealMove >= LaughsInARow)) return DriveAnswer.Busy;
@@ -300,10 +284,10 @@ public partial class Boss : Node2D
                 Warned?.Invoke();
                 break;
             case State.Laughing:
-                Laughed?.Invoke();
+                TellLaughed();
                 break;
             case State.GettingAngry:
-                GotAngry?.Invoke(Phase);
+                TellGotAngry(Phase);
                 break;
             case State.Dizzy:
                 attacksSincePound = 0; // a ground pound landed: he's not tired any more
@@ -503,7 +487,7 @@ public partial class Boss : Node2D
                 {
                     popTimer = 0.17f;
                     var box = Hitbox;
-                    Popped?.Invoke(box.Position + new Vector2((float)GD.RandRange(0, box.Size.X), (float)GD.RandRange(0, box.Size.Y)));
+                    TellPopped(box.Position + new Vector2((float)GD.RandRange(0, box.Size.X), (float)GD.RandRange(0, box.Size.Y)));
                 }
                 if (stateTime > 1.6f) BlowUp();
                 break;
@@ -536,12 +520,7 @@ public partial class Boss : Node2D
         Position = stateTime < FloatBackSeconds ? moveFrom.Lerp(spot, Smooth(stateTime / FloatBackSeconds)) : spot;
     }
 
-    /// <summary>Makes movement start and stop gently instead of jerking.</summary>
-    static float Smooth(float t)
-    {
-        t = Mathf.Clamp(t, 0, 1);
-        return t * t * (3 - 2 * t);
-    }
+    // (Smooth, which makes movement start and stop gently, is in BossBase.cs)
 
     void BlowUp()
     {
@@ -569,8 +548,8 @@ public partial class Boss : Node2D
             parts.Insert(4, new RobotPart("hat", new Vector2(0, -170), 20, DrawOutfit)); // (drawn just after the head)
         }
         explosion = new RobotExplosion(parts, new Vector2(0, -75), 0, (GroundY - Position.Y) / Size, Orange,
-                                       onBounce: bigPiece => PieceBounced?.Invoke(bigPiece));
-        BlewUp?.Invoke();
+                                       onBounce: TellPieceBounced);
+        TellBlewUp();
     }
 
     // ---------- Drawing (everything is drawn at size 1, facing left; Scale makes it big and turns it around) ----------

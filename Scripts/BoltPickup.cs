@@ -8,6 +8,14 @@ public partial class BoltPickup : Node2D
     public const float Radius = 13f;
     float time = (float)GD.RandRange(0.0, 10.0);
 
+    /// <summary>
+    /// Most bolts just float. A bolt that VROOMBA spits back out flies with this speed (pixels per second), falls,
+    /// and stops when it gets down to LandY.
+    /// </summary>
+    public Vector2 Velocity;
+    public float LandY;
+    const float FlyingGravity = 1600f;
+
     /// <summary>Does this bolt touch the box? (We're generous: a little extra reach.)</summary>
     public bool Touches(Rect2 box)
     {
@@ -17,7 +25,20 @@ public partial class BoltPickup : Node2D
 
     public override void _Process(double delta)
     {
-        time += (float)delta;
+        float dt = (float)delta;
+        time += dt;
+        if (Velocity != Vector2.Zero)
+        {
+            // Flying out of VROOMBA like a fountain! It bounces off the edges of the screen, so it stays in the arena.
+            Velocity.Y += FlyingGravity * dt;
+            Position += Velocity * dt;
+            if ((Position.X < 40 && Velocity.X < 0) || (Position.X > 1240 && Velocity.X > 0)) Velocity.X = -Velocity.X;
+            if (Velocity.Y > 0 && Position.Y >= LandY)
+            {
+                Position = new Vector2(Position.X, LandY); // landed: now it floats, like every bolt
+                Velocity = Vector2.Zero;
+            }
+        }
         QueueRedraw();
     }
 

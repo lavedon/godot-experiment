@@ -3,21 +3,27 @@ using Godot;
 /// <summary>
 /// DAD DRIVES BIG RUSTY! (This is more of Main: "partial" means one class spread over several files.)
 ///
-/// When Big Rusty shows up, Dad (or Mom) can press a number key on the keyboard to take over:
-///   1 = fireballs, 2 = drop Pup-Bot helpers (once he's ANGRY), 3 = GROUND POUND, 4 = giant laser (only when FURIOUS),
-///   H = "HA HA HA!"
+/// Normally the computer drives Big Rusty, just like always. But plug in a SECOND game controller, and in a boss fight
+/// Dad (or Mom) can press one of its buttons to take over:
+///   X = fireballs, Y = drop Pup-Bot helpers (once he's ANGRY), A = GROUND POUND, B = giant laser (only when FURIOUS),
+///   LB or RB = "HA HA HA!"
 /// "DAD IS DRIVING BIG RUSTY!" shows, Rusty laughs and puts on a little blue cap, and his bar says "BIG RUSTY (DAD)".
 /// Orders only work while three thinking dots bob over his head (he's waiting for an order); otherwise it says "Wait...".
 /// Fair-play rules keep the fight winnable (they live in Boss.Request): after 2 attacks he's TIRED and only the ground
 /// pound works, and after every ground pound he's dizzy, so Bolt-E can stomp him. Dad can make him laugh only 2 times
 /// in a row (then a real move has to come first), so laughing can't stop the fight. If Dad picks nothing for 3 seconds,
-/// Rusty's own brain picks the next move. The kid keeps playing on the controller exactly like always.
+/// Rusty's own brain picks the next move.
+/// The FIRST controller is always Bolt-E's (the kid's: see PickControllerOne in Main.cs). The second controller never
+/// moves Bolt-E: it only drives Big Rusty, and only in a boss fight. If nobody touches it, the computer keeps driving,
+/// so a spare controller lying around changes nothing. Only a real game controller can drive him: a phantom joystick
+/// or a steering wheel that Godot doesn't know does nothing (see PadIsKnown in Main.cs).
+/// Dad's tip and his "TIRED! Press A!" words are made from DriveButtons, so they stay right if you swap the buttons.
 /// </summary>
 public partial class Main
 {
     const string DriverName = "DAD"; // change to MOM, GRANDMA...
 
-    // ---- Dad's little order words ("Wait...", "TIRED! Press 3!", "Not yet!") (try changing these!) ----
+    // ---- Dad's little order words ("Wait...", "TIRED! Press A!", "Not yet!") (try changing these!) ----
     const int OrderWordsSize = 28;            // how big they are
     const float OrderWordsAbove = 260f;       // how far above Big Rusty they pop up
     const float SameWordsAgainAfter = 0.5f;   // pressing again sooner doesn't stack the same words on top of each other
@@ -27,43 +33,101 @@ public partial class Main
 
     static readonly Color DriverOrange = new(1f, 0.6f, 0.15f);
 
-    /// <summary>Which key asks Big Rusty for which move. (The keys themselves are set up in SetUpControls.)</summary>
-    static readonly (string Action, BossMove Move)[] DriveKeys =
+    /// <summary>
+    /// Which button on the second controller asks Big Rusty for which move. Every other button does nothing.
+    /// (Try swapping them around! Dad's tip and his "TIRED!" words follow along.)
+    /// </summary>
+    static readonly (JoyButton Button, BossMove Move)[] DriveButtons =
     {
-        ("drive_fireballs", BossMove.Fireballs), // 1
-        ("drive_helpers", BossMove.Helpers),     // 2
-        ("drive_pound", BossMove.Pound),         // 3
-        ("drive_laser", BossMove.Laser),         // 4
-        ("drive_laugh", BossMove.Laugh),         // H
+        (JoyButton.X, BossMove.Fireballs),
+        (JoyButton.Y, BossMove.Helpers),
+        (JoyButton.A, BossMove.Pound),
+        (JoyButton.B, BossMove.Laser),
+        (JoyButton.LeftShoulder, BossMove.Laugh),  // LB
+        (JoyButton.RightShoulder, BossMove.Laugh), // RB
     };
+
+    /// <summary>What the buttons are called: the letters printed on the controller.</summary>
+    static readonly Dictionary<JoyButton, string> ButtonNames = new()
+    {
+        [JoyButton.X] = "X",
+        [JoyButton.Y] = "Y",
+        [JoyButton.A] = "A",
+        [JoyButton.B] = "B",
+        [JoyButton.LeftShoulder] = "LB",
+        [JoyButton.RightShoulder] = "RB",
+    };
+
+    /// <summary>Dad's tip names the moves in this order, with these words.</summary>
+    static readonly (BossMove Move, string Words)[] TipWords =
+    {
+        (BossMove.Fireballs, "fireballs"),
+        (BossMove.Helpers, "helpers"),
+        (BossMove.Pound, "POUND"),
+        (BossMove.Laser, "laser"),
+        (BossMove.Laugh, "laugh"),
+    };
+
+    /// <summary>
+    /// The name of the first button in DriveButtons that asks for this move, like "A" for the ground pound
+    /// (or null if no button does). A button that isn't in ButtonNames gets Godot's name for it, like "DpadUp".
+    /// </summary>
+    static string? ButtonFor(BossMove move)
+    {
+        foreach (var (button, buttonMove) in DriveButtons)
+            if (buttonMove == move) return ButtonNames.GetValueOrDefault(button, button.ToString());
+        return null;
+    }
+
+    /// <summary>
+    /// Dad's tip when he takes over, made from DriveButtons: each move once, with its first button, like
+    /// "X fireballs  Y helpers  A POUND  B laser  LB laugh". (A move that no button does isn't in it.)
+    /// </summary>
+    static string DriveTip()
+    {
+        var tip = new List<string>();
+        foreach (var (move, words) in TipWords)
+            if (ButtonFor(move) is string button) tip.Add($"{button} {words}"); // like "X fireballs"
+        return string.Join("  ", tip);
+    }
+
+    /// <summary>What a TIRED Big Rusty says: which button makes him do his ground pound, like "TIRED! Press A!".</summary>
+    static string TiredWords() => ButtonFor(BossMove.Pound) is string pound ? $"TIRED! Press {pound}!" : "TIRED!";
+
+    int driverPad = -1; // the second controller that's driving Big Rusty in this fight (-1 = nobody)
 
     /// <summary>True when Dad was driving Big Rusty and the game ended before Bolt-E beat him: "DAD GOT YOU!"</summary>
     bool DriverGotYou => boss is { DriverControlled: true } && !boss.IsBeaten;
 
     /// <summary>
-    /// Called with every key press. In a Big Rusty fight, the keys 1 to 4 and H drive him: the first press takes over,
-    /// and every press asks him for a move. Returns true if it was one of Dad's keys (then nothing else happens with it).
+    /// Everything a SECOND controller does (any controller that isn't Bolt-E's: see _UnhandledInput). It never moves
+    /// Bolt-E. It only drives Big Rusty, and only in a boss fight: the first button press takes over, and every press
+    /// asks him for a move. Letting go of a button, the stick, and the buttons that aren't Dad's do nothing.
+    /// A phantom controller that Godot doesn't know (a pretend joystick, a steering wheel...) can't drive him at all.
+    /// (Only Big Rusty can be driven: VROOMBA's CanBeDriven is always false, so in his fights these buttons do nothing.)
     /// </summary>
-    bool DriverKeyPressed(InputEvent e)
+    void SecondControllerInput(InputEvent e)
     {
-        if (state != GameState.Playing || boss is not { CanBeDriven: true } || !BossFightActive) return false;
-        foreach (var (action, move) in DriveKeys)
+        if (e is not InputEventJoypadButton { Pressed: true } press) return;
+        if (!PadIsKnown(press.Device)) return; // (only a real game controller can drive Big Rusty)
+        if (state != GameState.Playing || boss is not { CanBeDriven: true } || !BossFightActive) return;
+        foreach (var (button, move) in DriveButtons)
         {
-            if (!e.IsActionPressed(action)) continue;
-            if (!boss.DriverControlled) TakeOverBigRusty();
+            if (press.ButtonIndex != button) continue;
+            if (!boss.DriverControlled) TakeOverBigRusty(press.Device);
             GiveOrder(move);
-            return true;
+            return;
         }
-        return false;
     }
 
-    /// <summary>Dad takes over! Big words, a laugh, a blue cap on Rusty's head, and Dad's keys as a tip.</summary>
-    void TakeOverBigRusty()
+    /// <summary>Dad takes over! Big words, a laugh, a blue cap on Rusty's head, and Dad's buttons as a tip.</summary>
+    void TakeOverBigRusty(int pad)
     {
+        driverPad = pad;
         boss!.TakeControl();
-        hud.ShowBanner($"{DriverShortName} IS DRIVING {Boss.DisplayName}!", DriverOrange);
-        hud.SetBossBarName($"{Boss.DisplayName} ({DriverShortName})");
-        hud.ShowHint("1 fireballs  2 helpers  3 POUND  4 laser  H laugh");
+        hud.ShowBanner($"{DriverShortName} IS DRIVING {boss.DisplayName}!", DriverOrange);
+        hud.SetBossBarName($"{boss.DisplayName} ({DriverShortName})");
+        hud.ShowHint(DriveTip());
         sounds.Play(Sfx.Laugh);
     }
 
@@ -80,15 +144,21 @@ public partial class Main
                 words = "Wait...";
                 break;
             case DriveAnswer.Tired:
-                words = "TIRED! Press 3!";
+                words = TiredWords(); // "TIRED! Press A!"
                 break;
             default: // NotYet
                 words = "Not yet!";
                 break;
         }
-        // (Pressing a key again and again while he's busy doesn't pile up a stack of the same words)
+        // (Pressing a button again and again while he's busy doesn't pile up a stack of the same words)
         if (popups.JustAdded(words, SameWordsAgainAfter)) return;
         popups.Add(words, OrderWordsSpot(words), DriverOrange, OrderWordsSize);
+    }
+
+    /// <summary>Bolt-E stomped Dad's Big Rusty: Dad's controller gives a short buzz too, so he feels the hit!</summary>
+    void BuzzTheDriver()
+    {
+        if (driverPad >= 0) Buzz(driverPad, 0.5f, 0.5f, 0.2f);
     }
 
     /// <summary>

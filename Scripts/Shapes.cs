@@ -52,13 +52,15 @@ public static class Shapes
         canvas.DrawColoredPolygon(new[] { new Vector2(outer, top), new Vector2(inner, top), new Vector2(inner, top + size.Y * 0.6f) }, screen);
     }
 
+    /// <summary>The 10 corner points of a star, made once and used again and again (like the oval's points above).</summary>
+    static readonly Vector2[] starScratch = new Vector2[10];
+
     /// <summary>A 5-pointed star (points go out to "size", the dents go in to less than half).</summary>
     public static void Star(CanvasItem canvas, Vector2 center, float size, float rotation, Color color)
     {
-        var points = new Vector2[10];
-        for (int i = 0; i < 10; i++)
-            points[i] = center + Vector2.Up.Rotated(rotation + i * Mathf.Pi / 5f) * (i % 2 == 0 ? size : size * 0.45f);
-        canvas.DrawColoredPolygon(points, color);
+        for (int i = 0; i < starScratch.Length; i++)
+            starScratch[i] = center + Vector2.Up.Rotated(rotation + i * Mathf.Pi / 5f) * (i % 2 == 0 ? size : size * 0.45f);
+        canvas.DrawColoredPolygon(starScratch, color);
     }
 
     /// <summary>An "X" shape, used when the robot bonks into something.</summary>

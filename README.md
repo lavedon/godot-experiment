@@ -7,6 +7,8 @@ An endless runner starring **Bolt-E**, a tiny cute robot with headphones riding 
 - **Xbox controller** (or any game controller): **A, B, X, Y** or **D-pad up** to jump, **START** to start or play again.
   The controller rumbles when Bolt-E blows up, and buzzes a tiny bit for each bolt.
   (On the menus, D-pad up never starts a game, so pressing the D-pad a bit crooked while picking a look is fine.)
+  The **first controller plugged in is Bolt-E's**. A second controller never moves Bolt-E: it can only drive Big Rusty
+  (see [Dad drives Big Rusty](#dad-drives-big-rusty) below), and only Bolt-E's controller buzzes for bolts and crashes.
 - Press jump again in the air to **double jump** (Bolt-E does a flip!)
 - Let go early for a small hop
 - Grab golden bolts for +10 points each
@@ -16,7 +18,7 @@ An endless runner starring **Bolt-E**, a tiny cute robot with headphones riding 
 - **Rainbow ? boxes**: sometimes a rainbow **?** box floats over the road. **Jump into it!** A slot machine over
   Bolt-E's head spins and lands on a power: **MEGA BOLT-E**, the **BOLT MAGNET** or the **ROCKET BOARD**.
   See [Mystery ? boxes](#mystery--boxes) below.
-- **World Tour**: every time you beat Big Rusty, Bolt-E rides into a new world: **Candy Land**, **Night City**,
+- **World Tour**: every time you beat a boss, Bolt-E rides into a new world: **Candy Land**, **Night City**,
   **Snowy Peaks**, then **THE MOON** (with floaty moon jumps!), and all the way around again.
   See [World Tour](#world-tour) below.
 - **Bolt Bank & looks**: every bolt you ever grab goes into Bolt-E's **Bolt Bank** (top-left of the menus). It never
@@ -27,16 +29,19 @@ An endless runner starring **Bolt-E**, a tiny cute robot with headphones riding 
   **who's playing**. Press **TAB** past the last name (or click the name) to type a **new player**.
   **Flags on the road** show where everyone's best ride ended: zoom past DAD's flag for **YOU PASSED DAD!**, and beat
   the Best score for **NEW HIGH SCORE!** right away. See [Family race](#family-race) below.
-- **Dad drives Big Rusty**: in a Big Rusty fight, Dad (or Mom) can press **1 to 4** or **H** on the keyboard to pick
-  Big Rusty's attacks, while the kid keeps playing on the controller. See [Dad drives Big Rusty](#dad-drives-big-rusty) below.
+- **Dad drives Big Rusty**: normally the computer drives Big Rusty. Plug in a **second controller**, and in a Big Rusty
+  fight Dad (or Mom) can press its buttons to pick Big Rusty's attacks, while the kid keeps playing on the first
+  controller. See [Dad drives Big Rusty](#dad-drives-big-rusty) below.
 - Jump over crates and cones. Ride **under** the grumpy purple drones!
 - **Stomp bad robots** by landing on their heads (like Mario!). Bumping into them from the side is a crash.
   - **Pup-Bot** (from `enemy-1.png`) zooms toward you on its wheels.
   - **Egg-Bot** (from `enemy-2.png`) hops up and down, so time your stomp!
   - Stomps in a row without landing score 25, 50, 100, then 200. Hold jump while landing to bounce higher.
-- **Boss: BIG RUSTY** (from `enemy-boss-who-can-shoot.png`) shows up at 400 m, then every 700 m after you beat him.
-  The world stops and it's an **arena fight**: ride left and right with the **arrow keys**, **A / D**,
-  or the controller's **D-pad / left stick**. He has 6 health and gets angrier as he gets hurt:
+- **Bosses** show up at 400 m, then every 700 m after you beat one (**WARNING!  BOSS AHEAD!**). There are two, and
+  they **take turns**: **BIG RUSTY** and **VROOMBA**, the giant robot vacuum (see [VROOMBA](#vroomba-the-second-boss)
+  below). The world stops and it's an **arena fight**: ride left and right with the **arrow keys**, **A / D**,
+  or the controller's **D-pad / left stick**. Every boss has 6 health and gets angrier as he gets hurt.
+- **Boss: BIG RUSTY** (from `enemy-boss-who-can-shoot.png`):
   - **Phase 1:** shoots bouncing fireballs (jump over them), then does a **GROUND POUND**. His shadow follows you,
     turns red, and he slams down. Ride out of the way and jump the shockwaves!
   - **Phase 2, ANGRY** (steaming ears): more fireballs, and he drops **Pup-Bot helpers** that chase you.
@@ -44,11 +49,17 @@ An endless runner starring **Bolt-E**, a tiny cute robot with headphones riding 
     (stay on the ground!), then **two** ground pounds in a row.
   - After a ground pound he's **dizzy** (spinning eyes, stars). That's when you **jump on his head**!
   - Six stomps and he shakes, pops, and blows apart (+250 points and a rainbow of bolts).
+- **Boss: VROOMBA**, a giant robot vacuum (drawn in code): he **ZOOMS** across the ground (jump over him!), **BONKS**
+  into the wall and lands upside down, dizzy: that's when you **jump on him**! His vacuum **SUCKS** (ride away!) and
+  gobbles up the bolts, and when he's ANGRY he spits out **dust bunnies**. Stomp him and the bolts fly back out!
 - **Enter** also starts or restarts the game
 - **M** (or **BACK** on a controller): music on/off (the game remembers your choice)
 - Boss battles play **Titan Circuit**, an original 32-bar chiptune with a charging minor-key riff, galloping bass,
   heavy drums, a half-time bridge and a soaring final section. It loops smoothly, speeds up as the boss gets angry,
   and crossfades back to the running theme after victory. M / BACK and battery rebuilds work with both themes.
+- **F11**: switch between full screen (the game always starts full screen) and a window
+- **F9**: move the game to the other screen. With a TV or second monitor plugged in, the game starts on the
+  TV by itself (so the laptop screen stays free). F9 swaps, and the game remembers your choice for next time.
 
 ## Spare batteries
 - Bolt-E starts every game with **1 spare battery** and can carry up to **3**. They're the green batteries under "Bolts".
@@ -64,6 +75,8 @@ An endless runner starring **Bolt-E**, a tiny cute robot with headphones riding 
 - **In a Big Rusty fight**, Big Rusty laughs "HA HA HA!" and floats back to his spot. His fireballs, shockwaves and
   lasers vanish, and his health stays where it was. He waits until Bolt-E is back before attacking again.
   (If he was dizzy, he stays dizzy, so you might still get to stomp him!)
+- **In a VROOMBA fight**, VROOMBA does a happy little **BEEP BOOP!** spin, rolls to his spot, and also waits until
+  Bolt-E is back. Dust bunnies close by puff away. (If he was dizzy, he stays dizzy.)
 - While Bolt-E is in pieces, jump and START do nothing (so mashing buttons can't skip the rebuild). M / BACK still work.
 - **No spare left?** Then a crash is game over, like always. If you used batteries, the results card says
   **Out of batteries!** (unless it's a **NEW HIGH SCORE!**)
@@ -92,9 +105,9 @@ An endless runner starring **Bolt-E**, a tiny cute robot with headphones riding 
 - Scores run higher with powers (more bolts, SMASH! and SPLAT! points, and more meters on the rocket board).
 
 ## World Tour
-- Every game starts in **Sunny Hills**. Beat Big Rusty and **YOU BEAT BIG RUSTY!** shows first. About 2 seconds later
-  **WELCOME TO CANDY LAND!** pops up with a sparkly jingle, and the sky, sun, clouds, hills and ground smoothly change
-  color over 3 seconds. Every Big Rusty win takes you one world further:
+- Every game starts in **Sunny Hills**. Beat a boss and **YOU BEAT BIG RUSTY!** (or **YOU BEAT VROOMBA!**) shows first.
+  About 2 seconds later **WELCOME TO CANDY LAND!** pops up with a sparkly jingle, and the sky, sun, clouds, hills and
+  ground smoothly change color over 3 seconds. Every boss win (Big Rusty or VROOMBA) takes you one world further:
   1. **Sunny Hills**: the green hills Robot Dash always had.
   2. **Candy Land**: a pink sky, giant lollipops, and chocolate ground with pink frosting and rainbow sprinkles.
   3. **Night City**: twinkling stars, a moon, skyscrapers with glowing windows, and a road with yellow dashes.
@@ -113,7 +126,7 @@ An endless runner starring **Bolt-E**, a tiny cute robot with headphones riding 
 - The results card says how far you got, like **You rode all the way to NIGHT CITY!**
 - **Postcards** on the menus (on the left, next to the cards) show every world you have reached. Worlds you reached
   for the very first time get a gold **NEW!** ribbon, and worlds you haven't reached yet are grey with a **?**.
-- A new game always starts in Sunny Hills again. Reaching the Moon takes 4 Big Rusty wins in one game:
+- A new game always starts in Sunny Hills again. Reaching the Moon takes 4 boss wins in one game:
   spare batteries help!
 
 ## Bolt Bank & looks
@@ -126,7 +139,7 @@ An endless runner starring **Bolt-E**, a tiny cute robot with headphones riding 
   player's look. (The A and D keys don't change looks on the menus: there, "(A)" means the controller's A button.
   In a Big Rusty fight A / D still ride left and right.)
 - A look you haven't won yet shows as a **dark shadow** of Bolt-E, with a padlock and what it takes:
-  **Need 120 more bolts!**, **Beat BIG RUSTY 3 times (1/3)** or **Ride to THE MOON!**
+  **Need 120 more bolts!**, **Beat 3 bosses (1/3)** or **Ride to THE MOON!**
 - **After a game** the Bolt Bank counts up with ticking sounds (higher and higher). Passing a prize means a party:
   **NEW LOOK!**, confetti, a jingle, and Bolt-E puts himself back together wearing it.
   If you start the next game too fast, the party simply happens on the next menu instead: **it's never lost**.
@@ -152,7 +165,7 @@ An endless runner starring **Bolt-E**, a tiny cute robot with headphones riding 
   | GOLD BOLT-E | 4,000 bolts | all gold |
   | KING BOLT-E | 5,500 bolts | gold, a crown, a rainbow board and a rainbow trail |
   | RAINBOW | 7,500 bolts | rainbow eyes, a rainbow board and a rainbow trail |
-  | RUSTY JR. | beat Big Rusty 3 times (all games together) | dressed like Big Rusty! |
+  | RUSTY JR. | beat 3 bosses: Big Rusty or VROOMBA, all games together | dressed like Big Rusty! |
   | ASTRONAUT | ride all the way to THE MOON | a space helmet, and he rides a cloud |
 - When Bolt-E blows up, his hat flies off as its own bouncing piece (and flies back on last, with his head).
 - Light-colored looks (Bubblegum, Gold, King, Rusty Jr., Astronaut) get a thin dark outline, so Bolt-E is still easy
@@ -189,37 +202,89 @@ An endless runner starring **Bolt-E**, a tiny cute robot with headphones riding 
   game closed) with the SQL in [The database](#the-database) below, then "Write Changes".
 - "Sam" and "sam" are the same person, but a typo makes a new person ("Sma"). The same SQL fixes that too.
 
-## Dad drives Big Rusty
-- When **BIG RUSTY** shows up, Dad (or Mom) can grab the **keyboard** and drive him, while the kid keeps playing on the
-  controller exactly like always. Press one of Dad's keys to take over: **DAD IS DRIVING BIG RUSTY!** shows, Rusty laughs
-  and puts on a little **blue cap with a star**, his bar says **BIG RUSTY (DAD)**, and a tip shows Dad's keys.
-- Dad's keys (the number keys on top of the keyboard, or on the number pad):
+## VROOMBA (the second boss)
+VROOMBA is a giant robot vacuum: a big, flat, dark dome on wheels, with a shiny silver rim, a glowing blue **CLEAN**
+button on top, two big sensor eyes on his front bumper, and two spinning side brushes. He's only 75 pixels tall, so
+Bolt-E can **jump right over him**.
+- **The bosses take turns.** Game 1 starts with BIG RUSTY, game 2 with VROOMBA, game 3 with Big Rusty again, and so on
+  (counting from when the game was opened). After that, every boss fight in a game is the other boss. So you meet
+  VROOMBA in every other game, even if you only ever reach the first fight.
+- He rolls in from the right, says **BEEP BOOP!**, and then it's the same kind of fight as Big Rusty's: 6 health, his
+  name on the health bar, **VROOMBA IS ANGRY!** and **VROOMBA IS FURIOUS!**, +250 and the rainbow of bolts when you beat
+  him (**YOU BEAT VROOMBA!**), and then on to the next world of the World Tour.
+- **His moves:**
+  - **ZOOM!** He revs up (a big red **!** over him, a rising engine sound, dust flying), then dashes across the arena
+    along the ground and **BONKS** into the wall. **Jump over him!** Bumping into his side or front while he's revving
+    or zooming is a crash. (Tip: ride toward him and jump, then he whooshes by underneath quicker. Riding away from him
+    makes him take longer to pass under you: then double jump!)
+  - **BONK, then DIZZY.** Every zoom ends with a BONK: a thud, the screen shakes, he bounces back a little and flips
+    **upside down**, wheels in the air, spinning slowly, with dizzy stars. **That's when you jump on him!** Touching him
+    while he's dizzy never hurts. Stomped, he blinks, flips back over and rolls to the side far from Bolt-E (hopping
+    right over Bolt-E if he's in the way), then attacks again.
+  - **SUCK!** He turns on his vacuum: wind lines swirl into his mouth with a whooshing hum for 3 seconds. Bolt-E gets
+    pulled toward him: **ride away!** (The pull is slower than riding.) Touching him is a crash. Every loose bolt in
+    the arena flies into his mouth: **YUM!** But they're not lost: **stomp him and half of them fountain back out**
+    (grab them!), and when he's beaten all the rest come out. After the SUCK comes a ZOOM, always.
+  - **DUST BUNNIES** (when he's ANGRY): he spits out 2 fluffy grey dust bunnies with big eyes (3 when he's FURIOUS).
+    They hop after Bolt-E: **stomp them** (like Egg-Bots, for the stomp combo), but bumping into one is a crash.
+    Then he zooms.
+  - **TURBO** (when he's FURIOUS): his zooms are faster, and every other time he zooms there and back first. The last
+    zoom always bonks, so he always ends up dizzy (a bit shorter when he's FURIOUS, but never under 1.8 seconds).
+- **His plan:** first a ZOOM, then SUCK + ZOOM, again and again. ANGRY: DUST BUNNIES + ZOOM, ZOOM, SUCK + ZOOM. FURIOUS:
+  DUST BUNNIES + ZOOM, SUCK + ZOOM, ZOOM, all with TURBO zooms. Every attack ends with a BONK, so you always get your
+  chance to stomp him.
+- His eyes glow blue, then orange (ANGRY) and red (FURIOUS), and the CLEAN button turns red too. Beaten, he blows apart
+  into his lid, the button, the bumper, the brushes and the wheels, in a big cloud of dust.
+- **Nobody can drive VROOMBA** (only Big Rusty, see below): in his fights the second controller does nothing.
+- If Bolt-E runs out of batteries, VROOMBA rolls away happily.
 
-  | Key | Big Rusty does |
+## Dad drives Big Rusty
+- **With one controller (or none), the computer drives Big Rusty**, exactly like the original fight.
+- **Plug in a second controller** and Dad (or Mom) can drive him, while the kid keeps playing on the first controller
+  exactly like always. The title card says so: **2 controllers! The 1st one plays Bolt-E, and the 2nd one can drive
+  BIG RUSTY!**
+- **The first controller plugged in is Bolt-E's; plug in a second one to drive Big Rusty.** If they're swapped (the
+  kid's buttons drive Big Rusty and Dad's move Bolt-E), swap the controllers, or unplug both and plug Bolt-E's in first.
+  (Some keyboards, mice and steering wheels pretend to be a controller too. They never steal Bolt-E, because a real
+  game controller always comes first. They can't drive Big Rusty, and the title card doesn't count them.)
+- Bolt-E's controller is always the real controller with the lowest number, and that's on purpose: if the kid's
+  controller goes away for a moment (flat batteries, or it fell asleep), Dad's controller plays Bolt-E meanwhile, and
+  when the kid's comes back, Godot gives it the lowest free number again, so Bolt-E goes back to it all by himself.
+- If the title says 2 controllers but only one is plugged in (Steam with controller support can make a pretend copy), close Steam or turn off Steam Input for Robot Dash.
+- When **BIG RUSTY** shows up, press one of Dad's buttons on the second controller to take over: **DAD IS DRIVING BIG
+  RUSTY!** shows, Rusty laughs and puts on a little **blue cap with a star**, his bar says **BIG RUSTY (DAD)**, and a tip
+  shows Dad's buttons. If nobody touches the second controller, the computer keeps driving, so a spare controller lying
+  around changes nothing.
+- Dad's buttons (on the second controller):
+
+  | Button | Big Rusty does |
   |---|---|
-  | **1** | bouncing fireballs |
-  | **2** | drops Pup-Bot helpers (once he's ANGRY) |
-  | **3** | a GROUND POUND (two in a row when he's FURIOUS) |
-  | **4** | the giant laser (only when he's FURIOUS) |
-  | **H** | "HA HA HA!" |
+  | **X** | bouncing fireballs |
+  | **Y** | drops Pup-Bot helpers (once he's ANGRY) |
+  | **A** | a GROUND POUND (two in a row when he's FURIOUS) |
+  | **B** | the giant laser (only when he's FURIOUS) |
+  | **LB** or **RB** | "HA HA HA!" |
 - **Thinking dots:** when Rusty is ready for an order, three white dots (with a dark ring, so you can see them in front
-  of the sun and in the snow) bob over his head. That's the moment to press a key!
-  While he's busy (shooting, pounding, dizzy...) a key just says **Wait...**, and a move he isn't angry enough for yet
+  of the sun and in the snow) bob over his head. That's the moment to press a button!
+  While he's busy (shooting, pounding, dizzy...) a button just says **Wait...**, and a move he isn't angry enough for yet
   says **Not yet!** (Pressing again and again doesn't stack up the words, and they never float up over his health bar.)
 - **Fair-play rules**, so a 6-year-old can win:
-  - After **2 attacks** Rusty is **TIRED**: only the ground pound works (**TIRED! Press 3!**). Laughing is always
-    allowed, but only once every 2 seconds, and **only 2 laughs in a row**: then H says **Wait...** until Rusty has done
-    a real move (Dad's pick, or his own brain's after 3 seconds). So pressing H over and over can never stop the fight.
+  - After **2 attacks** Rusty is **TIRED**: only the ground pound works (**TIRED! Press A!**). Laughing is always
+    allowed, but only once every 2 seconds, and **only 2 laughs in a row**: then LB / RB says **Wait...** until Rusty has
+    done a real move (Dad's pick, or his own brain's after 3 seconds). So laughing over and over can never stop the fight.
   - After **every ground pound** he's dizzy, like always, so Bolt-E gets his chance to stomp him. His shadow still
-    follows Bolt-E and turns red before he slams down.
+    follows Bolt-E and turns red before he slams down. When Bolt-E stomps him, Dad's controller gives a little buzz too.
   - If Dad presses nothing for **3 seconds**, Rusty's own brain picks his next move, so the fight never stops.
   - When Bolt-E crashes, Rusty still laughs and waits until Bolt-E is back together.
 - After the giant laser Rusty is down low: he floats back up to his spot smoothly, even if Dad picks his next move
   right away.
 - Beat him and it's **YOU BEAT DAD'S BIG RUSTY!** with the usual +250 and the rainbow of bolts (and Dad's cap flies off
   when he blows up!). Lose the last battery while Dad drives him, and the results card says **DAD GOT YOU!**
-- Every new Big Rusty starts out driving himself: press a key again to take over.
-- Only these keys drive him. A controller can never drive Big Rusty, and the kid's buttons and keys work just like before.
+- Every new Big Rusty starts out driving himself: press a button on the second controller again to take over.
+- **VROOMBA can't be driven.** In a VROOMBA fight the second controller's buttons do nothing (no banner, no "Wait...").
+- **The second controller never moves Bolt-E**: its buttons don't jump, its stick and D-pad don't ride, and on the
+  menus it doesn't start games, switch the music, change looks or switch players. It only drives Big Rusty, only in a
+  boss fight, and only with the buttons above (its other buttons do nothing). The keyboard can't drive Big Rusty.
 - Want MOM or GRANDMA to drive? Change `DriverName` in `Scripts/Main.Driver.cs`.
 
 ## Running it
@@ -269,15 +334,23 @@ APPDATA="$S\appdata" LOCALAPPDATA="$S\localappdata" \
   'C:\my-coding-projects\godotPalaceRoomViewer\.tools\Godot_v4.7.2-stable_mono_win64\Godot_v4.7.2-stable_mono_win64_console.exe' \
   --headless --path . --fixed-fps 60 --quit-after 72000 --log-file "$S\godot.log" -- "--db=$S\selftest.db" --selftest
 ```
+During the self-test the boss that comes by itself is always Big Rusty (so the older tests always meet the boss they
+expect); the VROOMBA tests ask for VROOMBA, and one test checks the taking-turns rule like a real game. A few of the
+VROOMBA tests run the game 3 times as fast while they wait for his moves, so the self-test stays quick.
 Exit codes: **0** = everything passed, **1** = something failed, **2** = refused to start (bad `--db`),
 **3** = it took too long. A good run has no lines with `FAIL:`, `ERROR:`, `SCRIPT ERROR` or `Unhandled exception`
 in the output or in `godot.log`. The tests are in `Scripts/Main.SelfTest.cs`, and new features add theirs there.
 Just before the DONE line it also prints how many seconds of game time the tests took (the watchdog stops them at 900).
 (They expect the normal tuning numbers, so if you change a number like `StartingBatteries` or `MegaSeconds`,
-a world in `Worlds.cs`, a look in `Looks.cs`, a family race number in `Main.Family.cs`, or Big Rusty's
-`AttacksBeforeHeMustPound`, `DriverWaitBeforeAI` or `LaughsInARow`, some tests will say FAIL. Changing `DriverName`
+a world in `Worlds.cs`, a look in `Looks.cs`, a family race number in `Main.Family.cs`, Big Rusty's
+`AttacksBeforeHeMustPound`, `DriverWaitBeforeAI` or `LaughsInARow`, VROOMBA's numbers in `Vroomba.cs`, or Dad's
+`DriveButtons` (the words on the screen
+follow your buttons, but the tests press the normal ones), some tests will say FAIL. Changing `DriverName`
 to MOM, or a flag's `PoleHeight`, is fine: the tests use whatever is there.)
-The self-test only pretends to press Dad's keys: it never touches a real keyboard or controller.
+The self-test only pretends to press buttons: its pretend Bolt-E controller is device 99 and its pretend second controller
+(the one that drives Big Rusty) is device 98. It never touches a real keyboard or controller, and while it runs, real
+controllers being plugged in or out don't change anything. (One test pretends that controllers get plugged in and out,
+a phantom one too, to check that Bolt-E's controls follow the plugs.)
 Start each run with a fresh `selftest.db` (the commands above delete the old one). Test players' names start with T,
 like `TCOW`; if a test name was already used in that database, the test adds a number (`TCOW2`). (One test also saves a
 game called `Player` in the scratch database, to check that games without a name count as a person.)
@@ -291,7 +364,7 @@ The self-test also writes a listenable `titan-circuit.wav` beside its scratch da
 
 | File | What it does |
 |---|---|
-| `Scripts/Main.cs` | The game boss: draws the world (in the colors of the world you're in), speeds up, spawns obstacles and bolts, checks for bumps (every crash goes through `Bonk`), saves scores |
+| `Scripts/Main.cs` | The game boss: draws the world (in the colors of the world you're in), speeds up, spawns obstacles, bolts and the bosses (`SpawnBoss`), checks for bumps (every crash goes through `Bonk`), saves scores, and the controls: which controller is Bolt-E's (the first one plugged in, `PickControllerOne`), tying his controls to it (`BindControllerOne`), sending a second controller's presses to Big Rusty, and telling real controllers from phantom ones (`PadIsKnown`) |
 | `Scripts/Main.Batteries.cs` | Spare batteries: charging with bolts (1-UP!), the magic rebuild after a crash, blinking, puffing away dangers |
 | `Scripts/Main.PowerUps.cs` | Rainbow ? boxes: when a box comes, opening it, starting and ending powers, SMASH! and SPLAT!, the magnet pull, the rocket landing |
 | `Scripts/Main.Worlds.cs` | The World Tour: changing worlds after a Big Rusty win, the smooth color change, and drawing each world's special things (stars, moon, Earth, skyscrapers, mountains, lollipops, pine trees, sprinkles, road dashes, craters, snow, the night glow) |
@@ -301,7 +374,8 @@ The self-test also writes a listenable `titan-circuit.wav` beside its scratch da
 | `Scripts/Main.Looks.cs` | The Bolt Bank and the looks: loading a player's bank and look, changing looks on the menus, the count-up after a game, and the unlock parties and the first-launch "N NEW LOOKS!" note (which are never lost) |
 | `Scripts/Main.Family.cs` | The family race: who's playing (LB / RB, TAB), "GO, MAX!" and "DAD'S TURN!", the flags on the road and passing them, NEW HIGH SCORE! in the middle of a ride, fireworks, who's champ today, rounds, and "So close!" |
 | `Scripts/RecordFlag.cs` | A flag on the road: the pole, the waving cloth, the star or X eyes, the words, and tipping over |
-| `Scripts/Main.Driver.cs` | Dad drives Big Rusty: the keys 1 to 4 and H, taking over ("DAD IS DRIVING BIG RUSTY!"), giving orders ("Wait...", "TIRED! Press 3!", "Not yet!", which never pile up or float over his health bar), and who's driving (`DriverName`) |
+| `Scripts/Main.Vroomba.cs` | VROOMBA's side of the game: the bosses taking turns (`BossForFight`), what happens when VROOMBA does something (sounds, the wall-bonk shake, dust bunnies), his vacuum pulling Bolt-E and gobbling up the loose bolts (YUM!), and the bolts fountaining back out when he's stomped |
+| `Scripts/Main.Driver.cs` | Dad drives Big Rusty with a second controller (only a real one: phantom controllers can't): its buttons (X, Y, A, B, LB and RB in `DriveButtons`), taking over ("DAD IS DRIVING BIG RUSTY!", with a tip made from `DriveButtons`), giving orders ("Wait...", "TIRED! Press A!", "Not yet!", which never pile up or float over his health bar), Dad's buzz when Bolt-E stomps him, and who's driving (`DriverName`) |
 | `Scripts/BankBox.cs` | The Bolt Bank box in the top-left corner of the menus (the number, the gold hexagon and the bar to the next prize) |
 | `Scripts/LookPicker.cs` | The look picker under Bolt-E on the menus (the arrows, the look's name, the padlock and what it takes to win it) |
 | `Scripts/Main.SelfTest.cs` | Grown-up testing code: the headless self-test and all its checks |
@@ -310,22 +384,24 @@ The self-test also writes a listenable `titan-circuit.wav` beside its scratch da
 | `Scripts/PowerRoulette.cs` | The slot machine over Bolt-E's head (tick-tick-tick!) |
 | `Scripts/Robot.cs` | Bolt-E: jumping, gravity (and floaty Moon gravity, even when a new world comes in the middle of a jump), blinking, music notes, the booting face, growing giant (MEGA), the rocket board and parachute, the magnet, heart eyes, star eyes, drawing the robot, and his looks (hats, boards, trails, rainbow eyes and the dark outline) |
 | `Scripts/RobotExplosion.cs` | The crash: Bolt-E bursts into bouncing pieces, sparks, smoke, and dizzy stars (and flies back together in the magic rebuild). Smashed crates, cones and drones use it too |
-| `Scripts/Enemy.cs` | Pup-Bot and Egg-Bot: how they move, look, and get squashed |
+| `Scripts/Enemy.cs` | Pup-Bot, Egg-Bot and VROOMBA's dust bunnies: how they move, look, and get squashed |
+| `Scripts/BossBase.cs` | What every boss has: 6 health and the ANGRY and FURIOUS phases, stomping, when bumping into him hurts, flying away, the laugh when Bolt-E crashes, blowing up, and being driven (only Big Rusty can be) |
 | `Scripts/Boss.cs` | Big Rusty: his size, his three phases, every attack, getting dizzy, blowing up, his World Tour outfits, and being driven by Dad (waiting for orders with thinking dots, the fair-play rules like TIRED and only 2 laughs in a row, and Dad's blue cap) |
+| `Scripts/Vroomba.cs` | VROOMBA, the giant robot vacuum: his moves (ZOOM, BONK, dizzy upside down, SUCK, dust bunnies, TURBO), his attack plan, his "try changing these!" numbers, and drawing him (lid, CLEAN button, bumper, sensor eyes, spinning brushes, wheels, dust, wind, and blowing apart) |
 | `Scripts/Blast.cs` | Big Rusty's bouncing fireballs |
 | `Scripts/Shockwave.cs` | The waves that roll out from his ground pound |
 | `Scripts/Laser.cs` | His giant laser (warning line, then the beam) |
 | `Scripts/ScorePopups.cs` | The floating "+25", "1-UP!", "SMASH! +25", "HA HA HA!" and "Wait..." words (how long they stay, how fast they float up) |
 | `Scripts/Obstacle.cs` | Crates, cones, crate stacks, and drones (and smashing them into pieces) |
-| `Scripts/BoltPickup.cs` | The spinning golden bolts |
-| `Scripts/Hud.cs` | Score text, title screen (with "Who's playing?" and Family Champions), game-over screen (results card, with the Today and So close lines and LB / RB around the play button), the flying spare battery, the power bar, Big Rusty's health bar (it says "BIG RUSTY (DAD)" while Dad drives him), the Best number flashing gold, the menu strip on the left (the Bolt Bank, the postcards, the NEW LOOK! words and the look picker) |
+| `Scripts/BoltPickup.cs` | The spinning golden bolts (and bolts flying out of VROOMBA like a fountain) |
+| `Scripts/Hud.cs` | Score text, title screen (with "Who's playing?", Family Champions, and the controller line, which says when a 2nd controller can drive Big Rusty), game-over screen (results card, with the Today and So close lines and LB / RB around the play button), the flying spare battery, the power bar, the boss's health bar (it says "VROOMBA", or "BIG RUSTY (DAD)" while Dad drives Big Rusty), the Best number flashing gold, the menu strip on the left (the Bolt Bank, the postcards, the NEW LOOK! words and the look picker) |
 | `Scripts/BatteryRow.cs` | The spare batteries under "Bolts" (green spares and the yellow charging one) |
 | `Scripts/ScoreDatabase.cs` | All the SQLite code (including everyone who plays, their bests, and today's scores) |
 | `Scripts/Audio/Song.cs` | The theme song, written as notes you can change |
-| `Scripts/Audio/SoundEffects.cs` | Every sound effect (jump, bolt, explosion, jingles, power-ups, SMASH, the rocket, the new-world jingle, the NEW LOOK! jingle, the "ta-da-DA!" for passing a flag...) |
-| `Scripts/Audio/Synth.cs` | The tiny synthesizer that turns notes into sound with math |
+| `Scripts/Audio/SoundEffects.cs` | Every sound effect (jump, bolt, explosion, jingles, power-ups, SMASH, the rocket, the new-world jingle, the NEW LOOK! jingle, the "ta-da-DA!" for passing a flag, and VROOMBA's rev-up, zoom, wall bonk, vacuum hum, BEEP BOOP and "ptoo!"...) |
+| `Scripts/Audio/Synth.cs` | The tiny synthesizer that turns notes into sound with math (with a buzzy saw wave for VROOMBA) |
 | `Scripts/Audio/SoundBoard.cs` | Plays the music and sound effects (and remembers how fast the music should play, so it wobbles down while Bolt-E is in pieces, even if you switch it off and on) |
-| `Scripts/Shapes.cs` | Drawing helpers (rounded rectangles, ovals, happy eyes, X eyes, heart eyes) |
+| `Scripts/Shapes.cs` | Drawing helpers (rounded rectangles, ovals, stars, happy eyes, X eyes, heart eyes) |
 
 ## The database
 Saved at `%APPDATA%\Godot\app_userdata\Robot Dash\robotdash.db`. Open it with [DB Browser for SQLite](https://sqlitebrowser.org/) to look inside.
@@ -380,9 +456,18 @@ To write your own song, change the notes in `Scripts/Audio/Song.cs`: `"C5"` is a
 - How fast the game gets: `StartSpeed`, `MaxSpeed`, `SpeedUpPerSecond` in `Main.cs`
 - Bolt points: `PointsPerBolt` in `Main.cs`
 - When the boss comes: `FirstBossAt` and `MetersBetweenBosses` in `Main.cs`
-- How big the boss is: `Size` in `Boss.cs` (1.5 now; try 2!)
-- How tough the boss is: `MaxHealth` in `Boss.cs`, and which attacks he uses in `AttackPlan`
-- How long he stays dizzy: `DizzyTime` in `Boss.cs`
+- How big Big Rusty is: `Size` in `Boss.cs` (1.5 now; try 2!)
+- How tough the bosses are: `MaxHealth` in `BossBase.cs`, and which attacks Big Rusty uses in `AttackPlan` in `Boss.cs`
+- How long Big Rusty stays dizzy: `DizzyTime` in `Boss.cs`
+- VROOMBA, all in `Vroomba.cs`: `ZoomSpeed` and `TurboSpeed` (how fast he zooms. Funny: faster is EASIER to jump
+  over, because he's under Bolt-E for a shorter time! Below about 400 a single jump standing still can't clear him),
+  `TurboZooms` (how many times a TURBO zoom goes across), `RevSeconds` (how long he revs up before a zoom),
+  `SuckSeconds` and `SuckPull` (how long the vacuum is on, and how hard it pulls Bolt-E: 0.55 = 55% of his riding
+  speed; at 1 or more he can't ride away!), `DizzySeconds` and `FuriousDizzySeconds` (how long he's dizzy;
+  `ShortestDizzy` keeps it at least 1.8 seconds), `BunniesWhenAngry` and `BunniesWhenFurious`, his attack lists
+  (`PhaseOnePlan`, `AngryPlan`, `FuriousPlan`), and his colors (`VroombaBlue` and friends). In `Main.Vroomba.cs`:
+  `SuckBoltSpeed` (how fast bolts fly into his mouth) and `DustBunnyChase` (how fast dust bunnies hop after Bolt-E)
+- Which boss comes when: `BossForFight` in `Main.Vroomba.cs` (make it always VROOMBA!)
 - How high Egg-Bot hops: the `80f` in `HopHeight` in `Enemy.cs`
 - Spare batteries, all in `Main.Batteries.cs`: `StartingBatteries` (0 = the classic game, 3 = super easy),
   `MaxBatteries` (how many he can carry), `BoltsPerBattery` (try 50 for lots of 1-UPs!)
@@ -414,7 +499,9 @@ To write your own song, change the notes in `Scripts/Audio/Song.cs`: `"C5"` is a
   go up with it), `LastTimeSize` (how small the LAST TIME flag is),
   `FallenOver` and `FallSeconds` (how far and how fast a passed flag tips over), and `LabelSize` (how big the words are)
 - The "ta-da-DA!" cheer for passing a flag: `PassFlag` in `Scripts/Audio/SoundEffects.cs`
-- Dad drives Big Rusty: who's driving, `DriverName` in `Main.Driver.cs` (try MOM or GRANDMA!), and in `Boss.cs`
+- Dad drives Big Rusty: who's driving, `DriverName` in `Main.Driver.cs` (try MOM or GRANDMA!), which button does what,
+  `DriveButtons` in `Main.Driver.cs` (try swapping them around, or giving LB and RB different moves: Dad's tip and the
+  "TIRED! Press A!" words follow along, with the button names from `ButtonNames`), and in `Boss.cs`
   `AttacksBeforeHeMustPound` (how many attacks before he's TIRED: try 1 for an easier fight), `DriverWaitBeforeAI`
   (how long he waits for Dad's order before his own brain picks), `LaughsInARow` (how many laughs Dad gets before a
   real move has to come) and `CapBlue` (the color of Dad's cap)

@@ -780,27 +780,27 @@ public partial class Hud : CanvasLayer
     void BuildBossBar()
     {
         bossBar = new Control { Position = new Vector2(440, 10), Size = new Vector2(400, 64), Visible = false, MouseFilter = Control.MouseFilterEnum.Ignore };
-        bossBarName = Centered(MakeLabel(Boss.DisplayName, 26, new Color(1f, 0.6f, 0.15f), outline: true));
+        bossBarName = Centered(MakeLabel(Boss.RustyName, 26, new Color(1f, 0.6f, 0.15f), outline: true));
         bossBarName.Size = new Vector2(400, 36);
         bossBar.AddChild(bossBarName);
         bossBar.AddChild(new ColorRect { Color = Ink, Position = new Vector2(50, 40), Size = new Vector2(300, 20), MouseFilter = Control.MouseFilterEnum.Ignore });
         bossHealth = new ColorRect { Color = new Color(0.95f, 0.3f, 0.2f), Position = new Vector2(53, 43), Size = new Vector2(294, 14), MouseFilter = Control.MouseFilterEnum.Ignore };
         bossBar.AddChild(bossHealth);
         // Little lines that split the bar into 3 pieces (one for each stomp)
-        for (int i = 1; i < Boss.MaxHealth; i++)
-            bossBar.AddChild(new ColorRect { Color = Ink, Position = new Vector2(53 + 294f * i / Boss.MaxHealth - 1.5f, 43), Size = new Vector2(3, 14), MouseFilter = Control.MouseFilterEnum.Ignore });
+        for (int i = 1; i < BossBase.MaxHealth; i++)
+            bossBar.AddChild(new ColorRect { Color = Ink, Position = new Vector2(53 + 294f * i / BossBase.MaxHealth - 1.5f, 43), Size = new Vector2(3, 14), MouseFilter = Control.MouseFilterEnum.Ignore });
         AddChild(bossBar);
     }
 
     public void ShowBossBar(int health)
     {
         bossBar.Visible = true;
-        bossHealth.Size = new Vector2(294f * health / Boss.MaxHealth, 14);
+        bossHealth.Size = new Vector2(294f * health / BossBase.MaxHealth, 14);
     }
 
     public void HideBossBar() => bossBar.Visible = false;
 
-    /// <summary>Changes the name over Big Rusty's health bar, like "BIG RUSTY (DAD)" while Dad drives him.</summary>
+    /// <summary>Changes the name over the boss's health bar, like "VROOMBA", or "BIG RUSTY (DAD)" while Dad drives him.</summary>
     public void SetBossBarName(string text) => bossBarName.Text = text;
 
     /// <summary>The name over Big Rusty's health bar (the self-test reads this).</summary>
@@ -881,15 +881,28 @@ public partial class Hud : CanvasLayer
         hint.Modulate = Colors.Transparent;
     }
 
-    /// <summary>Shows which game controller is plugged in (or null if there isn't one).</summary>
-    public void SetControllerName(string? name)
+    /// <summary>
+    /// The title card's controller line: the names of the game controllers that are plugged in (Bolt-E's first).
+    /// One controller: its name. Two or more: the first one is Bolt-E's, and the others can drive Big Rusty!
+    /// None: how to play with one. (It's always one line, so the title card never gets bigger.)
+    /// </summary>
+    public void SetControllers(IReadOnlyList<string> names)
     {
-        bool connected = !string.IsNullOrEmpty(name);
-        controllerLabel.Text = connected
-            ? $"Controller connected: {name}!   A, B, X, Y = jump   ·   START = go!"
-            : "Got a game controller? Plug it in to play with it!";
+        string first = names.Count > 0 ? names[0] : "";
+        bool connected = names.Count >= 2 || !string.IsNullOrEmpty(first);
+        controllerLabel.Text = names.Count switch
+        {
+            2 => $"2 controllers!  The 1st one plays Bolt-E, and the 2nd one can drive {Boss.RustyName}!",
+            > 2 => $"{names.Count} controllers!  The 1st one plays Bolt-E, and the others can drive {Boss.RustyName}!",
+            _ => connected
+                ? $"Controller connected: {first}!   A, B, X, Y = jump   ·   START = go!"
+                : "Got a game controller? Plug it in to play with it!",
+        };
         controllerLabel.LabelSettings.FontColor = connected ? new Color(0.15f, 0.55f, 0.3f) : Ink.Lightened(0.35f);
     }
+
+    /// <summary>The words on the title card's controller line (the self-test reads them).</summary>
+    public string ControllerLineText => controllerLabel.Text;
 
     void SetPlayingLabelsVisible(bool visible)
     {

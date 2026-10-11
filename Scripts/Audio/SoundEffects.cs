@@ -352,6 +352,80 @@ public static class SoundEffects
         return Done(sound);
     }
 
+    // ---------- VROOMBA, the giant robot vacuum ----------
+
+    /// <summary>"Vrrrr-RRRRM!" — VROOMBA revving up before a zoom: a buzzy engine going up, with puttering and dust.</summary>
+    public static float[] RevUp()
+    {
+        var sound = Synth.Silence(1.05f);
+        Synth.AddTone(sound, 0, 0.9f, Wave.Saw, 0.3f, Held, 70, 260);          // the engine, getting faster
+        Synth.AddTone(sound, 0, 0.9f, Wave.Square25, 0.12f, Held, 140, 520);   // ...and higher
+        Synth.AddTone(sound, 0, 0.9f, Wave.Noise, 0.1f, new Envelope(0.1f, 0.5f, 0.6f, 0.05f), 1); // dust kicking up
+        for (int i = 0; i < 9; i++)
+            Synth.AddTone(sound, i * 0.1f, 0.03f, Wave.Noise, 0.15f, Pluck, 1); // putt-putt-putt
+        return Done(sound);
+    }
+
+    /// <summary>"VROOOOOM!" — VROOMBA zooming across: a whoosh of air and a buzzy engine going past.</summary>
+    public static float[] Zoom()
+    {
+        var sound = Synth.Silence(0.8f);
+        Synth.AddTone(sound, 0, 0.6f, Wave.Noise, 0.35f, new Envelope(0.08f, 0.25f, 0.3f, 0.1f), 1);
+        Synth.AddTone(sound, 0, 0.55f, Wave.Saw, 0.25f, Held, 420, 180);
+        Synth.AddTone(sound, 0, 0.55f, Wave.Square25, 0.1f, Held, 840, 360);
+        return Done(sound);
+    }
+
+    /// <summary>"THUD! Boi-oi-oing!" — VROOMBA bonking into the wall: a deep thud, a knock, and a wobbly boing.</summary>
+    public static float[] WallBonk()
+    {
+        var sound = Synth.Silence(0.8f);
+        Synth.AddTone(sound, 0, 0.18f, Wave.Sine, 0.9f, new Envelope(0.001f, 0.12f, 0f, 0.03f), 160, 45);   // THUD
+        Synth.AddTone(sound, 0, 0.04f, Wave.Noise, 0.35f, new Envelope(0.001f, 0.02f, 0f, 0.01f), 1);       // the knock
+        Synth.AddTone(sound, 0.06f, 0.5f, Wave.Triangle, 0.5f, new Envelope(0.002f, 0.3f, 0.2f, 0.08f), 170, 420, vibrato: 0.12f); // boing!
+        return Done(sound, 0.9f);
+    }
+
+    /// <summary>
+    /// "Hmmmmmm... wsh wsh wsh" — VROOMBA's vacuum: a low buzzy hum, the hiss of the air, and 4 gusts of air rushing in
+    /// every second. It's exactly 1 second long and it LOOPS (the hums fit in it exactly 105 and 210 times, so you can't
+    /// hear where it starts again), so it hums for as long as the vacuum is on.
+    /// </summary>
+    public static float[] VacuumHum()
+    {
+        var sound = Synth.Silence(1f);
+        var steady = new Envelope(0f, 1f, 1f, 0.001f); // no fading in or out, so the loop is smooth
+        Synth.AddTone(sound, 0, 1f, Wave.Saw, 0.22f, steady, 105);
+        Synth.AddTone(sound, 0, 1f, Wave.Saw, 0.12f, steady, 210);
+        Synth.AddTone(sound, 0, 1f, Wave.HighNoise, 0.3f, steady, 1);
+        var gust = new Envelope(0.04f, 0.08f, 0.3f, 0.06f);
+        for (int i = 0; i < 4; i++)
+            Synth.AddTone(sound, 0.05f + i * 0.25f, 0.12f, Wave.Noise, 0.14f, gust, 1); // wsh!
+        return Done(sound, 0.7f);
+    }
+
+    /// <summary>"BEEP BOOP! bip bip" — VROOMBA being happy (and a bit cheeky) when Bolt-E crashes.</summary>
+    public static float[] BeepBoop()
+    {
+        var sound = Synth.Silence(0.75f);
+        var beep = new Envelope(0.004f, 0.1f, 0.6f, 0.03f);
+        Synth.AddTone(sound, 0, 0.13f, Wave.Square25, 0.3f, beep, Synth.NoteToFrequency("E6"));                                  // BEEP
+        Synth.AddTone(sound, 0.18f, 0.2f, Wave.Square50, 0.3f, beep, Synth.NoteToFrequency("A5"), Synth.NoteToFrequency("E5"));   // BOOP
+        Synth.AddTone(sound, 0.42f, 0.06f, Wave.Square12, 0.2f, Pluck, Synth.NoteToFrequency("C7"));                               // bip
+        Synth.AddTone(sound, 0.5f, 0.06f, Wave.Square12, 0.2f, Pluck, Synth.NoteToFrequency("G7"));                                // bip!
+        return Done(sound);
+    }
+
+    /// <summary>"Ptoo!" — VROOMBA spitting out a dust bunny: a little pop, a slide up, and a puff of fluff.</summary>
+    public static float[] Spit()
+    {
+        var sound = Synth.Silence(0.35f);
+        Synth.AddTone(sound, 0, 0.03f, Wave.Noise, 0.4f, new Envelope(0.001f, 0.015f, 0f, 0.01f), 1);    // "p"
+        Synth.AddTone(sound, 0.02f, 0.14f, Wave.Square50, 0.3f, Held, 380, 900);                          // "too!"
+        Synth.AddTone(sound, 0.02f, 0.18f, Wave.Noise, 0.15f, new Envelope(0.005f, 0.08f, 0.1f, 0.04f), 1); // fluff
+        return Done(sound);
+    }
+
     /// <summary>Plays a list of (note, seconds) one after another.</summary>
     static float[] Tune((string Note, float Length)[] notes, Wave wave, bool normalize = true)
     {
