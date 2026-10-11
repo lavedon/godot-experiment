@@ -2,6 +2,66 @@ using Godot;
 
 public partial class Main
 {
+    async Task DronezillaMusicBattle()
+    {
+        sounds.SetMusicOn(true);
+        var drone = StartDronezillaFight("TDroneBattleMusic", world: 1);
+        Check(sounds.BossMusicActive && sounds.DroneMusicActive, "spawning DRONEZILLA automatically selects Rotor Rush");
+        await Wait(0.8);
+        Check(sounds.MusicPlaying && Mathf.Abs(sounds.MusicPitch - 1.1f * CurrentWorld.MusicSpeed) < 0.01f,
+              "DRONEZILLA's entrance music follows the current world speed");
+
+        drone.LoseHealth(2);
+        Check(await WaitUntil(() => sounds.DroneMusicActive && Mathf.Abs(sounds.MusicPitch - 1.15f * CurrentWorld.MusicSpeed) < 0.01f, 4),
+              "the angry phase speeds up Rotor Rush without switching tracks");
+        robot.BlinkTime = 0;
+        Check(Bonk(null) && state == GameState.Rebuilding, "a crash in the drone fight starts the real rebuild flow");
+        await Wait(0.7);
+        sounds.SetMusicOn(false);
+        sounds.SetMusicOn(true);
+        Check(sounds.DroneMusicActive && Mathf.Abs(sounds.MusicPitch - 0.6f) < 0.01f,
+              "muting and unmuting during the rebuild preserves the drone score and its dip");
+        Check(await WaitUntil(() => state == GameState.Playing, 4), "the hero finishes rebuilding in the drone fight");
+        robot.BlinkTime = 1e9f;
+        await Wait(0.8);
+        Check(sounds.DroneMusicActive && Mathf.Abs(sounds.MusicPitch - 1.15f * CurrentWorld.MusicSpeed) < 0.01f,
+              "the rebuilt hero hears the drone score at the current phase speed again");
+
+        drone.LoseHealth(2);
+        Check(await WaitUntil(() => sounds.DroneMusicActive && Mathf.Abs(sounds.MusicPitch - 1.22f * CurrentWorld.MusicSpeed) < 0.01f, 4),
+              "the furious phase keeps Rotor Rush and raises its tempo");
+        drone.DoAttack(DroneAttack.Swoop);
+        Check(await FastForwardUntil(() => drone.CanBeStomped, 14), "DRONEZILLA finishes a swoop and lands to recharge");
+        Check(sounds.DroneMusicActive && sounds.MusicPlaying, "the score continues through his low-battery stomp window");
+        drone.LoseHealth(BossBase.MaxHealth);
+        Check(await WaitUntil(() => drone.HasBlownUp, 4), "DRONEZILLA is defeated through his normal victory flow");
+        await Wait(0.5);
+        Check(!sounds.BossMusicActive && sounds.MusicPlaying, "defeating DRONEZILLA returns to the runner theme");
+
+        GoToTitle();
+        sounds.SetMusicOn(false);
+        drone = StartDronezillaFight("TMutedDroneMusic");
+        Check(sounds.DroneMusicActive && !sounds.MusicPlaying, "a muted DRONEZILLA spawn still remembers Rotor Rush");
+        sounds.SetMusicOn(true);
+        Check(sounds.DroneMusicActive && sounds.MusicPlaying, "unmuting starts the score chosen by DRONEZILLA's spawn");
+        spareBatteries = 0;
+        robot.BlinkTime = 0;
+        Check(Bonk(null) && state == GameState.GameOver, "a final crash ends the drone encounter");
+        await Wait(1);
+        Check(!sounds.MusicPlaying, "game over powers down Rotor Rush");
+        StartGame();
+        QuietRoad();
+        await Wait(0.5);
+        Check(!sounds.BossMusicActive && sounds.MusicPlaying, "restarting after DRONEZILLA returns to the runner score");
+
+        GoToTitle();
+        StartBossFight("TRustyKeepsMusic");
+        Check(sounds.BossMusicActive && !sounds.DroneMusicActive, "BIG RUSTY still selects Titan Circuit");
+        GoToTitle();
+        StartVroombaFight("TVroombaKeepsMusic");
+        Check(sounds.BossMusicActive && !sounds.DroneMusicActive, "VROOMBA still selects Titan Circuit");
+    }
+
     async Task DroneMusicFlow()
     {
         AudioStreamPlayer[] PlayingMusic() => sounds.GetChildren().OfType<AudioStreamPlayer>().Where(player =>

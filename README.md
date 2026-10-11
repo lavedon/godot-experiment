@@ -59,7 +59,7 @@ An endless runner starring **Bolt-E**, a tiny cute robot with headphones riding 
   After every attack his battery runs low and he **LANDS**: that's when you **jump on him**!
 - **Enter** also starts or restarts the game
 - **M** (or **BACK** on a controller): music on/off (the game remembers your choice)
-- Boss battles play **Titan Circuit**, an original 32-bar chiptune with a charging minor-key riff, galloping bass,
+- BIG RUSTY and VROOMBA battles play **Titan Circuit**, an original 32-bar chiptune with a charging minor-key riff, galloping bass,
   heavy drums, a half-time bridge and a soaring final section. It loops smoothly, speeds up as the boss gets angry,
   and crossfades back to the running theme after victory. M / BACK and battery rebuilds work with both themes.
 - **F11**: switch between full screen (the game always starts full screen) and a window
@@ -449,12 +449,11 @@ speed changes. The flying drone's score, **Rotor Rush**, is in `Scripts/Audio/Dr
 The self-test writes listenable `titan-circuit.wav` and `rotor-rush.wav` files beside its scratch database.
 Add `--selftest-music` after `--selftest` to run just the music playback and audio checks.
 
-The drone boss can select its score at spawn with
-`sounds.SetBossMusic(true, 1.1f * CurrentWorld.MusicSpeed, BossMusicTheme.RotorRush)`.
-Use that in place of its usual two-argument `SetBossMusic` call. Existing bosses keep **Titan Circuit** by default;
-phase changes still use `SetMusicSpeed`, and victory still calls `SetBossMusic(false, CurrentWorld.MusicSpeed)`.
-Theme selection is independent of boss names and classes. New bosses opt in at spawn; the existing spawn calls
-continue using Titan Circuit until a different theme is selected explicitly.
+`SpawnBoss` automatically selects **Rotor Rush** for DRONEZILLA and **Titan Circuit** for BIG RUSTY and VROOMBA.
+The score continues while DRONEZILLA lands to recharge, follows the world's speed and his angry phases, and dips
+during a rebuild. Victory returns to the runner theme; game over powers the music down normally.
+The optional third argument to `SetBossMusic` selects `BossMusicTheme.RotorRush` or `BossMusicTheme.TitanCircuit`.
+Phase changes use `SetMusicSpeed`, and victory calls `SetBossMusic(false, CurrentWorld.MusicSpeed)`.
 
 | File | What it does |
 |---|---|

@@ -1153,7 +1153,8 @@ public partial class Main : Node2D
             Dronezilla => DronezillaHint,
             _ => "Ride left and right with  ← →  or the stick!",
         });
-        sounds.SetBossMusic(true, 1.1f * CurrentWorld.MusicSpeed); // a dedicated battle theme for every boss
+        sounds.SetBossMusic(true, 1.1f * CurrentWorld.MusicSpeed,
+            theBoss is Dronezilla ? BossMusicTheme.RotorRush : BossMusicTheme.TitanCircuit);
     }
 
     /// <summary>BIG RUSTY flies in, dressed up for the world! (Everything only he does is hooked up here.)</summary>
