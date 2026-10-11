@@ -43,8 +43,7 @@ public partial class SoundBoard : Node
 
     public override void _Ready()
     {
-        music = new AudioStreamPlayer { Stream = Synth.ToAudioStream(Song.Render(), loop: true), VolumeDb = MusicVolumeDb };
-        AddChild(music);
+        SetUpMusic();
 
         AddEffect(Sfx.Jump, SoundEffects.Jump(), -10f);
         AddEffect(Sfx.DoubleJump, SoundEffects.DoubleJump(), -10f);
@@ -102,7 +101,7 @@ public partial class SoundBoard : Node
         musicFade?.Kill();
         musicHeld = false;
         music.PitchScale = pitch;
-        music.VolumeDb = MusicVolumeDb;
+        if (trackFade is null || !trackFade.IsRunning()) music.VolumeDb = MusicVolumeDb;
         if (!music.Playing) music.Play();
     }
 
@@ -114,12 +113,14 @@ public partial class SoundBoard : Node
     {
         musicSpeed = speed;
         musicHeld = false; // (a fresh start: nothing is held any more, even if the music is switched off)
+        SelectTheme(boss: false);
         PlayMusicAt(speed);
     }
 
     /// <summary>The music slows down and fades out, like a robot running out of power.</summary>
     public void PowerDownMusic()
     {
+        FinishTrackFade();
         musicHeld = true;
         heldPitch = 1f; // (switched back on after the game, it plays at normal speed)
         if (!music.Playing) return;
@@ -131,7 +132,7 @@ public partial class SoundBoard : Node
     }
 
     /// <summary>
-    /// During a boss fight the music plays faster and higher, to make it exciting! (1 = normal speed)
+    /// The current theme follows the world's speed, powers and boss phase (1 = normal speed).
     /// While the music is dipped or powering down, it just remembers the speed for later.
     /// </summary>
     public void SetMusicSpeed(float speed)
@@ -172,6 +173,7 @@ public partial class SoundBoard : Node
     /// <summary>Stops the music and every sound effect right away (the self-test does this before it quits).</summary>
     public void StopEverything()
     {
+        FinishTrackFade();
         musicFade?.Kill();
         music.Stop();
         foreach (var player in effects.Values) player.Stop();
@@ -193,6 +195,7 @@ public partial class SoundBoard : Node
         }
         else
         {
+            FinishTrackFade();
             musicFade?.Kill();
             music.Stop();
         }

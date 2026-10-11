@@ -902,7 +902,7 @@ public partial class Main : Node2D
                        new Color(1f, 0.85f, 0.2f));
         sounds.Play(Sfx.Explosion);
         sounds.Play(Sfx.Victory);
-        sounds.SetMusicSpeed(CurrentWorld.MusicSpeed); // (each world has its own music speed)
+        sounds.SetBossMusic(false, CurrentWorld.MusicSpeed); // back to the runner theme after any boss
         shake = 0.5f;
         Rumble(0.8f, 1f, 0.6f);
         NextWorldSoon(); // ...and then on to the next world! (see Main.Worlds.cs)
@@ -1011,7 +1011,7 @@ public partial class Main : Node2D
         hud.SetBossBarName(Boss.DisplayName); // (nobody drives a new Big Rusty yet: see Main.Driver.cs)
         hud.ShowBossBar(rusty.Health);
         hud.ShowHint("Ride left and right with  ← →  or the stick!");
-        sounds.SetMusicSpeed(1.1f * CurrentWorld.MusicSpeed); // faster for the fight (each world has its own music speed)
+        sounds.SetBossMusic(true, 1.1f * CurrentWorld.MusicSpeed); // a dedicated battle theme for every boss
     }
 
     // ---------- Making new obstacles, enemies and bolts ----------

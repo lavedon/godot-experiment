@@ -46,6 +46,9 @@ An endless runner starring **Bolt-E**, a tiny cute robot with headphones riding 
   - Six stomps and he shakes, pops, and blows apart (+250 points and a rainbow of bolts).
 - **Enter** also starts or restarts the game
 - **M** (or **BACK** on a controller): music on/off (the game remembers your choice)
+- Boss battles play **Titan Circuit**, an original 32-bar chiptune with a charging minor-key riff, galloping bass,
+  heavy drums, a half-time bridge and a soaring final section. It loops smoothly, speeds up as the boss gets angry,
+  and crossfades back to the running theme after victory. M / BACK and battery rebuilds work with both themes.
 
 ## Spare batteries
 - Bolt-E starts every game with **1 spare battery** and can carry up to **3**. They're the green batteries under "Bolts".
@@ -280,6 +283,12 @@ like `TCOW`; if a test name was already used in that database, the test adds a n
 game called `Player` in the scratch database, to check that games without a name count as a person.)
 
 ## Where the code lives
+
+The boss score is in `Scripts/Audio/BossSong.cs`: each melody line is one bar of eight eighth-note steps (`-` holds
+the previous note, `.` rests). `Chords` supplies the harmony; `BeatsPerMinute` is 144 before world and boss-phase
+speed changes. `Scripts/Audio/SoundBoard.Music.cs` caches the two synthesized themes and crossfades between them.
+The self-test also writes a listenable `titan-circuit.wav` beside its scratch database.
+
 | File | What it does |
 |---|---|
 | `Scripts/Main.cs` | The game boss: draws the world (in the colors of the world you're in), speeds up, spawns obstacles and bolts, checks for bumps (every crash goes through `Bonk`), saves scores |

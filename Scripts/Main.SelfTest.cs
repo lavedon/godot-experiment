@@ -225,6 +225,13 @@ public partial class Main
                 (nameof(OnlyTodayCounts), OnlyTodayCounts),
             };
 
+            // Audio checks run last, keeping the existing tests' random seeds unchanged as bosses are added.
+            tests = tests.Concat(new (string Name, Func<Task> Run)[]
+            {
+                (nameof(BossMusicFlow), BossMusicFlow),
+                (nameof(BossMusicAudio), BossMusicAudio),
+            }).ToArray();
+
             for (int i = 0; i < tests.Length; i++)
             {
                 currentTest = tests[i].Name;
