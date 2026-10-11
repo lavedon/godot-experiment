@@ -11,6 +11,7 @@ public partial class Main
     {
         nameof(StationIsSixth), nameof(StartWorldPicker), nameof(FlipGravity), nameof(StationDangers), nameof(StationFairness),
         nameof(StationRebuild), nameof(StationBoss), nameof(StationPowers), nameof(StationResets), nameof(StationDraws),
+        nameof(StationMusicLevel),
     };
 
     /// <summary>

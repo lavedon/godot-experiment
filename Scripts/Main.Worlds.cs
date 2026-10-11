@@ -31,6 +31,10 @@ public partial class Main
     /// <summary>The world we're in now. (After UPSIDE-DOWN STATION it goes around again: world 6 is Sunny Hills.)</summary>
     World CurrentWorld => Worlds.All[worldNumber % Worlds.All.Length];
 
+    /// <summary>UPSIDE-DOWN STATION has its own running score; the other worlds share the original theme.</summary>
+    LevelMusicTheme CurrentLevelMusic => CurrentWorld.Scenery == Scenery.Station
+        ? LevelMusicTheme.NeonSlipstream : LevelMusicTheme.Runner;
+
     /// <summary>A color part-way between the old world's color and the new world's color (for the smooth change).</summary>
     Color Mix(Func<World, Color> pick) => pick(fromWorld).Lerp(pick(toWorld), worldBlend);
 
@@ -83,7 +87,7 @@ public partial class Main
 
         sounds.Play(Sfx.NewWorld);
         robot.SetGravityScale(toWorld.Gravity);
-        sounds.SetMusicSpeed(toWorld.MusicSpeed);
+        sounds.SetLevelMusic(CurrentLevelMusic, toWorld.MusicSpeed);
     }
 
     /// <summary>Every frame, on every screen: the colors keep changing into the new world, and the snow keeps falling.</summary>

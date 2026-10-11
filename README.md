@@ -413,7 +413,10 @@ light dashes zooming along both. It comes after the Moon (or pick it on the titl
 - **Boss fights:** when **WARNING! BOSS AHEAD!** sounds, it's **GRAVITY ON!**: Bolt-E drops to the floor, the station's
   dangers puff away, and the **ceiling slides open** (up off the screen), so every boss fights exactly like everywhere
   else, with normal jumps. Win, and you ride on to Sunny Hills: **YOU WENT ALL THE WAY AROUND!**
-- The music plays a bit faster here (1.1). Record flags stand on the floor, like always.
+- The level plays **Neon Slipstream**, an original theme with pulsing bass, glassy synths and tunnel echoes,
+  at the station's 1.1 music speed. It starts both on World Tour entry and when the station is picked on the title
+  screen. Bosses use their own battle themes; victory returns to the station score before the next world arrives.
+  Record flags stand on the floor, like always.
 - Leaving the station, a game over, or going back to the title always puts gravity back to normal.
 
 ## Dad drives Big Rusty
@@ -550,9 +553,9 @@ speed changes. The flying drone's score, **Rotor Rush**, is in `Scripts/Audio/Dr
 OPTI-MAX's score, **Iron Shadow**, is in `Scripts/Audio/HumanoidSong.cs`: 32 bars at 132 BPM
 (about 58.2 seconds), with a D-minor/Phrygian melody, a lurching bass pulse, metallic FM percussion, a sparse
 stalking passage, and a tightening final pursuit.
-The neon space-station level's score, **Neon Slipstream**, is in `Scripts/Audio/StationSong.cs`: 48 bars in F# minor at
+UPSIDE-DOWN STATION's score, **Neon Slipstream**, is in `Scripts/Audio/StationSong.cs`: 48 bars in F# minor at
 128 BPM (90 seconds before world-speed changes), with glassy keys, mirrored arpeggios, a pulsing bass, tunnel echoes,
-and a floating observation-window section. It is ready for the station level to select when that level is integrated.
+and a floating observation-window section.
 `Scripts/Audio/SoundBoard.Music.cs` caches all five synthesized themes and crossfades between them.
 The self-test writes listenable `titan-circuit.wav`, `rotor-rush.wav`, `iron-shadow.wav`, and `neon-slipstream.wav`
 files beside its scratch database.
@@ -566,12 +569,12 @@ The optional third argument to `SetBossMusic` selects `BossMusicTheme.RotorRush`
 or `BossMusicTheme.TitanCircuit` (the default).
 Phase changes use `SetMusicSpeed`, and victory calls `SetBossMusic(false, CurrentWorld.MusicSpeed)`.
 
-For station integration, use `sounds.SetLevelMusic(LevelMusicTheme.NeonSlipstream, toWorld.MusicSpeed)` when entering
-the station, and `LevelMusicTheme.Runner` for the other worlds. This replaces the world-change `SetMusicSpeed` call.
-During a boss fight it remembers the level selection without interrupting the boss score or its phase speed;
-the existing victory call returns to the selected level. Muting and rebuilding preserve that selection.
-`StartMusic(speed)` resets to the original runner theme for title screens and new games; a direct station start can use
-`StartMusic(speed, LevelMusicTheme.NeonSlipstream)`. The music branch does not yet change the world's spawn or selection code.
+`CurrentLevelMusic` in `Main.Worlds.cs` selects `LevelMusicTheme.NeonSlipstream` for station scenery and
+`LevelMusicTheme.Runner` for the other worlds. `ChangeWorld` calls `SetLevelMusic` to crossfade on entry and exit;
+`StartInPickedWorld` passes the same selection to `StartMusic` for the title-screen shortcut and restarts.
+During a boss fight the level selection is remembered without interrupting the boss score or its phase speed;
+the victory call returns to that level. Gravity flips, MEGA tempo changes, muting and rebuilding keep the station
+score selected. `StartMusic(speed)` resets to the original runner theme on the title screen and in Sunny Hills.
 
 | File | What it does |
 |---|---|

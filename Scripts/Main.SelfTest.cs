@@ -305,6 +305,7 @@ public partial class Main
                 (nameof(StationDraws), StationDraws),
                 (nameof(StationMusicFlow), StationMusicFlow),
                 (nameof(StationMusicAudio), StationMusicAudio),
+                (nameof(StationMusicLevel), StationMusicLevel),
             }).ToArray();
 
             if (OS.GetCmdlineUserArgs().Contains("--selftest-dust"))
@@ -313,7 +314,7 @@ public partial class Main
                 tests = tests.Where(test => test.Name is nameof(BossMusicFlow) or nameof(BossMusicAudio)
                     or nameof(DroneMusicFlow) or nameof(DroneMusicAudio) or nameof(DronezillaMusicBattle)
                     or nameof(HumanoidMusicFlow) or nameof(HumanoidMusicAudio) or nameof(OptiMaxMusicBattle)
-                    or nameof(StationMusicFlow) or nameof(StationMusicAudio)).ToArray();
+                    or nameof(StationMusicFlow) or nameof(StationMusicAudio) or nameof(StationMusicLevel)).ToArray();
             // To run only DRONEZILLA's checks (and the taking-turns rule): add --selftest-drone after --selftest
             if (OS.GetCmdlineUserArgs().Contains("--selftest-drone"))
                 tests = tests.Where(test => DroneTestNames.Contains(test.Name)).ToArray();

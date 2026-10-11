@@ -68,7 +68,7 @@ public partial class Main
         fromWorld = toWorld = CurrentWorld;
         worldBlend = 1;
         robot.SetGravityScale(toWorld.Gravity);
-        sounds.StartMusic(toWorld.MusicSpeed); // (its own music speed right away)
+        sounds.StartMusic(toWorld.MusicSpeed, CurrentLevelMusic); // its own score and speed right away
         hud.ShowBanner($"WELCOME TO {toWorld.Name}!", new Color(1f, 0.85f, 0.2f));
         if (toWorld.Gravity < 1) hud.ShowHint("Moon jumps are FLOATY!");
         if (InStation) ArriveInStation(shutNow: true);

@@ -2,6 +2,97 @@ using Godot;
 
 public partial class Main
 {
+    async Task StationMusicLevel()
+    {
+        sounds.SetMusicOn(true);
+        await StartStationGame("TStationScore");
+        Check(sounds.StationMusicActive && !sounds.BossMusicActive, "starting in UPSIDE-DOWN STATION automatically selects Neon Slipstream");
+        await Wait(0.7);
+        Check(sounds.MusicPlaying && Mathf.Abs(sounds.MusicPitch - CurrentWorld.MusicSpeed) < 0.01f,
+              "the selected start world plays its score at the station's speed");
+        var player = sounds.GetChildren().OfType<AudioStreamPlayer>().Single(p =>
+            p.Playing && p.Stream is AudioStreamWav { LoopMode: AudioStreamWav.LoopModeEnum.Forward });
+        var stationStream = player.Stream;
+        player.Seek(12);
+        Check(await FlipAndLand() > 0 && robot.UpsideDown, "the hero flips onto the station ceiling");
+        Check(sounds.StationMusicActive && player.Stream == stationStream && player.GetPlaybackPosition() >= 12,
+              "gravity flips keep the station's musical phrase playing");
+        StartPowerUp(PowerUp.Mega);
+        await Wait(0.8);
+        Check(sounds.StationMusicActive && Mathf.Abs(sounds.MusicPitch - 1.12f * CurrentWorld.MusicSpeed) < 0.01f,
+              "MEGA speeds up Neon Slipstream without changing the score");
+        EndPowerUp(quiet: true);
+        await Wait(0.8);
+        Check(sounds.StationMusicActive && Mathf.Abs(sounds.MusicPitch - CurrentWorld.MusicSpeed) < 0.01f,
+              "ending MEGA restores the station's normal tempo");
+
+        robot.BlinkTime = 0;
+        Check(Bonk(null) && state == GameState.Rebuilding, "a ceiling crash starts the real station rebuild");
+        await Wait(0.7);
+        sounds.SetMusicOn(false);
+        sounds.SetMusicOn(true);
+        Check(sounds.StationMusicActive && Mathf.Abs(sounds.MusicPitch - 0.6f) < 0.01f,
+              "unmuting during the rebuild preserves the station theme and dip");
+        Check(await WaitUntil(() => state == GameState.Playing, 5), "the hero rebuilds on the station floor");
+        await Wait(0.8);
+        Check(sounds.StationMusicActive && sounds.MusicPlaying && Mathf.Abs(sounds.MusicPitch - CurrentWorld.MusicSpeed) < 0.01f,
+              "the station score returns to normal after the rebuild");
+        spareBatteries = 0;
+        robot.BlinkTime = 0;
+        Check(Bonk(null) && state == GameState.GameOver, "a final crash ends the station run");
+        await Wait(1);
+        Check(!sounds.MusicPlaying, "game over powers down the station score");
+        startWorld = Worlds.StationIndex;
+        StartGame();
+        startWorld = 0;
+        QuietRoad();
+        await Wait(0.7);
+        Check(InStation && sounds.StationMusicActive && sounds.MusicPlaying, "restarting in the picked station restores Neon Slipstream");
+        GoToTitle();
+        await Wait(0.5);
+        Check(!sounds.StationMusicActive && !sounds.BossMusicActive && sounds.MusicPlaying, "the title screen returns to the original runner theme");
+
+        // Ride into the station through the actual World Tour, then win its boss fight and ride out again.
+        PlayAs("TStationTourMusic");
+        StartGame();
+        QuietRoad();
+        robot.BlinkTime = 1e9f;
+        ChangeWorld(Worlds.StationIndex - 1);
+        Check(!sounds.StationMusicActive && !sounds.BossMusicActive, "the Moon still uses the original runner theme");
+        SpawnBoss(BossKind.BigRusty);
+        var moonBoss = boss!;
+        moonBoss.LoseHealth(BossBase.MaxHealth);
+        Check(await WaitUntil(() => moonBoss.HasBlownUp, 6), "the Moon's boss is defeated");
+        Check(await WaitUntil(() => worldNumber == Worlds.StationIndex, 4), "the World Tour enters UPSIDE-DOWN STATION");
+        await Wait(0.7);
+        Check(sounds.StationMusicActive && sounds.MusicPlaying && Mathf.Abs(sounds.MusicPitch - CurrentWorld.MusicSpeed) < 0.01f,
+              "normal World Tour entry automatically crossfades to Neon Slipstream");
+        Check(await WaitUntil(() => boss is null, 6), "the previous boss's pieces finish clearing");
+        SpawnBoss(BossKind.OptiMax);
+        var stationBoss = boss!;
+        Check(sounds.HumanoidMusicActive && !sounds.StationMusicActive, "OPTI-MAX takes over with Iron Shadow inside the station");
+        stationBoss.LoseHealth(2);
+        Check(await WaitUntil(() => Mathf.Abs(sounds.MusicPitch - 1.15f * CurrentWorld.MusicSpeed) < 0.01f, 4),
+              "his angry phase combines the battle tempo with the station speed");
+        stationBoss.LoseHealth(BossBase.MaxHealth);
+        Check(await WaitUntil(() => stationBoss.HasBlownUp, 5), "the station's boss is defeated");
+        await Wait(0.5);
+        Check(sounds.StationMusicActive && sounds.MusicPlaying && Mathf.Abs(sounds.MusicPitch - CurrentWorld.MusicSpeed) < 0.01f,
+              "victory returns to Neon Slipstream while the hero is still in the station");
+        Check(await WaitUntil(() => worldNumber == Worlds.StationIndex + 1, 4), "the World Tour continues to Sunny Hills");
+        await Wait(0.7);
+        Check(!sounds.StationMusicActive && !sounds.BossMusicActive && sounds.MusicPlaying
+              && Mathf.Abs(sounds.MusicPitch - CurrentWorld.MusicSpeed) < 0.01f,
+              "leaving the station crossfades to the original runner score and destination speed");
+
+        GoToTitle();
+        sounds.SetMusicOn(false);
+        await StartStationGame("TMutedStationScore");
+        Check(sounds.StationMusicActive && !sounds.MusicPlaying, "a muted station shortcut remembers its score silently");
+        sounds.SetMusicOn(true);
+        Check(sounds.StationMusicActive && sounds.MusicPlaying, "unmuting the picked station plays Neon Slipstream");
+    }
+
     async Task StationMusicFlow()
     {
         AudioStreamPlayer[] PlayingMusic() => sounds.GetChildren().OfType<AudioStreamPlayer>().Where(player =>
