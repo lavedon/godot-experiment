@@ -11,6 +11,7 @@ public enum Sfx
     Unlock,
     PassFlag,
     RevUp, Zoom, WallBonk, VacuumHum, BeepBoop, Spit, // VROOMBA
+    RotorBuzz, BombWhistle, LowBattery, PowerDown, TakeOff, Bzzt, // DRONEZILLA
 }
 
 /// <summary>
@@ -82,6 +83,12 @@ public partial class SoundBoard : Node
         AddEffect(Sfx.VacuumHum, SoundEffects.VacuumHum(), -12f, voices: 1, loop: true); // (hums until the vacuum switches off)
         AddEffect(Sfx.BeepBoop, SoundEffects.BeepBoop(), -8f, voices: 1);
         AddEffect(Sfx.Spit, SoundEffects.Spit(), -9f, voices: 3);
+        AddEffect(Sfx.RotorBuzz, SoundEffects.RotorBuzz(), -19f, voices: 1, loop: true); // (buzzes while DRONEZILLA flies)
+        AddEffect(Sfx.BombWhistle, SoundEffects.BombWhistle(), -15f, voices: 5);
+        AddEffect(Sfx.LowBattery, SoundEffects.LowBattery(), -9f, voices: 1);
+        AddEffect(Sfx.PowerDown, SoundEffects.PowerDown(), -9f, voices: 1);
+        AddEffect(Sfx.TakeOff, SoundEffects.TakeOff(), -11f, voices: 1);
+        AddEffect(Sfx.Bzzt, SoundEffects.Bzzt(), -8f, voices: 1);
     }
 
     void AddEffect(Sfx name, float[] sound, float volumeDb, int voices = 2, bool loop = false)

@@ -252,6 +252,7 @@ public partial class Main
             };
 
             // Extra checks go here, keeping the existing tests' random seeds unchanged.
+            // (DRONEZILLA's tests, the third boss, are in Main.DronezillaTests.cs.)
             tests = tests.Concat(new (string Name, Func<Task> Run)[]
             {
                 (nameof(BossMusicFlow), BossMusicFlow),
@@ -263,6 +264,17 @@ public partial class Main
                 (nameof(JumpDustLuresAndClogs), JumpDustLuresAndClogs),
                 (nameof(JumpDustCannotTrapBoss), JumpDustCannotTrapBoss),
                 (nameof(JumpDustAtArenaEdges), JumpDustAtArenaEdges),
+                // DRONEZILLA, the third boss
+                (nameof(ThreeBossesTakeTurns), ThreeBossesTakeTurns),
+                (nameof(DroneFliesHighAndHarmless), DroneFliesHighAndHarmless),
+                (nameof(DroneBombs), DroneBombs),
+                (nameof(DroneSwoop), DroneSwoop),
+                (nameof(DroneLandsAndStomp), DroneLandsAndStomp),
+                (nameof(DroneZapAndMinis), DroneZapAndMinis),
+                (nameof(DroneTauntOnRebuild), DroneTauntOnRebuild),
+                (nameof(BeatDronezilla), BeatDronezilla),
+                (nameof(DroneCantBeDriven), DroneCantBeDriven),
+                (nameof(DroneDrawsEverywhere), DroneDrawsEverywhere),
                 (nameof(DroneMusicFlow), DroneMusicFlow),
                 (nameof(DroneMusicAudio), DroneMusicAudio),
             }).ToArray();
@@ -272,6 +284,9 @@ public partial class Main
             if (OS.GetCmdlineUserArgs().Contains("--selftest-music"))
                 tests = tests.Where(test => test.Name is nameof(BossMusicFlow) or nameof(BossMusicAudio)
                     or nameof(DroneMusicFlow) or nameof(DroneMusicAudio)).ToArray();
+            // To run only DRONEZILLA's checks (and the taking-turns rule): add --selftest-drone after --selftest
+            if (OS.GetCmdlineUserArgs().Contains("--selftest-drone"))
+                tests = tests.Where(test => DroneTestNames.Contains(test.Name)).ToArray();
 
             for (int i = 0; i < tests.Length; i++)
             {
@@ -4685,8 +4700,9 @@ public partial class Main
     // ---------- VROOMBA, the second boss (the bosses take turns) ----------
 
     /// <summary>
-    /// The bosses take turns: game 1 starts with BIG RUSTY, game 2 with VROOMBA, game 3 with Big Rusty... and every next
-    /// fight in a game is the other boss. During the self-test SpawnBoss() always brings Big Rusty (so every old test
+    /// The bosses take turns: BIG RUSTY, VROOMBA, DRONEZILLA, BIG RUSTY... and each game starts one boss further along
+    /// (game 1 with BIG RUSTY, game 2 with VROOMBA, game 3 with DRONEZILLA, game 4 with Big Rusty again), so every next
+    /// fight in a game is another boss. During the self-test SpawnBoss() always brings Big Rusty (so every old test
     /// keeps its boss), unless a test asks for the taking-turns rule: then it follows the rule like a real game.
     /// </summary>
     async Task BossesTakeTurns()
@@ -4694,10 +4710,10 @@ public partial class Main
         await NextFrame();
         string[] expected =
         {
-            "BigRusty Vroomba BigRusty", // game 1
-            "Vroomba BigRusty Vroomba",  // game 2
-            "BigRusty Vroomba BigRusty", // game 3
-            "Vroomba BigRusty Vroomba",  // game 4
+            "BigRusty Vroomba Dronezilla", // game 1
+            "Vroomba Dronezilla BigRusty", // game 2
+            "Dronezilla BigRusty Vroomba", // game 3
+            "BigRusty Vroomba Dronezilla", // game 4 (like game 1)
         };
         for (int game = 1; game <= expected.Length; game++)
         {
@@ -4725,22 +4741,22 @@ public partial class Main
             int game2 = gameNumber;
             Check(game2 == game1 + 1 && bossFightNumber == 0, $"a new game counts up: game {game2}");
             SpawnBoss();
-            var first = boss is Vroomba ? BossKind.Vroomba : BossKind.BigRusty;
+            var first = KindOf(boss);
             Check(first == BossForFight(game2, 1) && hud.BossBarName == boss!.DisplayName,
                   $"game {game2}'s first boss follows the rule: {first} ('{hud.BossBarName}' on his bar)");
             boss!.QueueFree();
             boss = null;
             SpawnBoss();
-            var second = boss is Vroomba ? BossKind.Vroomba : BossKind.BigRusty;
-            Check(second != first && second == BossForFight(game2, 2), $"the next fight is the other boss: {second}");
+            var second = KindOf(boss);
+            Check(second != first && second == BossForFight(game2, 2), $"the next fight is another boss: {second}");
 
             GoToTitle();
             StartGame();
             QuietRoad();
             robot.BlinkTime = 1e9f;
             SpawnBoss();
-            var nextGame = boss is Vroomba ? BossKind.Vroomba : BossKind.BigRusty;
-            Check(nextGame != first, $"the next game starts with the other boss: {nextGame}");
+            var nextGame = KindOf(boss);
+            Check(nextGame != first, $"the next game starts with another boss: {nextGame}");
         }
         finally
         {

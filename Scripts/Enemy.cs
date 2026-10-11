@@ -5,17 +5,19 @@ public enum EnemyKind
     PupBot,  // a robot puppy on wheels that zooms toward you (from enemy-1.png)
     EggBot,  // a hoppy egg-shaped robot (from enemy-2.png)
     DustBunny, // a fluffy grey ball of dust with big eyes: VROOMBA spits them out, and they hop after you
+    MiniDrone, // a little buzzing drone with one rotor and one eye: DRONEZILLA drops them, and they drift after you
 }
 
 /// <summary>
 /// A bad robot! Touching it from the side is a crash, but landing on its head squashes it (like in Mario).
-/// Position is the middle of its bottom, on the ground.
+/// Position is the middle of its bottom, on the ground. (A mini-drone flies: its Position is the bottom of the mini-drone,
+/// up at head height.)
 /// </summary>
 public partial class Enemy : Node2D
 {
     public EnemyKind Kind;
 
-    /// <summary>Big Rusty's helpers (and VROOMBA's dust bunnies) chase Bolt-E (left or right) instead of just coming from the right.</summary>
+    /// <summary>Big Rusty's helpers (and VROOMBA's dust bunnies and DRONEZILLA's mini-drones) chase Bolt-E (left or right) instead of just coming from the right.</summary>
     public bool Chaser;
     /// <summary>How fast a chaser goes after Bolt-E (pixels per second).</summary>
     public float ChaseSpeed = 150f;
@@ -37,8 +39,12 @@ public partial class Enemy : Node2D
     /// <summary>How much faster than the ground it moves toward Bolt-E (pixels per second).</summary>
     public float ExtraSpeed => Squashed ? 0 : Kind == EnemyKind.PupBot ? 140f : 30f;
 
+    /// <summary>How high a mini-drone hovers: the bottom of it, in pixels above the ground (try changing this!)</summary>
+    public const float MiniDroneHover = 75f;
+
     public Rect2 Hitbox => Kind switch
     {
+        EnemyKind.MiniDrone => new Rect2(Position + new Vector2(-24, -40 + MiniBob), new Vector2(48, 36)),
         EnemyKind.PupBot => new Rect2(Position + new Vector2(-40, -80), new Vector2(72, 80)),
         EnemyKind.DustBunny => new Rect2(Position + new Vector2(-25, -50 - HopHeight), new Vector2(50, 48)),
         _ => new Rect2(Position + new Vector2(-24, -110 - HopHeight), new Vector2(48, 108)),
@@ -71,7 +77,11 @@ public partial class Enemy : Node2D
 
     float time = (float)GD.RandRange(0.0, 1.0);
     float squashTime;
+    float rotorAngle; // a mini-drone's spinning rotor
     Transform2D drawBase = Transform2D.Identity; // where (and how squished) we're drawing right now
+
+    /// <summary>A mini-drone bobs gently up and down in the air (this is how far down it is right now).</summary>
+    float MiniBob => Kind == EnemyKind.MiniDrone && !Squashed ? Mathf.Sin(time * 4f) * 6f : 0;
 
     /// <summary>Egg-Bot (and a dust bunny) bounces up and down. This is how high off the ground it is right now.</summary>
     float HopHeight
@@ -111,8 +121,22 @@ public partial class Enemy : Node2D
             Thrown = Vector2.Zero;
         }
 
+        // A mini-drone glides down to head height and hovers there (squashed, it drops like a stone)
+        if (Kind == EnemyKind.MiniDrone)
+        {
+            if (Squashed)
+            {
+                fallSpeed += 2000f * dt;
+                Position = new Vector2(Position.X, Mathf.Min(GroundY, Position.Y + fallSpeed * dt));
+            }
+            else
+            {
+                Position = new Vector2(Position.X, Mathf.MoveToward(Position.Y, GroundY - MiniDroneHover, 260f * dt));
+            }
+            rotorAngle += (Squashed ? 6f : 45f) * dt;
+        }
         // Falling down after being dropped (or thrown)
-        if (GroundY > 0 && (Position.Y < GroundY || fallSpeed < 0))
+        else if (GroundY > 0 && (Position.Y < GroundY || fallSpeed < 0))
         {
             fallSpeed += 2000f * dt;
             Position = new Vector2(Position.X + flyX * dt, Mathf.Min(GroundY, Position.Y + fallSpeed * dt));
@@ -128,7 +152,7 @@ public partial class Enemy : Node2D
         float hop = HopHeight;
 
         // Shadow on the ground (smaller when hopping high). A dust bunny's shadow stays on the ground while it flies.
-        float flying = Kind == EnemyKind.DustBunny ? Mathf.Max(0, GroundY - Position.Y) : 0;
+        float flying = Kind is EnemyKind.DustBunny or EnemyKind.MiniDrone ? Mathf.Max(0, GroundY - Position.Y) : 0;
         float shadow = Mathf.Max(0.3f, 1f - (hop + flying) / 200f);
         DrawSetTransform(new Vector2(0, flying), 0, new Vector2(shadow, 0.2f * shadow));
         DrawCircle(Vector2.Zero, Kind == EnemyKind.PupBot ? 42 : 26, new Color(0, 0, 0, 0.18f));
@@ -145,6 +169,10 @@ public partial class Enemy : Node2D
             float stretch = hop < 8 ? 0.85f : 1.05f;
             drawBase = new Transform2D(0, new Vector2(2f - stretch, stretch), 0, new Vector2(0, -hop));
         }
+        else if (Kind == EnemyKind.MiniDrone)
+        {
+            drawBase = Transform2D.Identity.Translated(new Vector2(0, MiniBob)); // bobbing in the air
+        }
         else
         {
             drawBase = Transform2D.Identity;
@@ -153,6 +181,7 @@ public partial class Enemy : Node2D
 
         if (Kind == EnemyKind.PupBot) DrawPupBot();
         else if (Kind == EnemyKind.DustBunny) DrawDustBunny();
+        else if (Kind == EnemyKind.MiniDrone) DrawMiniDrone();
         else DrawEggBot(hop);
 
         DrawSetTransform(Vector2.Zero, 0, Vector2.One);
@@ -279,6 +308,51 @@ public partial class Enemy : Node2D
     }
 
     static readonly Vector2[] BunnyEyes = { new(-9, -27), new(5, -27) };
+
+    // ---- The mini-drone's colors ----
+    static readonly Color MiniMetal = new(0.36f, 0.39f, 0.45f);
+    static readonly Color MiniDark = new(0.2f, 0.22f, 0.26f);
+    static readonly Color MiniYellow = new(1f, 0.82f, 0.15f);
+    static readonly Color MiniRed = new(1f, 0.2f, 0.15f);
+
+    /// <summary>
+    /// A little round drone (it's looking left, at Bolt-E): one big eye, a yellow stripe, little legs, and one rotor on top
+    /// spinning so fast it's a blur. Like a baby DRONEZILLA!
+    /// </summary>
+    void DrawMiniDrone()
+    {
+        var body = new Vector2(0, -21);
+
+        // The rotor on top: a see-through blur, and a blade that turns (it looks longer and shorter as it spins)
+        DrawLine(new Vector2(0, -36), new Vector2(0, -44), MiniDark, 3, true);
+        if (!Squashed) Shapes.Ellipse(this, new Vector2(0, -45), new Vector2(26, 4), new Color(1, 1, 1, 0.3f));
+        float reach = Mathf.Cos(rotorAngle) * 24;
+        if (Mathf.Abs(reach) < 2) reach = 2;
+        DrawLine(new Vector2(-reach, -45), new Vector2(reach, -45), new Color(0.88f, 0.9f, 0.95f, Squashed ? 1f : 0.7f), 3.5f, true);
+        DrawCircle(new Vector2(0, -45), 3, MiniDark);
+
+        // Two little legs, the round body, a yellow stripe and a shine
+        DrawLine(new Vector2(-9, -8), new Vector2(-13, -1), MiniDark, 3, true);
+        DrawLine(new Vector2(9, -8), new Vector2(13, -1), MiniDark, 3, true);
+        DrawCircle(body, 17, MiniMetal);
+        DrawRect(new Rect2(-15, -16, 30, 5), MiniYellow);
+        DrawCircle(new Vector2(-6, -30), 4, new Color(1, 1, 1, 0.25f));
+
+        // A blinking red light on its back
+        if ((int)(time * 3) % 2 == 0 && !Squashed) DrawCircle(new Vector2(14, -30), 2.5f, MiniRed);
+
+        // One big eye, looking at Bolt-E (an X when it's squashed)
+        var eye = new Vector2(-5, -24);
+        if (Squashed)
+        {
+            Shapes.XEye(this, eye, 4, Screen);
+            return;
+        }
+        DrawCircle(eye, 8, Colors.White);
+        DrawCircle(eye + new Vector2(-2.5f, 0.5f), 4.2f, MiniRed);
+        DrawCircle(eye + new Vector2(-2.5f, 0.5f), 2f, Screen);
+        DrawCircle(eye + new Vector2(-4, -1.5f), 1.3f, Colors.White); // a sparkle
+    }
 
     void DrawArm(Vector2 shoulder, float angle)
     {

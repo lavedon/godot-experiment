@@ -77,7 +77,7 @@ public partial class Main
         return look.By switch
         {
             UnlockBy.Bolts => look.Need - Bank == 1 ? "Need 1 more bolt!" : $"Need {look.Need - Bank} more bolts!",
-            // (Every boss counts: BIG RUSTY and VROOMBA)
+            // (Every boss counts: BIG RUSTY, VROOMBA and DRONEZILLA)
             UnlockBy.BossesBeaten => look.Need == 1 ? $"Beat a boss ({beaten}/1)" : $"Beat {look.Need} bosses ({beaten}/{look.Need})",
             UnlockBy.World => $"Ride to {Worlds.All[Math.Clamp(look.Need, 1, Worlds.All.Length) - 1].Name}!",
             _ => "",

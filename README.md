@@ -39,9 +39,9 @@ An endless runner starring **Bolt-E**, a tiny cute robot with headphones riding 
   - **Pup-Bot** (from `enemy-1.png`) zooms toward you on its wheels.
   - **Egg-Bot** (from `enemy-2.png`) hops up and down, so time your stomp!
   - Stomps in a row without landing score 25, 50, 100, then 200. Hold jump while landing to bounce higher.
-- **Bosses** show up at 400 m, then every 700 m after you beat one (**WARNING!  BOSS AHEAD!**). There are two, and
-  they **take turns**: **BIG RUSTY** and **VROOMBA**, the giant robot vacuum (see [VROOMBA](#vroomba-the-second-boss)
-  below). The world stops and it's an **arena fight**: ride left and right with the **arrow keys**, **A / D**,
+- **Bosses** show up at 400 m, then every 700 m after you beat one (**WARNING!  BOSS AHEAD!**). There are three,
+  and they **take turns**: **BIG RUSTY**, **VROOMBA**, the giant robot vacuum (see [VROOMBA](#vroomba-the-second-boss)
+  below), and **DRONEZILLA**, the giant attack drone (see [DRONEZILLA](#dronezilla-the-third-boss) below). The world stops and it's an **arena fight**: ride left and right with the **arrow keys**, **A / D**,
   or the controller's **D-pad / left stick**. Every boss has 6 health and gets angrier as he gets hurt.
 - **Boss: BIG RUSTY** (from `enemy-boss-who-can-shoot.png`):
   - **Phase 1:** shoots bouncing fireballs (jump over them), then does a **GROUND POUND**. His shadow follows you,
@@ -54,6 +54,9 @@ An endless runner starring **Bolt-E**, a tiny cute robot with headphones riding 
 - **Boss: VROOMBA**, a giant robot vacuum (drawn in code): he **ZOOMS** across the ground (jump over him!), **BONKS**
   into the wall and lands upside down, dizzy: that's when you **jump on him**! His vacuum **SUCKS** (ride away!) and
   gobbles up the bolts, and when he's ANGRY he spits out **dust bunnies**. Stomp him and the bolts fly back out!
+- **Boss: DRONEZILLA**, a giant attack drone (drawn in code): he flies high and attacks from the air: **BOMBS**
+  (ride out of the red rings!), a low **SWOOP** (jump over him!), and when he's ANGRY a **ZAP BEAM** and **mini-drones**.
+  After every attack his battery runs low and he **LANDS**: that's when you **jump on him**!
 - **Enter** also starts or restarts the game
 - **M** (or **BACK** on a controller): music on/off (the game remembers your choice)
 - Boss battles play **Titan Circuit**, an original 32-bar chiptune with a charging minor-key riff, galloping bass,
@@ -79,6 +82,9 @@ An endless runner starring **Bolt-E**, a tiny cute robot with headphones riding 
   (If he was dizzy, he stays dizzy, so you might still get to stomp him!)
 - **In a VROOMBA fight**, VROOMBA does a happy little **BEEP BOOP!** spin, rolls to his spot, and also waits until
   Bolt-E is back. Dust bunnies close by puff away. (If he was dizzy, he stays dizzy.)
+- **In a DRONEZILLA fight**, DRONEZILLA does a happy loop-the-loop (**BZZT BZZT!**) and waits until Bolt-E is back.
+  Bombs already falling still land, but no new ones come. His bombs, zap beam and mini-drones puff away.
+  (If he had landed, he stays landed, so you can still stomp him!)
 - While Bolt-E is in pieces, jump and START do nothing (so mashing buttons can't skip the rebuild). M / BACK still work.
 - **No spare left?** Then a crash is game over, like always. If you used batteries, the results card says
   **Out of batteries!** (unless it's a **NEW HIGH SCORE!**)
@@ -107,9 +113,10 @@ An endless runner starring **Bolt-E**, a tiny cute robot with headphones riding 
 - Scores run higher with powers (more bolts, SMASH! and SPLAT! points, and more meters on the rocket board).
 
 ## World Tour
-- Every game starts in **Sunny Hills**. Beat a boss and **YOU BEAT BIG RUSTY!** (or **YOU BEAT VROOMBA!**) shows first.
+- Every game starts in **Sunny Hills**. Beat a boss and **YOU BEAT BIG RUSTY!** (or **YOU BEAT VROOMBA!**, or
+  **YOU BEAT DRONEZILLA!**) shows first.
   About 2 seconds later **WELCOME TO CANDY LAND!** pops up with a sparkly jingle, and the sky, sun, clouds, hills and
-  ground smoothly change color over 3 seconds. Every boss win (Big Rusty or VROOMBA) takes you one world further:
+  ground smoothly change color over 3 seconds. Every boss win (Big Rusty, VROOMBA or DRONEZILLA) takes you one world further:
   1. **Sunny Hills**: the green hills Robot Dash always had.
   2. **Candy Land**: a pink sky, giant lollipops, and chocolate ground with pink frosting and rainbow sprinkles.
   3. **Night City**: twinkling stars, a moon, skyscrapers with glowing windows, and a road with yellow dashes.
@@ -167,7 +174,7 @@ An endless runner starring **Bolt-E**, a tiny cute robot with headphones riding 
   | GOLD BOLT-E | 4,000 bolts | all gold |
   | KING BOLT-E | 5,500 bolts | gold, a crown, a rainbow board and a rainbow trail |
   | RAINBOW | 7,500 bolts | rainbow eyes, a rainbow board and a rainbow trail |
-  | RUSTY JR. | beat 3 bosses: Big Rusty or VROOMBA, all games together | dressed like Big Rusty! |
+  | RUSTY JR. | beat 3 bosses: Big Rusty, VROOMBA or DRONEZILLA, all games together | dressed like Big Rusty! |
   | ASTRONAUT | ride all the way to THE MOON | a space helmet, and he rides a cloud |
   | COZMOS | everyone has him | a whole new robot: white, on tank treads, with blue eyes |
   | VECKTOR | everyone has him | a whole new robot: shiny black, on tank treads, with green eyes |
@@ -231,9 +238,8 @@ Two new robots to play as, picked from photos of two little real-life robots! Ev
 VROOMBA is a giant robot vacuum: a big, flat, dark dome on wheels, with a shiny silver rim, a glowing blue **CLEAN**
 button on top, two big sensor eyes on his front bumper, and two spinning side brushes. He's only 75 pixels tall, so
 Bolt-E can **jump right over him**.
-- **The bosses take turns.** Game 1 starts with BIG RUSTY, game 2 with VROOMBA, game 3 with Big Rusty again, and so on
-  (counting from when the game was opened). After that, every boss fight in a game is the other boss. So you meet
-  VROOMBA in every other game, even if you only ever reach the first fight.
+- **The bosses take turns** (see [DRONEZILLA](#dronezilla-the-third-boss) below for the whole rule): BIG RUSTY, VROOMBA,
+  DRONEZILLA, BIG RUSTY... and each game starts one boss further along.
 - He rolls in from the right, says **BEEP BOOP!**, and then it's the same kind of fight as Big Rusty's: 6 health, his
   name on the health bar, **VROOMBA IS ANGRY!** and **VROOMBA IS FURIOUS!**, +250 and the rainbow of bolts when you beat
   him (**YOU BEAT VROOMBA!**), and then on to the next world of the World Tour.
@@ -268,6 +274,48 @@ Bolt-E can **jump right over him**.
   into his lid, the button, the bumper, the brushes and the wheels, in a big cloud of dust.
 - **Nobody can drive VROOMBA** (only Big Rusty, see below): in his fights the second controller does nothing.
 - If Bolt-E runs out of batteries, VROOMBA rolls away happily.
+
+## DRONEZILLA (the third boss)
+DRONEZILLA is a giant attack drone, seen from the side: a chunky gunmetal body with a yellow-and-black hazard stripe,
+two arms with a spinning rotor on top of each, a big round red camera eye underneath, a dark visor with two little LED
+eyes, blinking red and green lights, an antenna, a battery on his side, and two landing skids. His shadow on the ground
+gets bigger as he comes lower, so you can always see where he is.
+- **The bosses take turns:** BIG RUSTY, then VROOMBA, then DRONEZILLA, then Big Rusty again... and every game starts one
+  boss further along: game 1 is RUSTY, VROOMBA, DRONEZILLA...; game 2 is VROOMBA, DRONEZILLA, RUSTY...; game 3 is
+  DRONEZILLA, RUSTY, VROOMBA...; and game 4 is like game 1 (counting from when the game was opened). So you meet every
+  boss, even if you only ever reach the first fight.
+- He flies in from the top-right with a rising buzz, and then it's the same kind of fight as the others: 6 health, his
+  name on the health bar, **DRONEZILLA IS ANGRY!** and **DRONEZILLA IS FURIOUS!**, +250 and the rainbow of bolts when
+  you beat him (**YOU BEAT DRONEZILLA!**), and then on to the next world of the World Tour.
+- **Up in the air he's safe to touch.** He cruises way up high, higher than a double jump. Bumping into him up there
+  never hurts (not even with the Moon's floaty jumps), but you can't stomp him up there either.
+- **His moves:**
+  - **BOMBS AWAY!** He flies over Bolt-E and drops 3 bombs, one after another (5 when he's FURIOUS). Each one whistles,
+    and a **blinking red ring** on the ground shows where it will land: **ride out of the ring!** A bomb (or its
+    BOOM) hitting Bolt-E is a crash.
+  - **SWOOP!** A big red **!** flashes, then he dives across the arena in a big U, down low: **jump over him!** Touching
+    him during the swoop is a crash. Then he climbs back up at the other side. FURIOUS: there AND back.
+  - **ZAP BEAM!** (when he's ANGRY) A red circle on the ground follows Bolt-E... then it **LOCKS** (it stops and glows):
+    **ride out of it!** Then a zap beam fires straight down on it. Being in the beam is a crash.
+  - **MINI-DRONES!** (when he's ANGRY) 2 little buzzing drones (3 when he's FURIOUS) with one rotor and one eye. They
+    hover at head height and drift slowly after Bolt-E: **stomp them** (for the stomp combo), but bumping into one is a
+    crash.
+  - **LOW BATTERY!** After every attack his battery runs low: beep beep booop! His battery blinks red, a yellow ring on
+    the ground shows where he'll land (never close to Bolt-E), and he glides down and **LANDS**. His rotors spin down,
+    and a bouncing yellow arrow shows over him: **JUMP ON HIM!** (He sits there for 2.6 seconds, 1.9 when he's FURIOUS.)
+    Touching him while he's landed never hurts. Stomped, he blinks, his rotors sputter back on, and he wobbles back up.
+    If you miss him, his battery charges up and he takes off by himself.
+- **His plan:** BOMBS, land; SWOOP, land; again and again. ANGRY: MINI-DRONES + BOMBS, land; ZAP BEAM + SWOOP, land.
+  FURIOUS: the same, with 5 bombs and double swoops. Every attack ends with a landing, so you always get your chance.
+- **How he looks:** his LED eyes are round and green when he's calm, squinty and mischievous when he attacks, sleepy and
+  half shut when his battery is low, spinning spirals when he's stomped, happy when he loops the loop, and X eyes when
+  he's beaten. They turn orange when he's ANGRY and red when he's FURIOUS (then he crackles with sparks, too). His red
+  camera eye always looks at Bolt-E. He leans into the way he flies, and bobs gently when he hovers. His rotors are a
+  see-through blur when they're fast (even faster in a swoop) and stop when he lands.
+- Beaten, every bomb and mini-drone puffs away. He sputters, smokes, spins down out of the sky, **crashes**, and blows
+  apart into his body, his 4 rotor blades, his 2 arms, his camera and his skids.
+- **Nobody can drive DRONEZILLA** (only Big Rusty): in his fights the second controller does nothing.
+- If Bolt-E runs out of batteries, DRONEZILLA zooms up and away, off the top of the screen.
 
 ## Dad drives Big Rusty
 - **With one controller (or none), the computer drives Big Rusty**, exactly like the original fight.
@@ -312,7 +360,7 @@ Bolt-E can **jump right over him**.
 - Beat him and it's **YOU BEAT DAD'S BIG RUSTY!** with the usual +250 and the rainbow of bolts (and Dad's cap flies off
   when he blows up!). Lose the last battery while Dad drives him, and the results card says **DAD GOT YOU!**
 - Every new Big Rusty starts out driving himself: press a button on the second controller again to take over.
-- **VROOMBA can't be driven.** In a VROOMBA fight the second controller's buttons do nothing (no banner, no "Wait...").
+- **VROOMBA and DRONEZILLA can't be driven.** In their fights the second controller's buttons do nothing (no banner, no "Wait...").
 - **The second controller never moves Bolt-E**: its buttons don't jump, its stick and D-pad don't ride, and on the
   menus it doesn't start games, switch the music, change looks or switch players. It only drives Big Rusty, only in a
   boss fight, and only with the buttons above (its other buttons do nothing). The keyboard can't drive Big Rusty.
@@ -369,6 +417,8 @@ During the self-test the boss that comes by itself is always Big Rusty (so the o
 expect); the VROOMBA tests ask for VROOMBA, and one test checks the taking-turns rule like a real game. A few of the
 VROOMBA tests run the game 3 times as fast while they wait for his moves, so the self-test stays quick.
 To run only the jump-dust checks and VROOMBA drawing coverage, add `--selftest-dust` after `--selftest` in the same command.
+To run only DRONEZILLA's checks (and the taking-turns rule), add `--selftest-drone` instead. (The DRONEZILLA tests ask for
+him too, and some of them also run the game 3 times as fast.)
 Exit codes: **0** = everything passed, **1** = something failed, **2** = refused to start (bad `--db`),
 **3** = it took too long. A good run has no lines with `FAIL:`, `ERROR:`, `SCRIPT ERROR` or `Unhandled exception`
 in the output or in `godot.log`. The tests are in `Scripts/Main.SelfTest.cs`, and new features add theirs there.
@@ -376,7 +426,8 @@ Just before the DONE line it also prints how many seconds of game time the tests
 so the commands above use `--quit-after 120000`).
 (They expect the normal tuning numbers, so if you change a number like `StartingBatteries` or `MegaSeconds`,
 a world in `Worlds.cs`, a look in `Looks.cs`, a family race number in `Main.Family.cs`, Big Rusty's
-`AttacksBeforeHeMustPound`, `DriverWaitBeforeAI` or `LaughsInARow`, VROOMBA's numbers in `Vroomba.cs`, or Dad's
+`AttacksBeforeHeMustPound`, `DriverWaitBeforeAI` or `LaughsInARow`, VROOMBA's numbers in `Vroomba.cs`, DRONEZILLA's
+numbers in `Dronezilla.cs`, or Dad's
 `DriveButtons` (the words on the screen
 follow your buttons, but the tests press the normal ones), some tests will say FAIL. Changing `DriverName`
 to MOM, or a flag's `PoleHeight`, is fine: the tests use whatever is there.)
@@ -420,6 +471,8 @@ continue using Titan Circuit until a different theme is selected explicitly.
 | `Scripts/Main.Vroomba.cs` | VROOMBA's side of the game: the bosses taking turns (`BossForFight`), his sounds and dust bunnies, jump dust lures, his vacuum pulling Bolt-E and gobbling up loose bolts (YUM!), and bolts fountaining back out when stomped |
 | `Scripts/JumpDust.cs` | Jump dust: a visible puff that settles, fades, and shrinks as VROOMBA cleans it |
 | `Scripts/Main.VroombaDustTests.cs` | Self-test checks for jump dust, luring and stomping, arena edges, and encounter cleanup |
+| `Scripts/Main.Dronezilla.cs` | DRONEZILLA's side of the game: his sounds (and the rotor buzz, which never keeps playing after the fight), his bombs, zap beam and mini-drones, checking if they bumped into Bolt-E, and puffing them away after a rebuild or when he's beaten |
+| `Scripts/Main.DronezillaTests.cs` | Self-test checks for DRONEZILLA (and the three bosses taking turns) |
 | `Scripts/Main.Driver.cs` | Dad drives Big Rusty with a second controller (only a real one: phantom controllers can't): its buttons (X, Y, A, B, LB and RB in `DriveButtons`), taking over ("DAD IS DRIVING BIG RUSTY!", with a tip made from `DriveButtons`), giving orders ("Wait...", "TIRED! Press A!", "Not yet!", which never pile up or float over his health bar), Dad's buzz when Bolt-E stomps him, and who's driving (`DriverName`) |
 | `Scripts/BankBox.cs` | The Bolt Bank box in the top-left corner of the menus (the number, the gold hexagon and the bar to the next prize) |
 | `Scripts/LookPicker.cs` | The look picker under Bolt-E on the menus (the arrows, the look's name, the padlock and what it takes to win it) |
@@ -430,21 +483,24 @@ continue using Titan Circuit until a different theme is selected explicitly.
 | `Scripts/Robot.cs` | Bolt-E: jumping, gravity (and floaty Moon gravity, even when a new world comes in the middle of a jump), blinking, music notes, the booting face, growing giant (MEGA), the rocket board and parachute, the magnet, heart eyes, star eyes, drawing the robot, and his looks (hats, boards, trails, rainbow eyes and the dark outline) |
 | `Scripts/RobotBodies.cs` | COZMOS and VECKTOR, the two tank-tread robots: their "try changing these!" shapes, drawing the rolling treads and wheels, the box body, the big head with its screen face (and the red disc or gold panel), the forklift arm, and the pieces they blow apart into |
 | `Scripts/RobotExplosion.cs` | The crash: Bolt-E bursts into bouncing pieces, sparks, smoke, and dizzy stars (and flies back together in the magic rebuild). Smashed crates, cones and drones use it too |
-| `Scripts/Enemy.cs` | Pup-Bot, Egg-Bot and VROOMBA's dust bunnies: how they move, look, and get squashed |
+| `Scripts/Enemy.cs` | Pup-Bot, Egg-Bot, VROOMBA's dust bunnies and DRONEZILLA's mini-drones: how they move, look, and get squashed |
 | `Scripts/BossBase.cs` | What every boss has: 6 health and the ANGRY and FURIOUS phases, stomping, when bumping into him hurts, flying away, the laugh when Bolt-E crashes, blowing up, and being driven (only Big Rusty can be) |
 | `Scripts/Boss.cs` | Big Rusty: his size, his three phases, every attack, getting dizzy, blowing up, his World Tour outfits, and being driven by Dad (waiting for orders with thinking dots, the fair-play rules like TIRED and only 2 laughs in a row, and Dad's blue cap) |
 | `Scripts/Vroomba.cs` | VROOMBA, the giant robot vacuum: his moves (ZOOM, BONK, dizzy upside down, SUCK, dust bunnies, TURBO), his attack plan, his "try changing these!" numbers, and drawing him (lid, CLEAN button, bumper, sensor eyes, spinning brushes, wheels, dust, wind, and blowing apart) |
+| `Scripts/Dronezilla.cs` | DRONEZILLA, the giant attack drone: his moves (BOMBS AWAY, SWOOP, ZAP BEAM, MINI-DRONES, LOW BATTERY and landing, the loop-the-loop, crashing down), his attack plan, his "try changing these!" numbers, and drawing him (body, hazard stripes, arms, spinning rotors, camera eye, LED eyes, nav lights, antenna, battery, skids, shadow, and blowing apart) |
+| `Scripts/DroneBomb.cs` | DRONEZILLA's bombs: falling with a red target ring underneath, and the BOOM |
+| `Scripts/ZapBeam.cs` | DRONEZILLA's zap beam: the red circle that follows Bolt-E, locks, then the beam zapping straight down |
 | `Scripts/Blast.cs` | Big Rusty's bouncing fireballs |
 | `Scripts/Shockwave.cs` | The waves that roll out from his ground pound |
 | `Scripts/Laser.cs` | His giant laser (warning line, then the beam) |
 | `Scripts/ScorePopups.cs` | The floating "+25", "1-UP!", "SMASH! +25", "HA HA HA!" and "Wait..." words (how long they stay, how fast they float up) |
 | `Scripts/Obstacle.cs` | Crates, cones, crate stacks, and drones (and smashing them into pieces) |
 | `Scripts/BoltPickup.cs` | The spinning golden bolts (and bolts flying out of VROOMBA like a fountain) |
-| `Scripts/Hud.cs` | Score text, title screen (with "Who's playing?", Family Champions, and the controller line, which says when a 2nd controller can drive Big Rusty), game-over screen (results card, with the Today and So close lines and LB / RB around the play button), the flying spare battery, the power bar, the boss's health bar (it says "VROOMBA", or "BIG RUSTY (DAD)" while Dad drives Big Rusty), the Best number flashing gold, the menu strip on the left (the Bolt Bank, the postcards, the NEW LOOK! words and the look picker) |
+| `Scripts/Hud.cs` | Score text, title screen (with "Who's playing?", Family Champions, and the controller line, which says when a 2nd controller can drive Big Rusty), game-over screen (results card, with the Today and So close lines and LB / RB around the play button), the flying spare battery, the power bar, the boss's health bar (it says "VROOMBA" or "DRONEZILLA", or "BIG RUSTY (DAD)" while Dad drives Big Rusty), the Best number flashing gold, the menu strip on the left (the Bolt Bank, the postcards, the NEW LOOK! words and the look picker) |
 | `Scripts/BatteryRow.cs` | The spare batteries under "Bolts" (green spares and the yellow charging one) |
 | `Scripts/ScoreDatabase.cs` | All the SQLite code (including everyone who plays, their bests, and today's scores) |
 | `Scripts/Audio/Song.cs` | The theme song, written as notes you can change |
-| `Scripts/Audio/SoundEffects.cs` | Every sound effect (jump, bolt, explosion, jingles, power-ups, SMASH, the rocket, the new-world jingle, the NEW LOOK! jingle, the "ta-da-DA!" for passing a flag, and VROOMBA's rev-up, zoom, wall bonk, vacuum hum, BEEP BOOP and "ptoo!"...) |
+| `Scripts/Audio/SoundEffects.cs` | Every sound effect (jump, bolt, explosion, jingles, power-ups, SMASH, the rocket, the new-world jingle, the NEW LOOK! jingle, the "ta-da-DA!" for passing a flag, VROOMBA's rev-up, zoom, wall bonk, vacuum hum, BEEP BOOP and "ptoo!", and DRONEZILLA's rotor buzz, bomb whistle, LOW BATTERY beeps, power-down, take-off whir and BZZT BZZT...) |
 | `Scripts/Audio/Synth.cs` | The tiny synthesizer that turns notes into sound with math (with a buzzy saw wave for VROOMBA) |
 | `Scripts/Audio/SoundBoard.cs` | Plays the music and sound effects (and remembers how fast the music should play, so it wobbles down while Bolt-E is in pieces, even if you switch it off and on) |
 | `Scripts/Shapes.cs` | Drawing helpers (rounded rectangles, ovals, stars, happy eyes, X eyes, heart eyes) |
@@ -518,7 +574,17 @@ To write your own song, change the notes in `Scripts/Audio/Song.cs`: `"C5"` is a
   `SuckBoltSpeed` (how fast bolts fly into his mouth) and `DustBunnyChase` (how fast dust bunnies hop after Bolt-E)
 - Jump dust: `Lifetime` in `JumpDust.cs`, `MaxJumpDust` in `Main.Vroomba.cs`, and in `Vroomba.cs`: `DustChaseSpeed`,
   `DustNoticeSeconds`, `DustChaseSeconds`, `DustVacuumSeconds`, `DustDizzySeconds` and `DustLureCooldown`
-- Which boss comes when: `BossForFight` in `Main.Vroomba.cs` (make it always VROOMBA!)
+- DRONEZILLA, all in `Dronezilla.cs`: `CruiseHeight` (how high he flies: under about 365 a double jump reaches him,
+  but that's still harmless), `BombsWhenCalm` and `BombsWhenFurious` (how many bombs), `BombEvery` (time between
+  bombs), `BombChaseSpeed` (how fast he follows Bolt-E while bombing: faster than 430 and you can't get away!),
+  `SwoopSeconds` (how long a swoop takes: shorter is faster), `SwoopLow` (how low he swoops: try 120 and you can ride
+  under him!), `ZapTrackSeconds`, `ZapLockSeconds` and `ZapFireSeconds` (the zap beam's timing), `MinisWhenAngry` and
+  `MinisWhenFurious`, `LandedSeconds` (how long he sits on the ground: your stomp time! `ShortestLanded` keeps it at
+  least 1.8 seconds), `LandAway` (how far from Bolt-E he lands), his attack plans (`PhaseOnePlan`, `AngryPlan`,
+  `FuriousPlan`), and his colors (`DroneYellow` and friends). In `Main.Dronezilla.cs`: `MiniDroneChase` (how fast
+  mini-drones drift after Bolt-E). In `DroneBomb.cs`: `Gravity` (how fast bombs fall) and `BlastHalfWidth`. In
+  `Enemy.cs`: `MiniDroneHover` (how high mini-drones hover)
+- Which boss comes when: `BossForFight` in `Main.Vroomba.cs` (make it always DRONEZILLA: `BossKind.Dronezilla`!)
 - How high Egg-Bot hops: the `80f` in `HopHeight` in `Enemy.cs`
 - Spare batteries, all in `Main.Batteries.cs`: `StartingBatteries` (0 = the classic game, 3 = super easy),
   `MaxBatteries` (how many he can carry), `BoltsPerBattery` (try 50 for lots of 1-UPs!)

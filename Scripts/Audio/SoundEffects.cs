@@ -426,6 +426,82 @@ public static class SoundEffects
         return Done(sound);
     }
 
+    // ---------- DRONEZILLA, the giant attack drone ----------
+
+    /// <summary>
+    /// "Bzzzzzzz" — DRONEZILLA's rotors: a low buzzy drone and the "wup-wup-wup" of the blades chopping the air,
+    /// 30 chops every second. It's exactly 1 second long and it LOOPS (the buzzes fit in it exactly 120 and 181 times,
+    /// so you can't hear where it starts again), so it buzzes for as long as he flies.
+    /// </summary>
+    public static float[] RotorBuzz()
+    {
+        var sound = Synth.Silence(1f);
+        var steady = new Envelope(0f, 1f, 1f, 0.001f); // no fading in or out, so the loop is smooth
+        Synth.AddTone(sound, 0, 1f, Wave.Saw, 0.2f, steady, 120);
+        Synth.AddTone(sound, 0, 1f, Wave.Square25, 0.08f, steady, 181);
+        var chop = new Envelope(0.002f, 0.012f, 0f, 0.005f);
+        for (int i = 0; i < 30; i++)
+            Synth.AddTone(sound, i / 30f, 0.015f, Wave.Noise, 0.3f, chop, 1); // wup!
+        return Done(sound, 0.7f);
+    }
+
+    /// <summary>"Wheeeeeeoooo" — a bomb falling: a whistle sliding down.</summary>
+    public static float[] BombWhistle()
+    {
+        var sound = Synth.Silence(0.85f);
+        Synth.AddTone(sound, 0, 0.75f, Wave.Sine, 0.4f, new Envelope(0.05f, 0.5f, 0.7f, 0.06f), 1900, 700);
+        Synth.AddTone(sound, 0, 0.75f, Wave.Triangle, 0.12f, new Envelope(0.05f, 0.5f, 0.7f, 0.06f), 3800, 1400);
+        return Done(sound, 0.7f);
+    }
+
+    /// <summary>"Beep beep booop" — LOW BATTERY! Three beeps going down, the last one long and sad.</summary>
+    public static float[] LowBattery()
+    {
+        var sound = Synth.Silence(0.8f);
+        var beep = new Envelope(0.003f, 0.08f, 0.7f, 0.03f);
+        Synth.AddTone(sound, 0, 0.1f, Wave.Square50, 0.3f, beep, Synth.NoteToFrequency("B5"));
+        Synth.AddTone(sound, 0.16f, 0.1f, Wave.Square50, 0.3f, beep, Synth.NoteToFrequency("G5"));
+        Synth.AddTone(sound, 0.32f, 0.35f, Wave.Square50, 0.3f, beep, Synth.NoteToFrequency("E5"), Synth.NoteToFrequency("C5"));
+        return Done(sound);
+    }
+
+    /// <summary>"Wheeeoowwww... clunk" — DRONEZILLA's rotors powering down when he lands.</summary>
+    public static float[] PowerDown()
+    {
+        var sound = Synth.Silence(1f);
+        Synth.AddTone(sound, 0, 0.8f, Wave.Saw, 0.25f, Held, 420, 55);
+        Synth.AddTone(sound, 0, 0.8f, Wave.Square25, 0.1f, Held, 840, 110);
+        Synth.AddTone(sound, 0.82f, 0.04f, Wave.Noise, 0.3f, Pluck, 1); // clunk
+        return Done(sound);
+    }
+
+    /// <summary>"Vrrrr-WHIIIR!" — DRONEZILLA's rotors whirring up as he takes off (and the wind they blow).</summary>
+    public static float[] TakeOff()
+    {
+        var sound = Synth.Silence(0.9f);
+        Synth.AddTone(sound, 0, 0.75f, Wave.Saw, 0.25f, Held, 60, 240);
+        Synth.AddTone(sound, 0, 0.75f, Wave.Square25, 0.1f, Held, 120, 480);
+        Synth.AddTone(sound, 0, 0.75f, Wave.Noise, 0.12f, new Envelope(0.2f, 0.4f, 0.6f, 0.08f), 1);
+        return Done(sound);
+    }
+
+    /// <summary>"BZZT BZZT! dee-doo!" — DRONEZILLA being cheeky when Bolt-E crashes: two buzzes and a little tune.</summary>
+    public static float[] Bzzt()
+    {
+        var sound = Synth.Silence(0.95f);
+        var buzz = new Envelope(0.004f, 0.1f, 0.8f, 0.03f);
+        for (int i = 0; i < 2; i++)
+        {
+            float start = i * 0.26f;
+            Synth.AddTone(sound, start, 0.17f, Wave.Saw, 0.3f, buzz, 150, 135);        // BZZ...
+            Synth.AddTone(sound, start, 0.17f, Wave.Square25, 0.15f, buzz, 301, 270);
+            Synth.AddTone(sound, start + 0.15f, 0.03f, Wave.Noise, 0.3f, Pluck, 1);   // ...T!
+        }
+        Synth.AddTone(sound, 0.58f, 0.09f, Wave.Square12, 0.2f, Pluck, Synth.NoteToFrequency("G6")); // dee
+        Synth.AddTone(sound, 0.68f, 0.14f, Wave.Square12, 0.2f, Pluck, Synth.NoteToFrequency("C7")); // doo!
+        return Done(sound);
+    }
+
     /// <summary>Plays a list of (note, seconds) one after another.</summary>
     static float[] Tune((string Note, float Length)[] notes, Wave wave, bool normalize = true)
     {
