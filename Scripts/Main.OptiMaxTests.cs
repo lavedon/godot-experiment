@@ -12,7 +12,7 @@ public partial class Main
         nameof(BossesTakeTurns), nameof(ThreeBossesTakeTurns), nameof(FourBossesTakeTurns), nameof(OptiMaxIsJumpable),
         nameof(BoxToss), nameof(SuperStompWaves), nameof(OptiMaxUpdatesAndStomp), nameof(SoccerAndRun),
         nameof(OptiMaxTauntOnRebuild), nameof(BeatOptiMax), nameof(OptiMaxCantBeDriven), nameof(OptiMaxDrawsEverywhere),
-        nameof(OptiMaxMusicBattle),
+        nameof(OptiMaxMusicBattle), nameof(EasierOptiMaxKicks),
     };
 
     /// <summary>
@@ -467,6 +467,56 @@ public partial class Main
             await NextFrame();
         }
         Check(closest >= 200, $"he stops {closest:0} px before Bolt-E");
+    }
+
+    /// <summary>
+    /// Even when FURIOUS, a kick has a readable warning and sends just one ball. A single jump can clear the ball
+    /// and its rebound at either wall, without invulnerability. His longer update also allows a late stomp.
+    /// </summary>
+    async Task EasierOptiMaxKicks()
+    {
+        foreach (float edge in new[] { Robot.LeftEdge, Robot.RightEdge })
+        {
+            GoToTitle();
+            var opti = StartOptiMaxFight("TOptiEasyKick");
+            Check(await WaitUntil(() => opti.CurrentMove == "Idle", 4), "OPTI-MAX walked in");
+            opti.LoseHealth(4);
+            Check(await WaitUntil(() => opti.CurrentMove == "GettingAngry", 3) && opti.Phase == 3,
+                  "the hardest phase, with two health left");
+            robot.Position = new Vector2(edge, GroundY);
+            opti.Position = new Vector2(edge == Robot.LeftEdge ? 500 : 780, GroundY);
+            opti.TargetX = edge;
+            LetBoltECrash();
+            int kicks = 0;
+            opti.BallKicked += (_, _) => kicks++;
+            opti.DoAttack(OptiAttack.Kick);
+
+            await Wait(0.8);
+            Check(kicks == 0 && opti.CurrentMove == "HoldingBall", "a full warning before even the furious kick");
+            Check(await WaitUntil(() => kickBalls.Count == 1, 1), "then one ball is kicked");
+            if (kickBalls.Count != 1) return;
+            var ball = kickBalls[0];
+            bool rebounded = false;
+            ball.HitWall += _ => rebounded = true;
+            await Wait(0.8);
+            Check(IsInstanceValid(ball) && Mathf.Abs(ball.Position.X - edge) > 130,
+                  "at least 0.8 seconds to react before the ball reaches jumping distance");
+            Check(await WaitUntil(() => !IsInstanceValid(ball) || Mathf.Abs(ball.Position.X - edge) <= 130, 1),
+                  "the ball approaches the wall");
+            Check(robot.Jump(), "one ordinary jump, with no invulnerability or spare battery");
+            Check(await WaitUntil(() => !kickBalls.Contains(ball), 3) && rebounded &&
+                  state == GameState.Playing && !robot.Crashed && robot.BlinkTime <= 0,
+                  $"the jump clears the ball and its rebound at x {edge:0}");
+            Check(kicks == 1 && opti.CanBeStomped, "no second ball follows: the kick ends with a stomp opportunity");
+
+            // Start a fresh update window after a super stomp, then deliberately wait before jumping.
+            robot.BlinkTime = 1e9f;
+            opti.DoAttack(OptiAttack.Stomp);
+            Check(await WaitUntil(() => opti.CanBeStomped, 8), "the super stomp ends with an update");
+            await Wait(2.0);
+            Check(await StompOptiMax(opti) && opti.Health == 1,
+                  "waiting two seconds still leaves enough time to jump and land a stomp");
+        }
     }
 
     /// <summary>

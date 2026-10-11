@@ -10,7 +10,7 @@ public partial class KickBall : Node2D
 {
     // ---- Ball numbers (try changing these!) ----
     public const float Radius = 17f;
-    public const float KickSpeed = 380f;   // how fast it rolls sideways (Bolt-E rides 430)
+    public const float KickSpeed = 300f;   // time to read each bounce and dodge (Bolt-E rides 430)
     public const float FirstHop = 520f;    // how hard the kick lifts it
     public const float HopSpeed = 700f;    // how high every bounce goes (about 160 pixels: ride under it!)
     public const float Gravity = 1500f;

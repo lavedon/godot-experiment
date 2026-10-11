@@ -330,6 +330,7 @@ public partial class Main
                 (nameof(VolcanoBoss), VolcanoBoss),
                 (nameof(VolcanoPowersAndPause), VolcanoPowersAndPause),
                 (nameof(VolcanoDraws), VolcanoDraws),
+                (nameof(EasierOptiMaxKicks), EasierOptiMaxKicks),
             }).ToArray();
 
             if (OS.GetCmdlineUserArgs().Contains("--selftest-dust"))
