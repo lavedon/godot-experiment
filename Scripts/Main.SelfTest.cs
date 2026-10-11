@@ -317,6 +317,7 @@ public partial class Main
                 (nameof(QuitToTitleSaves), QuitToTitleSaves),
                 (nameof(PauseSafety), PauseSafety),
                 (nameof(PauseDraws), PauseDraws),
+                (nameof(EasierOptiMaxKicks), EasierOptiMaxKicks),
             }).ToArray();
 
             if (OS.GetCmdlineUserArgs().Contains("--selftest-dust"))

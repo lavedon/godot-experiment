@@ -16,7 +16,7 @@ public enum OptiAttack
 /// He has 6 health and gets angrier as he gets hurt:
 ///   Phase 1:            BOX TOSS (2 boxes) and SUPER STOMP, taking turns
 ///   Phase 2 (ANGRY):    he also does the SOCCER KICK and the ROBOT RUN, and throws 3 boxes
-///   Phase 3 (FURIOUS):  faster, 4 boxes, 2 balls, and TWO super stomps in a row
+///   Phase 3 (FURIOUS):  faster, 4 boxes and TWO super stomps, but still only one well-telegraphed soccer ball
 /// After every attack he freezes: "UPDATING..." He kneels down on one knee while a progress bar fills up... JUMP ON HIM!
 /// What every boss has (health, phases, stomping, flying away...) is in BossBase.cs. What the game does when he throws
 /// a box (and so on) is in Main.OptiMax.cs. His boxes are ThrownBox.cs, his ball is KickBall.cs, his shockwaves are
@@ -40,12 +40,13 @@ public partial class OptiMax : BossBase
     public const float FuriousBoxFlightSeconds = 0.85f; // ...and when he's FURIOUS
     public const float StompJumpHeight = 170f;     // how high he jumps for a SUPER STOMP
     public const int BallsWhenAngry = 1;           // soccer balls he kicks when he's ANGRY...
-    public const int BallsWhenFurious = 2;         // ...and when he's FURIOUS
+    public const int BallsWhenFurious = 1;         // no overlapping soccer volley in the hardest phase
+    public const float HoldBallSeconds = 1.0f;    // a full wind-up before the kick, even when he's FURIOUS
     public const float WalkSpeed = 320f;           // how fast he walks (Bolt-E rides 430)
     public const float RunSpeed = 620f;            // how fast he sprints in a ROBOT RUN
     public const float RunStopShort = 220f;        // a run always stops at least this far from Bolt-E (he never squashes him on a wall)
     public const float UpdateSeconds = 2.6f;       // how long his SOFTWARE UPDATE takes (STOMP HIM!)...
-    public const float FuriousUpdateSeconds = 2.0f;// ...and when he's FURIOUS
+    public const float FuriousUpdateSeconds = 2.8f;// extra time to reach and stomp him during the hardest phase
     public const float ShortestUpdate = 1.8f;      // an update never takes less than this, so there's always time to stomp him
     public const float KneelAway = 260f;           // he kneels at least this far from Bolt-E (he never kneels on him!)
     public const float FuriousSpeedUp = 0.8f;      // when he's FURIOUS his moves take only 80% of the time
@@ -67,7 +68,6 @@ public partial class OptiMax : BossBase
     const float CrouchSeconds = 0.5f;    // crouching down for a super stomp
     const float AirSeconds = 0.8f;       // up in the air
     const float LandSeconds = 0.45f;     // landing (STOMP!) and getting back up
-    const float HoldBallSeconds = 0.55f; // holding the ball, then dropping it
     const float KickSeconds = 0.42f;     // the kick
     const float BrakeSeconds = 0.3f;     // stopping after a run
     const float FreezeSeconds = 0.5f;    // frozen: "UPDATING..."
@@ -530,8 +530,9 @@ public partial class OptiMax : BossBase
 
             case State.HoldingBall:
                 // SOCCER KICK: he holds the ball, then drops it in front of his foot...
-                if (stateTime >= HoldBallSeconds * 0.45f * Quick) ballDropped = true;
-                if (stateTime >= HoldBallSeconds * Quick) ChangeState(State.Kicking);
+                // The warning never gets shortened by the furious animation speed-up.
+                if (stateTime >= HoldBallSeconds * 0.45f) ballDropped = true;
+                if (stateTime >= HoldBallSeconds) ChangeState(State.Kicking);
                 break;
 
             case State.Kicking:
@@ -1250,7 +1251,7 @@ public partial class OptiMax : BossBase
             KickBall.DrawBall(this, heldBall, 0);
             return;
         }
-        float fallen = Mathf.Min(1, (stateTime - HoldBallSeconds * 0.45f * Quick) / 0.2f);
+        float fallen = Mathf.Min(1, (stateTime - HoldBallSeconds * 0.45f) / 0.2f);
         if (state == State.Kicking) fallen = 1;
         var floor = new Vector2(BallSpotX, -KickBall.Radius);
         KickBall.DrawBall(this, heldBall.Lerp(floor, fallen * fallen), 0);

@@ -360,20 +360,23 @@ and his knees bend when he crouches or lands. (He's built like a little skeleton
     2 boxes (3 when he's ANGRY, 4 and faster when he's FURIOUS). Touching a box is a crash.
   - **SUPER STOMP!** He crouches, jumps up high and lands with a STOMP: the screen shakes and two low glowing teal
     **shockwaves** run along the ground, away from him both ways. **Jump over them!** FURIOUS: two stomps in a row.
-  - **SOCCER KICK!** (when he's ANGRY) He drops a ball and kicks it toward Bolt-E. It bounces in big hops (boing!):
-    **jump over it, or ride under it** while it's high up. It bounces off the far wall once, then pops. FURIOUS: 2 balls.
+  - **SOCCER KICK!** (when he's ANGRY) He holds and drops the ball with a full one-second wind-up, then kicks it
+    toward Bolt-E. **One ball per kick attack, even when FURIOUS**, traveling at 300 pixels per second so there's
+    time to read its big bouncy hops: **jump over it, or ride under it** while it's high up. It bounces off the far
+    wall once, then pops. The wind-up stays just as long in the final phase.
   - **ROBOT RUN!** (when he's ANGRY) He sprints across the arena with pumping arms, so the fight moves around. Touching
     him is a crash (double jump over him!), but he **never squashes Bolt-E against a wall**: he always stops at least
     200 pixels before him.
   - **SOFTWARE UPDATE: STOMP HIM!** Every attack ends with him **freezing** in the middle of what he was doing:
     **UPDATING...** Then he **kneels on one knee** with his head bowed (the top of his head is only about 125 pixels up)
     and a progress bar fills over his head, with little computer chirps, while a yellow arrow bounces over his back.
-    **Jump on his back!** (The update takes 2.6 seconds, 2.0 when he's FURIOUS, never less than 1.8.) He never kneels
+    **Jump on his back!** (The update takes 2.6 seconds, 2.8 when he's FURIOUS, never less than 1.8.) He never kneels
     on Bolt-E: if Bolt-E is close, he walks a few steps away first. Touching him while he updates never hurts.
     Stomped: sparks fly from his head, an error buzz, the bar says **ERROR!** in red, and he wobbles back up. Missed
     him? The bar reaches 100%, **DING!**, and he stands up.
 - **His plan:** BOX TOSS, update; SUPER STOMP, update; again and again. ANGRY: SOCCER KICK + BOX TOSS, update; ROBOT RUN
-  + SUPER STOMP, update. FURIOUS: the same, faster, with 4 boxes, 2 balls and double stomps. Every attack ends with an
+  + SUPER STOMP, update. FURIOUS: faster boxes and double stomps, but still one ball with the full kick wind-up,
+  followed by a longer stomp window. Every attack sequence ends with an
   update, so you always get your chance.
 - **How he looks:** his eyes are calm soft glows, narrow when he attacks, spinning loading circles while he updates,
   happy arcs when he waves or dances, glitchy red flickers when he's stomped, and X eyes when he's beaten. His eyes
@@ -757,7 +760,8 @@ To write your own song, change the notes in `Scripts/Audio/Song.cs`: `"C5"` is a
   `Enemy.cs`: `MiniDroneHover` (how high mini-drones hover)
 - OPTI-MAX, all in `OptiMax.cs`: `BoxesWhenCalm`, `BoxesWhenAngry` and `BoxesWhenFurious` (how many boxes),
   `BoxFlightSeconds` (how long a box flies: shorter is harder), `StompJumpHeight` (how high he jumps), `BallsWhenAngry`
-  and `BallsWhenFurious`, `WalkSpeed` and `RunSpeed`, `RunStopShort` (how far before Bolt-E a run stops), `UpdateSeconds`
+  and `BallsWhenFurious`, `HoldBallSeconds` (the kick warning, never sped up), `WalkSpeed` and `RunSpeed`,
+  `RunStopShort` (how far before Bolt-E a run stops), `UpdateSeconds`
   and `FuriousUpdateSeconds` (your stomp time! `ShortestUpdate` keeps it at least 1.8 seconds), `KneelAway` (how far
   from Bolt-E he kneels), `FuriousSpeedUp`, his attack plans (`PhaseOnePlan`, `AngryPlan`, `FuriousPlan`), his poses
   (`StandPose`, `KneelPose`, `CrouchPose`... every angle is in radians: try making him lean way back!), his bone lengths
