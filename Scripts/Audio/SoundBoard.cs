@@ -139,10 +139,12 @@ public partial class SoundBoard : Node
     /// <summary>
     /// Starts the music (or makes sure it's playing at normal volume) at this speed: 1 = normal.
     /// (A new game or the title screen: each world has its own music speed, so Main passes Sunny Hills' speed.)
+    /// A fresh start defaults to the original runner theme; a level may explicitly choose its own score.
     /// </summary>
-    public void StartMusic(float speed = 1f)
+    public void StartMusic(float speed = 1f, LevelMusicTheme theme = LevelMusicTheme.Runner)
     {
         musicSpeed = speed;
+        levelMusicTheme = theme;
         musicHeld = false; // (a fresh start: nothing is held any more, even if the music is switched off)
         SelectTheme(boss: false);
         PlayMusicAt(speed);

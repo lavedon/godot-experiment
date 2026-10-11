@@ -3,19 +3,25 @@ using Godot;
 /// <summary>A boss chooses its score independently of its name or implementation.</summary>
 public enum BossMusicTheme { TitanCircuit, RotorRush, IronShadow }
 
+/// <summary>The running score for a level, remembered while a boss's own theme plays.</summary>
+public enum LevelMusicTheme { Runner, NeonSlipstream }
+
 public partial class SoundBoard
 {
     AudioStreamWav runnerTheme = null!;
+    AudioStreamWav stationTheme = null!;
     AudioStreamWav bossTheme = null!;
     AudioStreamWav droneTheme = null!;
     AudioStreamWav humanoidTheme = null!;
     AudioStreamPlayer outgoingMusic = null!;
     Tween? trackFade;
+    LevelMusicTheme levelMusicTheme = LevelMusicTheme.Runner;
 
     /// <summary>The selected theme, even while muted or rebuilding (also read by the self-test).</summary>
     public bool BossMusicActive => music.Stream == bossTheme || music.Stream == droneTheme || music.Stream == humanoidTheme;
     public bool DroneMusicActive => music.Stream == droneTheme;
     public bool HumanoidMusicActive => music.Stream == humanoidTheme;
+    public bool StationMusicActive => music.Stream == stationTheme;
 
     void SetUpMusic()
     {
@@ -23,13 +29,27 @@ public partial class SoundBoard
         bossTheme = Synth.ToAudioStream(BossSong.Render(), loop: true);
         droneTheme = Synth.ToAudioStream(DroneSong.Render(), loop: true);
         humanoidTheme = Synth.ToAudioStream(HumanoidSong.Render(), loop: true);
+        stationTheme = Synth.ToAudioStream(StationSong.Render(), loop: true);
         music = new AudioStreamPlayer { Stream = runnerTheme, VolumeDb = MusicVolumeDb };
         outgoingMusic = new AudioStreamPlayer();
         AddChild(music);
         AddChild(outgoingMusic);
     }
 
-    /// <summary>Choose a battle score at spawn; speed follows the world and boss phase.</summary>
+    /// <summary>
+    /// Select a level's running score and speed. During a boss fight, remember the level without interrupting
+    /// the battle music or its phase speed; SetBossMusic(false, speed) returns to this selection after victory.
+    /// </summary>
+    public void SetLevelMusic(LevelMusicTheme theme, float speed)
+    {
+        levelMusicTheme = theme;
+        if (BossMusicActive) return;
+        musicSpeed = speed;
+        SelectTheme(boss: false);
+        SetMusicSpeed(speed);
+    }
+
+    /// <summary>Choose a battle score at spawn; victory returns to the selected level score.</summary>
     public void SetBossMusic(bool enabled, float speed, BossMusicTheme theme = BossMusicTheme.TitanCircuit)
     {
         musicSpeed = speed;
@@ -39,7 +59,8 @@ public partial class SoundBoard
 
     void SelectTheme(bool boss, BossMusicTheme theme = BossMusicTheme.TitanCircuit)
     {
-        AudioStreamWav next = !boss ? runnerTheme : theme switch
+        AudioStreamWav level = levelMusicTheme == LevelMusicTheme.NeonSlipstream ? stationTheme : runnerTheme;
+        AudioStreamWav next = !boss ? level : theme switch
         {
             BossMusicTheme.RotorRush => droneTheme,
             BossMusicTheme.IronShadow => humanoidTheme,

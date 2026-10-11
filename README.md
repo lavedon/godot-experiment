@@ -500,17 +500,28 @@ speed changes. The flying drone's score, **Rotor Rush**, is in `Scripts/Audio/Dr
 OPTI-MAX's score, **Iron Shadow**, is in `Scripts/Audio/HumanoidSong.cs`: 32 bars at 132 BPM
 (about 58.2 seconds), with a D-minor/Phrygian melody, a lurching bass pulse, metallic FM percussion, a sparse
 stalking passage, and a tightening final pursuit.
-`Scripts/Audio/SoundBoard.Music.cs` caches all four synthesized themes and crossfades between them.
-The self-test writes listenable `titan-circuit.wav`, `rotor-rush.wav`, and `iron-shadow.wav` files beside its scratch database.
+The neon space-station level's score, **Neon Slipstream**, is in `Scripts/Audio/StationSong.cs`: 48 bars in F# minor at
+128 BPM (90 seconds before world-speed changes), with glassy keys, mirrored arpeggios, a pulsing bass, tunnel echoes,
+and a floating observation-window section. It is ready for the station level to select when that level is integrated.
+`Scripts/Audio/SoundBoard.Music.cs` caches all five synthesized themes and crossfades between them.
+The self-test writes listenable `titan-circuit.wav`, `rotor-rush.wav`, `iron-shadow.wav`, and `neon-slipstream.wav`
+files beside its scratch database.
 Add `--selftest-music` after `--selftest` to run just the music playback and audio checks.
 
 `SpawnBoss` automatically selects **Iron Shadow** for OPTI-MAX, **Rotor Rush** for DRONEZILLA, and **Titan Circuit**
 for BIG RUSTY and VROOMBA. The scores continue while OPTI-MAX updates or DRONEZILLA lands to recharge, follow the
-world's speed and each boss's angry phases, and dip during a rebuild. Victory returns to the runner theme;
+world's speed and each boss's angry phases, and dip during a rebuild. Victory returns to the selected level theme;
 game over powers the music down normally.
 The optional third argument to `SetBossMusic` selects `BossMusicTheme.RotorRush`, `BossMusicTheme.IronShadow`,
 or `BossMusicTheme.TitanCircuit` (the default).
 Phase changes use `SetMusicSpeed`, and victory calls `SetBossMusic(false, CurrentWorld.MusicSpeed)`.
+
+For station integration, use `sounds.SetLevelMusic(LevelMusicTheme.NeonSlipstream, toWorld.MusicSpeed)` when entering
+the station, and `LevelMusicTheme.Runner` for the other worlds. This replaces the world-change `SetMusicSpeed` call.
+During a boss fight it remembers the level selection without interrupting the boss score or its phase speed;
+the existing victory call returns to the selected level. Muting and rebuilding preserve that selection.
+`StartMusic(speed)` resets to the original runner theme for title screens and new games; a direct station start can use
+`StartMusic(speed, LevelMusicTheme.NeonSlipstream)`. The music branch does not yet change the world's spawn or selection code.
 
 | File | What it does |
 |---|---|
