@@ -7,7 +7,8 @@ using Godot;
 /// Main.PowerUps.cs (rainbow ? boxes and their powers), Main.Worlds.cs (the World Tour: a new world after every
 /// Big Rusty win), Main.Looks.cs (the Bolt Bank and Bolt-E's looks), Main.Family.cs (the family race: who's playing,
 /// and the flags on the road), Main.Driver.cs (Dad drives Big Rusty with a second controller), Main.Vroomba.cs
-/// (VROOMBA, the second boss, and how the bosses take turns) and Main.SelfTest.cs (grown-up testing code).
+/// (VROOMBA, the second boss, and how the bosses take turns), Main.Dronezilla.cs (DRONEZILLA, the third boss: his bombs,
+/// zap beam and mini-drones) and Main.SelfTest.cs (grown-up testing code).
 /// </summary>
 public partial class Main : Node2D
 {
@@ -45,7 +46,7 @@ public partial class Main : Node2D
     readonly List<Blast> blasts = new();
     readonly List<Shockwave> shockwaves = new();
     readonly List<Laser> lasers = new();
-    BossBase? boss;          // Big Rusty or VROOMBA (see BossBase.cs)
+    BossBase? boss;          // Big Rusty, VROOMBA or DRONEZILLA (see BossBase.cs)
     ScorePopups popups = null!;
 
     float speed;
@@ -395,6 +396,7 @@ public partial class Main : Node2D
         ResetWorlds(); // back to Sunny Hills (see Main.Worlds.cs)
         ClearFlags();  // (see Main.Family.cs)
         ClearJumpDust();
+        ClearDroneThings(); // DRONEZILLA's bombs and zap beam, and his rotor buzz (see Main.Dronezilla.cs)
         foreach (var o in obstacles) o.QueueFree();
         foreach (var b in bolts) b.QueueFree();
         foreach (var e in enemies) e.QueueFree();
@@ -708,6 +710,7 @@ public partial class Main : Node2D
         float dt = (float)delta;
 
         UpdateJumpDust(dt);
+        UpdateDronezilla(dt); // his bombs, his zap beam, and the buzz of his rotors (see Main.Dronezilla.cs)
 
         if (state == GameState.Playing)
         {
@@ -829,7 +832,7 @@ public partial class Main : Node2D
             var enemy = enemies[i];
             if (enemy.Chaser && !enemy.Squashed)
             {
-                // Big Rusty's helpers (and VROOMBA's dust bunnies) chase Bolt-E
+                // Big Rusty's helpers (and VROOMBA's dust bunnies and DRONEZILLA's mini-drones) chase Bolt-E
                 float direction = robot.Position.X < enemy.Position.X ? -1 : 1;
                 enemy.Facing = direction;
                 enemy.Position += new Vector2(direction * enemy.ChaseSpeed * dt - move, 0);
@@ -939,6 +942,8 @@ public partial class Main : Node2D
                 if (Bonk(laser)) return;
             }
         }
+
+        if (CheckDroneBumps(robotBox)) return; // DRONEZILLA's bombs and zap beam (see Main.Dronezilla.cs)
 
         if (boss is not null && robotBox.Intersects(boss.Hitbox))
         {
@@ -1085,7 +1090,7 @@ public partial class Main : Node2D
     }
 
     /// <summary>
-    /// A boss arrives! With no kind given, the bosses take turns (see Main.Vroomba.cs): BIG RUSTY or VROOMBA.
+    /// A boss arrives! With no kind given, the bosses take turns (see Main.Vroomba.cs): BIG RUSTY, VROOMBA or DRONEZILLA.
     /// </summary>
     void SpawnBoss(BossKind? kind = null)
     {
@@ -1111,14 +1116,20 @@ public partial class Main : Node2D
         PuffAway(boxes, _ => true); // (no ? boxes in a boss fight)
 
         bossFightNumber++;
-        BossBase theBoss = (kind ?? NextBossKind()) == BossKind.Vroomba ? MakeVroomba() : MakeBigRusty();
+        BossBase theBoss = (kind ?? NextBossKind()) switch
+        {
+            BossKind.Vroomba => MakeVroomba(),
+            BossKind.Dronezilla => MakeDronezilla(),
+            _ => MakeBigRusty(),
+        };
         boss = theBoss;
 
         // What every boss does: gets angry, pops, blows up and his pieces bounce
         theBoss.GotAngry += phase =>
         {
             hud.ShowBanner(phase == 2 ? $"{theBoss.DisplayName} IS ANGRY!" : $"{theBoss.DisplayName} IS FURIOUS!", new Color(1f, 0.35f, 0.25f));
-            sounds.Play(Sfx.Roar, theBoss is Vroomba ? 1.5f : 1f); // (VROOMBA's roar is a higher, robot-vacuum "GRRR!")
+            // (VROOMBA's roar is a higher, robot-vacuum "GRRR!", and DRONEZILLA's is a buzzy one in between)
+            sounds.Play(Sfx.Roar, theBoss switch { Vroomba => 1.5f, Dronezilla => 1.3f, _ => 1f });
             sounds.SetMusicSpeed((phase == 2 ? 1.15f : 1.22f) * CurrentWorld.MusicSpeed);
             shake = 0.35f;
             Rumble(0.5f, 0.6f, 0.5f);
@@ -1136,9 +1147,12 @@ public partial class Main : Node2D
         hud.SetBossBarName(theBoss.DisplayName); // (nobody drives a new Big Rusty yet: see Main.Driver.cs)
         driverPad = -1;
         hud.ShowBossBar(theBoss.Health);
-        hud.ShowHint(theBoss is Vroomba
-            ? "Jump to leave dust! Lure him, then STOMP when clogged!  ← → / stick to ride"
-            : "Ride left and right with  ← →  or the stick!");
+        hud.ShowHint(theBoss switch
+        {
+            Vroomba => "Jump to leave dust! Lure him, then STOMP when clogged!  ← → / stick to ride",
+            Dronezilla => DronezillaHint,
+            _ => "Ride left and right with  ← →  or the stick!",
+        });
         sounds.SetBossMusic(true, 1.1f * CurrentWorld.MusicSpeed); // a dedicated battle theme for every boss
     }
 

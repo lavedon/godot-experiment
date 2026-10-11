@@ -3,9 +3,10 @@ using Godot;
 /// <summary>
 /// VROOMBA, the second boss! (This is more of Main: "partial" means one class spread over several files.)
 ///
-/// The bosses TAKE TURNS: game 1 starts with BIG RUSTY, game 2 with VROOMBA, game 3 with Big Rusty again... and after
-/// that every boss fight is the other boss. So the kid meets VROOMBA in every other game, even if he only ever reaches
-/// the first fight. (VROOMBA himself, his moves and his drawing, is in Vroomba.cs.)
+/// The bosses TAKE TURNS: BIG RUSTY, then VROOMBA, then DRONEZILLA (the third boss: see Main.Dronezilla.cs), then Big
+/// Rusty again... And each new game starts one boss further along: game 1 starts with BIG RUSTY, game 2 with VROOMBA,
+/// game 3 with DRONEZILLA, game 4 with Big Rusty again. So the kid meets every boss, even if he only ever reaches the
+/// first fight. (VROOMBA himself, his moves and his drawing, is in Vroomba.cs.)
 /// Here: picking the boss, what happens when VROOMBA does something (sounds, dust, dust bunnies...), his vacuum pulling
 /// Bolt-E and gobbling up the loose bolts, jump dust that lures and clogs him, and bolts flying back out when stomped.
 /// </summary>
@@ -24,14 +25,16 @@ public partial class Main
 
     /// <summary>
     /// The bosses take turns! Which boss comes in this game's fight number "fightNumber" (1 = the first fight)?
-    /// Game 1: BIG RUSTY, VROOMBA, BIG RUSTY...  Game 2: VROOMBA, BIG RUSTY, VROOMBA...  Game 3 is like game 1, and so on.
+    /// Game 1: BIG RUSTY, VROOMBA, DRONEZILLA, BIG RUSTY...   Game 2: VROOMBA, DRONEZILLA, BIG RUSTY...
+    /// Game 3: DRONEZILLA, BIG RUSTY, VROOMBA...              Game 4 is like game 1, and so on.
+    /// (% 3 means "the remainder after dividing by 3": it counts 0, 1, 2, 0, 1, 2... the three bosses, over and over.)
     /// </summary>
     static BossKind BossForFight(int gameNumber, int fightNumber) =>
-        (gameNumber + fightNumber) % 2 == 0 ? BossKind.BigRusty : BossKind.Vroomba;
+        (BossKind)((gameNumber - 1 + fightNumber - 1) % 3);
 
     /// <summary>
     /// The boss for the next fight, by the taking-turns rule. (During the self-test it's always Big Rusty, so every old
-    /// test still meets the boss it expects. The VROOMBA tests ask for him: SpawnBoss(BossKind.Vroomba).)
+    /// test still meets the boss it expects. The VROOMBA and DRONEZILLA tests ask for them: SpawnBoss(BossKind.Vroomba).)
     /// </summary>
     BossKind NextBossKind() => selfTesting && !testTakeTurns ? BossKind.BigRusty : BossForFight(gameNumber, bossFightNumber);
 
