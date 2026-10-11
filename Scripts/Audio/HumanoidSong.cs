@@ -1,5 +1,5 @@
 /// <summary>
-/// "Iron Shadow" — an original humanoid-robot battle theme: 32 bars at 132 BPM.
+/// "Iron Shadow" — OPTI-MAX's original battle theme: 32 bars at 132 BPM.
 /// D minor with a Phrygian flat second: heavy footsteps, a hunt, an eerie stalking passage,
 /// then a tightening pursuit. Each melody word is an eighth note; '-' holds and '.' rests.
 /// Metallic FM strikes and a low, clipped pulse give this robot weight without masking attack cues.

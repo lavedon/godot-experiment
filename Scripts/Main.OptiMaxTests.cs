@@ -12,6 +12,7 @@ public partial class Main
         nameof(BossesTakeTurns), nameof(ThreeBossesTakeTurns), nameof(FourBossesTakeTurns), nameof(OptiMaxIsJumpable),
         nameof(BoxToss), nameof(SuperStompWaves), nameof(OptiMaxUpdatesAndStomp), nameof(SoccerAndRun),
         nameof(OptiMaxTauntOnRebuild), nameof(BeatOptiMax), nameof(OptiMaxCantBeDriven), nameof(OptiMaxDrawsEverywhere),
+        nameof(OptiMaxMusicBattle),
     };
 
     /// <summary>

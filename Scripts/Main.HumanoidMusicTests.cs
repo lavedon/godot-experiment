@@ -2,6 +2,60 @@ using Godot;
 
 public partial class Main
 {
+    async Task OptiMaxMusicBattle()
+    {
+        sounds.SetMusicOn(true);
+        var opti = StartOptiMaxFight("TOptiBattleMusic", world: 1);
+        Check(sounds.BossMusicActive && sounds.HumanoidMusicActive && !sounds.DroneMusicActive,
+              "spawning OPTI-MAX automatically selects Iron Shadow");
+        Check(await WaitUntil(() => opti.CurrentMove == "Idle", 4), "OPTI-MAX finishes his entrance");
+        Check(sounds.MusicPlaying && Mathf.Abs(sounds.MusicPitch - 1.1f * CurrentWorld.MusicSpeed) < 0.01f,
+              "his entrance music follows the current world's speed");
+
+        opti.LoseHealth(2);
+        Check(await WaitUntil(() => sounds.HumanoidMusicActive && Mathf.Abs(sounds.MusicPitch - 1.15f * CurrentWorld.MusicSpeed) < 0.01f, 4),
+              "OPTI-MAX's angry phase speeds up Iron Shadow");
+        robot.BlinkTime = 0;
+        Check(Bonk(null) && state == GameState.Rebuilding, "a crash in his fight starts the real rebuild flow");
+        await Wait(0.7);
+        sounds.SetMusicOn(false);
+        sounds.SetMusicOn(true);
+        Check(sounds.HumanoidMusicActive && Mathf.Abs(sounds.MusicPitch - 0.6f) < 0.01f,
+              "muting and unmuting during rebuilding keeps Iron Shadow dipped");
+        Check(await WaitUntil(() => state == GameState.Playing, 4), "the hero finishes rebuilding in OPTI-MAX's fight");
+        robot.BlinkTime = 1e9f;
+        await Wait(0.8);
+        Check(sounds.HumanoidMusicActive && Mathf.Abs(sounds.MusicPitch - 1.15f * CurrentWorld.MusicSpeed) < 0.01f,
+              "rebuilding restores Iron Shadow at the current battle tempo");
+
+        opti.LoseHealth(2);
+        Check(await WaitUntil(() => sounds.HumanoidMusicActive && Mathf.Abs(sounds.MusicPitch - 1.22f * CurrentWorld.MusicSpeed) < 0.01f, 4),
+              "his furious phase keeps Iron Shadow and raises its tempo");
+        opti.DoAttack(OptiAttack.Stomp);
+        Check(await FastForwardUntil(() => opti.CanBeStomped, 12), "OPTI-MAX finishes his super stomp and kneels to update");
+        Check(sounds.HumanoidMusicActive && sounds.MusicPlaying, "Iron Shadow continues through the software-update stomp window");
+        opti.LoseHealth(BossBase.MaxHealth);
+        Check(await WaitUntil(() => opti.HasBlownUp, 5), "OPTI-MAX falls over and explodes through the normal victory flow");
+        await Wait(0.5);
+        Check(!sounds.BossMusicActive && sounds.MusicPlaying, "defeating OPTI-MAX returns to the runner score");
+
+        GoToTitle();
+        sounds.SetMusicOn(false);
+        StartOptiMaxFight("TMutedOptiMusic");
+        Check(sounds.HumanoidMusicActive && !sounds.MusicPlaying, "a muted OPTI-MAX spawn still selects Iron Shadow");
+        sounds.SetMusicOn(true);
+        Check(sounds.HumanoidMusicActive && sounds.MusicPlaying, "unmuting starts the score selected by his spawn");
+        spareBatteries = 0;
+        robot.BlinkTime = 0;
+        Check(Bonk(null) && state == GameState.GameOver, "a final crash ends the OPTI-MAX encounter");
+        await Wait(1);
+        Check(!sounds.MusicPlaying, "game over powers down Iron Shadow");
+        StartGame();
+        QuietRoad();
+        await Wait(0.5);
+        Check(!sounds.BossMusicActive && sounds.MusicPlaying, "restarting after OPTI-MAX returns to the runner theme");
+    }
+
     async Task HumanoidMusicFlow()
     {
         AudioStreamPlayer[] PlayingMusic() => sounds.GetChildren().OfType<AudioStreamPlayer>().Where(player =>

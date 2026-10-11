@@ -333,6 +333,8 @@ and his knees bend when he crouches or lands. (He's built like a little skeleton
 - He walks in from the right with heavy clanky footsteps and does a little wave, and then it's the same kind of fight
   as the others: 6 health, his name on the health bar, **OPTI-MAX IS ANGRY!** and **OPTI-MAX IS FURIOUS!**, +250 and
   the rainbow of bolts when you beat him (**YOU BEAT OPTI-MAX!**), and then on to the next world of the World Tour.
+- His battle plays **Iron Shadow**, an original theme with a heavy mechanical rhythm, eerie melody and metallic
+  percussion. It speeds up as he gets angry and keeps playing while he kneels for a software update.
 - **His moves:**
   - **BOX TOSS!** There's a little stack of cardboard boxes at each end of the arena. He bends down, picks up the top
     box, lifts it over his head and throws it in a high arc at Bolt-E (whoosh!). A **shadow** on the ground shows where
@@ -495,23 +497,20 @@ The boss score is in `Scripts/Audio/BossSong.cs`: each melody line is one bar of
 the previous note, `.` rests). `Chords` supplies the harmony; `BeatsPerMinute` is 144 before world and boss-phase
 speed changes. The flying drone's score, **Rotor Rush**, is in `Scripts/Audio/DroneSong.cs`: 32 bars in E minor at
 152 BPM (about 50.5 seconds), with a pulsing rotor arpeggio, climbing melody, hovering bridge, and diving final phrase.
-The humanoid robot's score, **Iron Shadow**, is in `Scripts/Audio/HumanoidSong.cs`: 32 bars at 132 BPM
+OPTI-MAX's score, **Iron Shadow**, is in `Scripts/Audio/HumanoidSong.cs`: 32 bars at 132 BPM
 (about 58.2 seconds), with a D-minor/Phrygian melody, a lurching bass pulse, metallic FM percussion, a sparse
-stalking passage, and a tightening final pursuit. It is ready for the humanoid boss to select at spawn.
+stalking passage, and a tightening final pursuit.
 `Scripts/Audio/SoundBoard.Music.cs` caches all four synthesized themes and crossfades between them.
 The self-test writes listenable `titan-circuit.wav`, `rotor-rush.wav`, and `iron-shadow.wav` files beside its scratch database.
 Add `--selftest-music` after `--selftest` to run just the music playback and audio checks.
 
-`SpawnBoss` automatically selects **Rotor Rush** for DRONEZILLA and **Titan Circuit** for BIG RUSTY and VROOMBA.
-The score continues while DRONEZILLA lands to recharge, follows the world's speed and his angry phases, and dips
-during a rebuild. Victory returns to the runner theme; game over powers the music down normally.
+`SpawnBoss` automatically selects **Iron Shadow** for OPTI-MAX, **Rotor Rush** for DRONEZILLA, and **Titan Circuit**
+for BIG RUSTY and VROOMBA. The scores continue while OPTI-MAX updates or DRONEZILLA lands to recharge, follow the
+world's speed and each boss's angry phases, and dip during a rebuild. Victory returns to the runner theme;
+game over powers the music down normally.
 The optional third argument to `SetBossMusic` selects `BossMusicTheme.RotorRush`, `BossMusicTheme.IronShadow`,
 or `BossMusicTheme.TitanCircuit` (the default).
 Phase changes use `SetMusicSpeed`, and victory calls `SetBossMusic(false, CurrentWorld.MusicSpeed)`.
-
-To connect the new humanoid boss, select `BossMusicTheme.IronShadow` in its `SpawnBoss` theme selection:
-`sounds.SetBossMusic(true, 1.1f * CurrentWorld.MusicSpeed, BossMusicTheme.IronShadow)`.
-The score already supports phase changes, muting, rebuilding, victory crossfades, game over, and restarting.
 
 | File | What it does |
 |---|---|
