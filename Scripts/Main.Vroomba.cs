@@ -7,7 +7,7 @@ using Godot;
 /// that every boss fight is the other boss. So the kid meets VROOMBA in every other game, even if he only ever reaches
 /// the first fight. (VROOMBA himself, his moves and his drawing, is in Vroomba.cs.)
 /// Here: picking the boss, what happens when VROOMBA does something (sounds, dust, dust bunnies...), his vacuum pulling
-/// Bolt-E and gobbling up the loose bolts, and the bolts flying back out when he's stomped.
+/// Bolt-E and gobbling up the loose bolts, jump dust that lures and clogs him, and bolts flying back out when stomped.
 /// </summary>
 public partial class Main
 {
@@ -15,6 +15,8 @@ public partial class Main
     const float SuckBoltSpeed = 650f;        // how fast loose bolts fly into his mouth (pixels per second)
     const float DustBunnyChase = 110f;       // how fast dust bunnies hop after Bolt-E (Big Rusty's Pup-Bots go 150)
     static readonly Color DustColor = new(0.78f, 0.75f, 0.7f);
+    const int MaxJumpDust = 8; // jumping never fills the arena with an unbounded trail
+    readonly List<JumpDust> jumpDust = new();
 
     int gameNumber;        // games started since the game was opened: game 1, game 2...
     int bossFightNumber;   // boss fights in this game so far: fight 1, fight 2...
@@ -60,7 +62,56 @@ public partial class Main
             sounds.Play(Sfx.Spit);
         };
         vroomba.BoltsOut += FountainBolts;
+        vroomba.DustNoticed += () =>
+            popups.Add("DUST!", vroomba.Position + new Vector2(0, -125), DustColor, 30);
+        vroomba.DustClogged += () =>
+        {
+            popups.Add("CLOGGED! STOMP!", vroomba.Position + new Vector2(0, -140), new Color(1f, 0.88f, 0.25f), 30);
+            sounds.Play(Sfx.BeepBoop, 0.7f);
+            Burst(vroomba.Mouth, 12, DustColor, 180f);
+        };
         return vroomba;
+    }
+
+    /// <summary>Only accepted jump presses leave bait, including the double jump; other fights keep their usual puff.</summary>
+    void LeaveJumpDust()
+    {
+        if (state != GameState.Playing || boss is not Vroomba { IsBeaten: false }) return;
+        if (jumpDust.Count >= MaxJumpDust)
+        {
+            jumpDust[0].QueueFree();
+            jumpDust.RemoveAt(0);
+        }
+        var dust = new JumpDust { Position = robot.Position + new Vector2(0, -12), GroundY = GroundY, ZIndex = 4 };
+        AddChild(dust);
+        jumpDust.Add(dust);
+    }
+
+    void ClearJumpDust()
+    {
+        foreach (var dust in jumpDust) dust.QueueFree();
+        jumpDust.Clear();
+    }
+
+    /// <summary>Dust belongs to this encounter. Crashes, victory and menus clear it, even when the world is stopped.</summary>
+    void UpdateJumpDust(float dt)
+    {
+        if (state != GameState.Playing || boss is not Vroomba { IsBeaten: false } vroomba)
+        {
+            ClearJumpDust();
+            return;
+        }
+        for (int i = jumpDust.Count - 1; i >= 0; i--)
+        {
+            var dust = jumpDust[i];
+            dust.Update(dt);
+            if (dust.Available) continue;
+            dust.QueueFree();
+            jumpDust.RemoveAt(i);
+        }
+        if (!vroomba.CanChaseDust) return;
+        var nearest = jumpDust.MinBy(dust => Mathf.Abs(dust.Position.X - vroomba.Position.X));
+        if (nearest is not null) vroomba.ChaseDust(nearest);
     }
 
     /// <summary>

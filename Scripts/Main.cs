@@ -394,6 +394,7 @@ public partial class Main : Node2D
         CancelCelebrations();
         ResetWorlds(); // back to Sunny Hills (see Main.Worlds.cs)
         ClearFlags();  // (see Main.Family.cs)
+        ClearJumpDust();
         foreach (var o in obstacles) o.QueueFree();
         foreach (var b in bolts) b.QueueFree();
         foreach (var e in enemies) e.QueueFree();
@@ -671,6 +672,7 @@ public partial class Main : Node2D
                 case GameState.Playing:
                     if (jump && robot.Jump())
                     {
+                        LeaveJumpDust();
                         Burst(robot.Position, 8, new Color(0.9f, 0.85f, 0.75f), 120f);
                         sounds.Play(robot.DidDoubleJump ? Sfx.DoubleJump : Sfx.Jump);
                     }
@@ -704,6 +706,8 @@ public partial class Main : Node2D
     public override void _Process(double delta)
     {
         float dt = (float)delta;
+
+        UpdateJumpDust(dt);
 
         if (state == GameState.Playing)
         {
@@ -1132,7 +1136,9 @@ public partial class Main : Node2D
         hud.SetBossBarName(theBoss.DisplayName); // (nobody drives a new Big Rusty yet: see Main.Driver.cs)
         driverPad = -1;
         hud.ShowBossBar(theBoss.Health);
-        hud.ShowHint("Ride left and right with  ← →  or the stick!");
+        hud.ShowHint(theBoss is Vroomba
+            ? "Jump to leave dust! Lure him, then STOMP when clogged!  ← → / stick to ride"
+            : "Ride left and right with  ← →  or the stick!");
         sounds.SetBossMusic(true, 1.1f * CurrentWorld.MusicSpeed); // a dedicated battle theme for every boss
     }
 

@@ -224,15 +224,21 @@ Bolt-E can **jump right over him**.
   - **SUCK!** He turns on his vacuum: wind lines swirl into his mouth with a whooshing hum for 3 seconds. Bolt-E gets
     pulled toward him: **ride away!** (The pull is slower than riding.) Touching him is a crash. Every loose bolt in
     the arena flies into his mouth: **YUM!** But they're not lost: **stomp him and half of them fountain back out**
-    (grab them!), and when he's beaten all the rest come out. After the SUCK comes a ZOOM, always.
+    (grab them!), and when he's beaten all the rest come out. After the SUCK comes a ZOOM, unless jump dust distracts him.
+  - **JUMP DUST!** Every jump (including the double jump) leaves a dust puff during his fight. Ride away from it!
+    Before a zoom, or while sucking or spitting, he spots the dust (**DUST!**) and chases that puff instead of Bolt-E.
+    He rides slower than you, but touching him on the way still hurts. When he stops to vacuum it, he's harmless.
+    His filter clogs: **CLOGGED! STOMP!** He flips upside down for 3.2 seconds: jump on him to deal the usual damage!
+    Dust fades after 8 seconds. He ignores it during a zoom, while dizzy or recovering, and briefly after a clog,
+    so his normal attack pattern still matters. Dust and its vacuum sound clear when the fight ends or Bolt-E crashes.
   - **DUST BUNNIES** (when he's ANGRY): he spits out 2 fluffy grey dust bunnies with big eyes (3 when he's FURIOUS).
     They hop after Bolt-E: **stomp them** (like Egg-Bots, for the stomp combo), but bumping into one is a crash.
     Then he zooms.
   - **TURBO** (when he's FURIOUS): his zooms are faster, and every other time he zooms there and back first. The last
     zoom always bonks, so he always ends up dizzy (a bit shorter when he's FURIOUS, but never under 1.8 seconds).
 - **His plan:** first a ZOOM, then SUCK + ZOOM, again and again. ANGRY: DUST BUNNIES + ZOOM, ZOOM, SUCK + ZOOM. FURIOUS:
-  DUST BUNNIES + ZOOM, SUCK + ZOOM, ZOOM, all with TURBO zooms. Every attack ends with a BONK, so you always get your
-  chance to stomp him.
+  DUST BUNNIES + ZOOM, SUCK + ZOOM, ZOOM, all with TURBO zooms. Without a dust distraction, every attack ends with a
+  BONK, so you always get your chance to stomp him.
 - His eyes glow blue, then orange (ANGRY) and red (FURIOUS), and the CLEAN button turns red too. Beaten, he blows apart
   into his lid, the button, the bumper, the brushes and the wheels, in a big cloud of dust.
 - **Nobody can drive VROOMBA** (only Big Rusty, see below): in his fights the second controller does nothing.
@@ -337,6 +343,7 @@ APPDATA="$S\appdata" LOCALAPPDATA="$S\localappdata" \
 During the self-test the boss that comes by itself is always Big Rusty (so the older tests always meet the boss they
 expect); the VROOMBA tests ask for VROOMBA, and one test checks the taking-turns rule like a real game. A few of the
 VROOMBA tests run the game 3 times as fast while they wait for his moves, so the self-test stays quick.
+To run only the jump-dust checks and VROOMBA drawing coverage, add `--selftest-dust` after `--selftest` in the same command.
 Exit codes: **0** = everything passed, **1** = something failed, **2** = refused to start (bad `--db`),
 **3** = it took too long. A good run has no lines with `FAIL:`, `ERROR:`, `SCRIPT ERROR` or `Unhandled exception`
 in the output or in `godot.log`. The tests are in `Scripts/Main.SelfTest.cs`, and new features add theirs there.
@@ -374,7 +381,9 @@ The self-test also writes a listenable `titan-circuit.wav` beside its scratch da
 | `Scripts/Main.Looks.cs` | The Bolt Bank and the looks: loading a player's bank and look, changing looks on the menus, the count-up after a game, and the unlock parties and the first-launch "N NEW LOOKS!" note (which are never lost) |
 | `Scripts/Main.Family.cs` | The family race: who's playing (LB / RB, TAB), "GO, MAX!" and "DAD'S TURN!", the flags on the road and passing them, NEW HIGH SCORE! in the middle of a ride, fireworks, who's champ today, rounds, and "So close!" |
 | `Scripts/RecordFlag.cs` | A flag on the road: the pole, the waving cloth, the star or X eyes, the words, and tipping over |
-| `Scripts/Main.Vroomba.cs` | VROOMBA's side of the game: the bosses taking turns (`BossForFight`), what happens when VROOMBA does something (sounds, the wall-bonk shake, dust bunnies), his vacuum pulling Bolt-E and gobbling up the loose bolts (YUM!), and the bolts fountaining back out when he's stomped |
+| `Scripts/Main.Vroomba.cs` | VROOMBA's side of the game: the bosses taking turns (`BossForFight`), his sounds and dust bunnies, jump dust lures, his vacuum pulling Bolt-E and gobbling up loose bolts (YUM!), and bolts fountaining back out when stomped |
+| `Scripts/JumpDust.cs` | Jump dust: a visible puff that settles, fades, and shrinks as VROOMBA cleans it |
+| `Scripts/Main.VroombaDustTests.cs` | Self-test checks for jump dust, luring and stomping, arena edges, and encounter cleanup |
 | `Scripts/Main.Driver.cs` | Dad drives Big Rusty with a second controller (only a real one: phantom controllers can't): its buttons (X, Y, A, B, LB and RB in `DriveButtons`), taking over ("DAD IS DRIVING BIG RUSTY!", with a tip made from `DriveButtons`), giving orders ("Wait...", "TIRED! Press A!", "Not yet!", which never pile up or float over his health bar), Dad's buzz when Bolt-E stomps him, and who's driving (`DriverName`) |
 | `Scripts/BankBox.cs` | The Bolt Bank box in the top-left corner of the menus (the number, the gold hexagon and the bar to the next prize) |
 | `Scripts/LookPicker.cs` | The look picker under Bolt-E on the menus (the arrows, the look's name, the padlock and what it takes to win it) |
@@ -467,6 +476,8 @@ To write your own song, change the notes in `Scripts/Audio/Song.cs`: `"C5"` is a
   `ShortestDizzy` keeps it at least 1.8 seconds), `BunniesWhenAngry` and `BunniesWhenFurious`, his attack lists
   (`PhaseOnePlan`, `AngryPlan`, `FuriousPlan`), and his colors (`VroombaBlue` and friends). In `Main.Vroomba.cs`:
   `SuckBoltSpeed` (how fast bolts fly into his mouth) and `DustBunnyChase` (how fast dust bunnies hop after Bolt-E)
+- Jump dust: `Lifetime` in `JumpDust.cs`, `MaxJumpDust` in `Main.Vroomba.cs`, and in `Vroomba.cs`: `DustChaseSpeed`,
+  `DustNoticeSeconds`, `DustChaseSeconds`, `DustVacuumSeconds`, `DustDizzySeconds` and `DustLureCooldown`
 - Which boss comes when: `BossForFight` in `Main.Vroomba.cs` (make it always VROOMBA!)
 - How high Egg-Bot hops: the `80f` in `HopHeight` in `Enemy.cs`
 - Spare batteries, all in `Main.Batteries.cs`: `StartingBatteries` (0 = the classic game, 3 = super easy),

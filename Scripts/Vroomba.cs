@@ -1,6 +1,6 @@
 using Godot;
 
-/// <summary>VROOMBA's three attacks. Every one of them ends with a ZOOM into the wall (BONK!), so he always gets dizzy.</summary>
+/// <summary>VROOMBA's three attacks. Each ends with a wall BONK unless jump dust distracts and clogs him first.</summary>
 public enum VroombaAttack
 {
     Zoom,         // he revs up, then dashes across the arena and BONKS into the wall
@@ -15,7 +15,8 @@ public enum VroombaAttack
 ///                       SUCK! His vacuum pulls Bolt-E (ride away!) and gobbles up every loose bolt: YUM!
 ///   Phase 2 (ANGRY):    he also spits out fluffy DUST BUNNIES that hop after Bolt-E (stomp them!).
 ///   Phase 3 (FURIOUS):  TURBO zooms: faster, and every other time he zooms there and back first.
-/// Every attack ends with a zoom into the wall: BONK! He flips upside down, dizzy... JUMP ON HIM!
+/// His normal attacks end with a zoom into the wall: BONK! He flips upside down, dizzy... JUMP ON HIM!
+/// Jump dust can distract him before an attack: he chases it, vacuums it up, and gets clogged and dizzy on the spot.
 /// The bolts he gobbled up fly back out when you stomp him (half each time, and all the rest when he's beaten).
 /// What every boss has (health, phases, stomping, flying away...) is in BossBase.cs.
 /// Position is the middle of his bottom, on the ground. He's drawn facing right (his bumper and eyes are in front);
@@ -38,6 +39,12 @@ public partial class Vroomba : BossBase
     public const float ShortestDizzy = 1.8f;        // he's never dizzy for less than this, so there's always time to stomp him
     public const int BunniesWhenAngry = 2;          // dust bunnies he spits out when he's ANGRY...
     public const int BunniesWhenFurious = 3;        // ...and when he's FURIOUS
+    public const float DustChaseSpeed = 310f;       // slower than Bolt-E rides: leave the dust and get out of his way!
+    public const float DustNoticeSeconds = 0.35f;   // a short "DUST!" warning before he starts chasing
+    public const float DustChaseSeconds = 4.5f;     // give up if a puff can't be reached
+    public const float DustVacuumSeconds = 0.75f;   // time spent cleaning the puff before his filter clogs
+    public const float DustDizzySeconds = 3.2f;     // a longer stomp window as the reward for luring him
+    public const float DustLureCooldown = 6f;       // time from clogging until dust can distract him again
 
     // ---- His size, and his spots in the arena ----
     public const float HalfWidth = 115f;            // he's 230 pixels wide...
@@ -71,7 +78,7 @@ public partial class Vroomba : BossBase
     enum State
     {
         Entering, BeepBoop, Revving, Zooming, Turning, WallBonk, Dizzy, Hurt, Recovering, GettingAngry,
-        Sucking, Spitting, FlyingAway, Exploding, Defeated,
+        Sucking, Spitting, DustChase, DustVacuum, FlyingAway, Exploding, Defeated,
     }
 
     // ---- Things he does that the rest of the game needs to know about ----
@@ -83,6 +90,8 @@ public partial class Vroomba : BossBase
     public event Action? VacuumOff;                   // ...and off
     public event Action<Vector2, float>? SpatBunny;   // a dust bunny flies out here, going left (-1) or right (1)
     public event Action<Vector2, int>? BoltsOut;      // this many of the bolts he swallowed fly out of him, from here
+    public event Action? DustNoticed;                 // spotted a jump puff: DUST!
+    public event Action? DustClogged;                 // his filter clogged: STOMP!
 
     State state = State.Entering;
     float stateTime, time;
@@ -104,6 +113,9 @@ public partial class Vroomba : BossBase
     float cloudDrift;           // how far the big dust cloud has slid along with the world after he blew up
     Vector2 moveFrom;           // where a move started
     RobotExplosion? explosion;
+    JumpDust? dustTarget;
+    float dustCooldown;
+    bool dustDizzy;
 
     /// <summary>How many bolts are in his tummy right now (they come back out when he's stomped!).</summary>
     public int Swallowed { get; private set; }
@@ -113,6 +125,12 @@ public partial class Vroomba : BossBase
     public float Facing => facing;
     /// <summary>True while his vacuum is on: Bolt-E and the loose bolts get pulled toward him (see Main.Vroomba.cs).</summary>
     public bool Sucking => state == State.Sucking;
+    bool VacuumRunning => state is State.Sucking or State.DustChase or State.DustVacuum;
+    /// <summary>Dust interrupts preparations, never a committed zoom, a stomp window, or the rebuild grace period.</summary>
+    public bool CanChaseDust => dustCooldown <= 0 && holdAttacks <= 0
+                               && state is State.Revving or State.Sucking or State.Spitting;
+    public bool ChasingDust => state == State.DustChase;
+    public bool CleaningDust => state == State.DustVacuum;
     /// <summary>Where his mouth is (at the bottom of his front bumper), on the screen.</summary>
     public Vector2 Mouth => Position + new Vector2(facing * MouthSpot.X, MouthSpot.Y);
     /// <summary>How fast he's zooming right now (the self-test reads this).</summary>
@@ -136,11 +154,11 @@ public partial class Vroomba : BossBase
 
     public override bool CanBeStomped => state == State.Dizzy;
     /// <summary>
-    /// Bumping into him is a crash while he's up to something: revving, zooming, sucking, spitting or angry.
-    /// (Rolling in, his BEEP BOOP spin, dizzy, hurt or rolling to his spot: he's harmless.)
+    /// Bumping into him is a crash while he's revving, zooming, sucking, spitting, angry or chasing dust.
+    /// (Rolling in, cleaning a puff, his BEEP BOOP spin, dizzy, hurt or rolling to his spot: he's harmless.)
     /// </summary>
     public override bool IsDangerous => state is State.Revving or State.Zooming or State.Turning
-                                                 or State.Sucking or State.Spitting or State.GettingAngry;
+                                                 or State.Sucking or State.Spitting or State.GettingAngry or State.DustChase;
     public override bool IsBeaten => state is State.Exploding or State.Defeated;
     public override bool HasBlownUp => state == State.Defeated;
     public override bool Finished => (state == State.Defeated && stateTime > 3.5f)
@@ -149,7 +167,7 @@ public partial class Vroomba : BossBase
 
     public override Rect2 Hitbox => new(Position + new Vector2(-HitHalfWidth, -HitHeight), new Vector2(HitHalfWidth * 2, HitHeight));
 
-    float DizzyTime => Mathf.Max(ShortestDizzy, Phase == 3 ? FuriousDizzySeconds : DizzySeconds);
+    float DizzyTime => Mathf.Max(ShortestDizzy, dustDizzy ? DustDizzySeconds : Phase == 3 ? FuriousDizzySeconds : DizzySeconds);
 
     public override void _Ready()
     {
@@ -219,10 +237,66 @@ public partial class Vroomba : BossBase
 
     // ---------- His brain ----------
 
+    /// <summary>Commit to one puff's position, even if Bolt-E moves or leaves more dust elsewhere.</summary>
+    public bool ChaseDust(JumpDust dust)
+    {
+        if (!CanChaseDust || !IsInstanceValid(dust) || !dust.Available) return false;
+        dustTarget = dust;
+        facing = dust.Position.X < Position.X ? -1 : 1;
+        // A puff underneath him near a wall can only be reached with his mouth facing that wall.
+        float parkAt = dust.Position.X - facing * MouthSpot.X;
+        if (parkAt < HalfWidth || parkAt > ArenaRight - HalfWidth) facing = -facing;
+        ChangeState(State.DustChase);
+        DustNoticed?.Invoke();
+        return true;
+    }
+
+    void FollowDust(float dt)
+    {
+        if (!IsInstanceValid(dustTarget) || !dustTarget!.Available)
+        {
+            dustCooldown = 1f;
+            ChangeState(State.Revving);
+            return;
+        }
+        SettleDown(dt);
+        if (state == State.DustChase)
+        {
+            if (stateTime < DustNoticeSeconds) return;
+            float parkAt = Mathf.Clamp(dustTarget.Position.X - facing * MouthSpot.X, HalfWidth, ArenaRight - HalfWidth);
+            Position = new Vector2(Mathf.MoveToward(Position.X, parkAt, DustChaseSpeed * dt), GroundY);
+            if (Mathf.Abs(Mouth.X - dustTarget.Position.X) < 24 && Mathf.Abs(Mouth.Y - dustTarget.Position.Y) < 55)
+                ChangeState(State.DustVacuum);
+            else if (stateTime > DustChaseSeconds)
+            {
+                dustCooldown = 1f;
+                ChangeState(State.Revving);
+            }
+            return;
+        }
+
+        dustTarget.Position = dustTarget.Position.MoveToward(Mouth, 240f * dt);
+        dustTarget.VacuumProgress = Mathf.Min(1, stateTime / DustVacuumSeconds);
+        if (stateTime < DustVacuumSeconds) return;
+        dustTarget.Consume();
+        dustDizzy = true;
+        dustCooldown = DustLureCooldown;
+        ChangeState(State.Dizzy);
+        DustClogged?.Invoke();
+    }
+
     void ChangeState(State next)
     {
-        if (state == State.Sucking && next != State.Sucking) VacuumOff?.Invoke();
+        bool wasVacuuming = VacuumRunning;
         state = next;
+        if (wasVacuuming && !VacuumRunning) VacuumOff?.Invoke();
+        if (!wasVacuuming && VacuumRunning) VacuumOn?.Invoke();
+        if (next is not (State.DustChase or State.DustVacuum))
+        {
+            if (IsInstanceValid(dustTarget)) dustTarget!.VacuumProgress = 0;
+            dustTarget = null;
+        }
+        if (next != State.Dizzy) dustDizzy = false;
         stateTime = 0;
         moveFrom = Position;
         switch (next)
@@ -240,9 +314,6 @@ public partial class Vroomba : BossBase
                 break;
             case State.Turning:
                 turnedAround = false;
-                break;
-            case State.Sucking:
-                VacuumOn?.Invoke();
                 break;
             case State.Spitting:
                 bunniesLeft = Phase == 3 ? BunniesWhenFurious : BunniesWhenAngry;
@@ -289,6 +360,7 @@ public partial class Vroomba : BossBase
         time += dt;
         stateTime += dt;
         holdAttacks = Mathf.Max(0, holdAttacks - dt);
+        dustCooldown = Mathf.Max(0, dustCooldown - dt);
 
         // He keeps an eye on Bolt-E while he sucks, spits, gets angry or waits at his spot
         if (state is State.Sucking or State.Spitting or State.GettingAngry || (state == State.Recovering && rolledThere)) FaceBoltE();
@@ -419,6 +491,11 @@ public partial class Vroomba : BossBase
                 if (stateTime > SuckSeconds) ChangeState(State.Revving); // and then a ZOOM, like always
                 break;
 
+            case State.DustChase:
+            case State.DustVacuum:
+                FollowDust(dt);
+                break;
+
             case State.Spitting:
                 SettleDown(dt);
                 spitTimer -= dt;
@@ -473,7 +550,7 @@ public partial class Vroomba : BossBase
         // The side brushes spin (a blur when he's revving, zooming or sucking), and the wheels roll
         float brushSpin = state switch
         {
-            State.Revving or State.Zooming or State.Turning or State.Sucking => 32f,
+            State.Revving or State.Zooming or State.Turning or State.Sucking or State.DustChase or State.DustVacuum => 32f,
             State.Dizzy => 5f,
             State.Exploding or State.Defeated => 0f,
             _ => 12f,
@@ -482,6 +559,7 @@ public partial class Vroomba : BossBase
         float rolling = state switch
         {
             State.Zooming or State.FlyingAway => zoomSpeed,
+            State.DustChase => stateTime < DustNoticeSeconds ? 0f : DustChaseSpeed,
             State.Revving => 500f,                                  // spinning on the spot!
             State.Entering or State.Hurt or State.Recovering => rolledThere ? 0f : 300f,
             State.Dizzy => 150f,                                    // spinning in the air
@@ -644,7 +722,7 @@ public partial class Vroomba : BossBase
         if (angle > 0.001f) DrawSetTransform(Vector2.Zero, 0, Vector2.One);
 
         if (state == State.Zooming) DrawSpeedLines();
-        if (state == State.Sucking) DrawWind();
+        if (VacuumRunning) DrawWind();
         if (state == State.Revving) DrawWarning();
         if (state is State.Dizzy || (state == State.WallBonk && stateTime > BonkSeconds / 2)) DrawDizzyStars();
         DrawMood();
@@ -689,7 +767,7 @@ public partial class Vroomba : BossBase
         // The front bumper (it sticks out a little), with his two big sensor eyes, and his mouth at the bottom
         Shapes.RoundRect(this, new Rect2(38, -54, HalfWidth + 3 - 38, 38), 15, Bumper);
         DrawLine(new Vector2(46, -51), new Vector2(108, -51), new Color(1, 1, 1, 0.35f), 2, true);
-        if (state is State.Sucking or State.Spitting) Shapes.RoundRect(this, new Rect2(MouthSpot.X - 16, MouthSpot.Y - 5, 18, 10), 4, Lens);
+        if (VacuumRunning || state == State.Spitting) Shapes.RoundRect(this, new Rect2(MouthSpot.X - 16, MouthSpot.Y - 5, 18, 10), 4, Lens);
         DrawEye(BackEye, BackEyeLid);
         DrawEye(FrontEye, FrontEyeLid);
     }
@@ -729,7 +807,7 @@ public partial class Vroomba : BossBase
     void DrawBrush(Vector2 hub)
     {
         // Three arms spinning around. When he revs, zooms or sucks they spin so fast they blur!
-        bool blur = state is State.Revving or State.Zooming or State.Turning or State.Sucking;
+        bool blur = VacuumRunning || state is State.Revving or State.Zooming or State.Turning;
         if (blur) DrawCircle(hub, 15, new Color(Bristles, 0.3f));
         var arms = blur ? new Color(Bristles, 0.6f) : Bristles;
         for (int i = 0; i < 3; i++)
@@ -751,7 +829,7 @@ public partial class Vroomba : BossBase
     /// <summary>A tiny puff of dust from his back while he drives (a big one while he revs up).</summary>
     void DrawDustBehind()
     {
-        bool driving = state is State.Entering or State.Revving or State.Zooming or State.Turning or State.FlyingAway
+        bool driving = state is State.Entering or State.Revving or State.Zooming or State.Turning or State.FlyingAway or State.DustChase
                        || (state is State.Hurt or State.Recovering && !rolledThere && stateTime > FlipSeconds);
         if (!driving || GroundY - Position.Y > 5) return; // (not while he's up in the air)
         bool revving = state == State.Revving;
