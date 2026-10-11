@@ -445,15 +445,23 @@ The boss score is in `Scripts/Audio/BossSong.cs`: each melody line is one bar of
 the previous note, `.` rests). `Chords` supplies the harmony; `BeatsPerMinute` is 144 before world and boss-phase
 speed changes. The flying drone's score, **Rotor Rush**, is in `Scripts/Audio/DroneSong.cs`: 32 bars in E minor at
 152 BPM (about 50.5 seconds), with a pulsing rotor arpeggio, climbing melody, hovering bridge, and diving final phrase.
-`Scripts/Audio/SoundBoard.Music.cs` caches all three synthesized themes and crossfades between them.
-The self-test writes listenable `titan-circuit.wav` and `rotor-rush.wav` files beside its scratch database.
+The humanoid robot's score, **Iron Shadow**, is in `Scripts/Audio/HumanoidSong.cs`: 32 bars at 132 BPM
+(about 58.2 seconds), with a D-minor/Phrygian melody, a lurching bass pulse, metallic FM percussion, a sparse
+stalking passage, and a tightening final pursuit. It is ready for the humanoid boss to select at spawn.
+`Scripts/Audio/SoundBoard.Music.cs` caches all four synthesized themes and crossfades between them.
+The self-test writes listenable `titan-circuit.wav`, `rotor-rush.wav`, and `iron-shadow.wav` files beside its scratch database.
 Add `--selftest-music` after `--selftest` to run just the music playback and audio checks.
 
 `SpawnBoss` automatically selects **Rotor Rush** for DRONEZILLA and **Titan Circuit** for BIG RUSTY and VROOMBA.
 The score continues while DRONEZILLA lands to recharge, follows the world's speed and his angry phases, and dips
 during a rebuild. Victory returns to the runner theme; game over powers the music down normally.
-The optional third argument to `SetBossMusic` selects `BossMusicTheme.RotorRush` or `BossMusicTheme.TitanCircuit`.
+The optional third argument to `SetBossMusic` selects `BossMusicTheme.RotorRush`, `BossMusicTheme.IronShadow`,
+or `BossMusicTheme.TitanCircuit` (the default).
 Phase changes use `SetMusicSpeed`, and victory calls `SetBossMusic(false, CurrentWorld.MusicSpeed)`.
+
+To connect the new humanoid boss, select `BossMusicTheme.IronShadow` in its `SpawnBoss` theme selection:
+`sounds.SetBossMusic(true, 1.1f * CurrentWorld.MusicSpeed, BossMusicTheme.IronShadow)`.
+The score already supports phase changes, muting, rebuilding, victory crossfades, game over, and restarting.
 
 | File | What it does |
 |---|---|
