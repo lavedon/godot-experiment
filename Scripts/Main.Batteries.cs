@@ -130,6 +130,7 @@ public partial class Main
         PuffAway(shockwaves, _ => true);
         PuffAway(lasers, _ => true);
         ClearDroneDangers(); // DRONEZILLA's bombs, zap beam and mini-drones (see Main.Dronezilla.cs)
+        ClearOptiDangers();  // OPTI-MAX's boxes, soccer balls and shockwaves (see Main.OptiMax.cs)
         spawnCountdown = Mathf.Max(spawnCountdown, 600); // a little breather before new obstacles
 
         // Speed back up to 85% of the old speed. (In a boss fight, the speed for after the fight stays the same.)

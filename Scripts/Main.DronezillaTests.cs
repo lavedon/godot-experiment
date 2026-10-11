@@ -14,11 +14,12 @@ public partial class Main
         nameof(BeatDronezilla), nameof(DroneCantBeDriven), nameof(DroneDrawsEverywhere),
     };
 
-    /// <summary>Which kind of boss this is (Big Rusty, VROOMBA or DRONEZILLA).</summary>
+    /// <summary>Which kind of boss this is (Big Rusty, VROOMBA, DRONEZILLA or OPTI-MAX).</summary>
     static BossKind KindOf(BossBase? someBoss) => someBoss switch
     {
         Vroomba => BossKind.Vroomba,
         Dronezilla => BossKind.Dronezilla,
+        OptiMax => BossKind.OptiMax,
         _ => BossKind.BigRusty,
     };
 
@@ -52,20 +53,21 @@ public partial class Main
     }
 
     /// <summary>
-    /// The three bosses take turns: BIG RUSTY, VROOMBA, DRONEZILLA, BIG RUSTY... and every game starts one boss further
-    /// along (game 4 is like game 1). Games 1 and 2 still start like before. Like a real game, three fights in a row bring
-    /// all three bosses, each with his name on the health bar (and DRONEZILLA with his own tip).
+    /// The bosses take turns: BIG RUSTY, VROOMBA, DRONEZILLA, (now also OPTI-MAX,) BIG RUSTY... and every game starts one
+    /// boss further along. Games 1 and 2 still start like before. Like a real game, three fights in a row bring three
+    /// different bosses, each with his name on the health bar (and DRONEZILLA with his own tip).
+    /// (Since OPTI-MAX came along there are four bosses: see FourBossesTakeTurns in Main.OptiMaxTests.cs.)
     /// </summary>
     async Task ThreeBossesTakeTurns()
     {
         await NextFrame();
-        var order = new[] { BossKind.BigRusty, BossKind.Vroomba, BossKind.Dronezilla };
+        var order = new[] { BossKind.BigRusty, BossKind.Vroomba, BossKind.Dronezilla, BossKind.OptiMax };
         for (int game = 1; game <= 4; game++)
         {
             for (int fight = 1; fight <= 4; fight++)
             {
                 var comes = BossForFight(game, fight);
-                Check(comes == order[(game - 1 + fight - 1) % 3], $"game {game}, fight {fight}: {comes}");
+                Check(comes == order[(game - 1 + fight - 1) % 4], $"game {game}, fight {fight}: {comes}");
             }
         }
         Check(BossForFight(1, 1) == BossKind.BigRusty && BossForFight(2, 1) == BossKind.Vroomba,
@@ -92,7 +94,7 @@ public partial class Main
                 boss = null;
                 await NextFrame();
             }
-            Check(seen.Distinct().Count() == 3, $"three fights in a row bring all three bosses ({string.Join(", ", seen)})");
+            Check(seen.Distinct().Count() == 3, $"three fights in a row bring three different bosses ({string.Join(", ", seen)})");
         }
         finally
         {
