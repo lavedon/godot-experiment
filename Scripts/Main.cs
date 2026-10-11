@@ -8,8 +8,9 @@ using Godot;
 /// Big Rusty win), Main.Looks.cs (the Bolt Bank and Bolt-E's looks), Main.Family.cs (the family race: who's playing,
 /// and the flags on the road), Main.Driver.cs (Dad drives Big Rusty with a second controller), Main.Vroomba.cs
 /// (VROOMBA, the second boss, and how the bosses take turns), Main.Dronezilla.cs (DRONEZILLA, the third boss: his bombs,
-/// zap beam and mini-drones), Main.OptiMax.cs (OPTI-MAX, the fourth boss: his boxes, soccer balls and shockwaves) and
-/// Main.SelfTest.cs (grown-up testing code).
+/// zap beam and mini-drones), Main.OptiMax.cs (OPTI-MAX, the fourth boss: his boxes, soccer balls and shockwaves),
+/// Main.Station.cs (UPSIDE-DOWN STATION, the 6th world, where jump FLIPS GRAVITY), Main.StartWorld.cs (picking the world
+/// to start in) and Main.SelfTest.cs (grown-up testing code).
 /// </summary>
 public partial class Main : Node2D
 {
@@ -399,6 +400,7 @@ public partial class Main : Node2D
         ClearJumpDust();
         ClearDroneThings(); // DRONEZILLA's bombs and zap beam, and his rotor buzz (see Main.Dronezilla.cs)
         ClearOptiThings();  // OPTI-MAX's boxes, balls, shockwaves and box stacks (see Main.OptiMax.cs)
+        ClearStation();     // UPSIDE-DOWN STATION's gaps, its ceiling and flipping (see Main.Station.cs)
         foreach (var o in obstacles) o.QueueFree();
         foreach (var b in bolts) b.QueueFree();
         foreach (var e in enemies) e.QueueFree();
@@ -503,6 +505,7 @@ public partial class Main : Node2D
         BuildFlags();
         previousPlayer = hud.PlayerName;
         SayWhoseTurn(before);
+        StartInPickedWorld(); // picked another world to start in? Off we go! (see Main.StartWorld.cs)
     }
 
     void GameOver()
@@ -561,7 +564,7 @@ public partial class Main : Node2D
         // and the ones reached for the very first time get a gold NEW! ribbon.
         int postcardsReached = Math.Min(Worlds.All.Length, Math.Max(worldsReached, farthestNow));
         int postcardsNewFrom = Math.Min(Worlds.All.Length, farthestBefore);
-        string worldLine = Worlds.WorldLine(worldsReached);
+        string worldLine = ResultsWorldLine(); // (a game that started in another world says so: see Main.StartWorld.cs)
 
         // Don't cover up the explosion: show the scores a little later (see _Process).
         var topScores = database?.TopScores(5) ?? new();
@@ -661,6 +664,13 @@ public partial class Main : Node2D
             }
         }
 
+        // On the title screen, Y on Bolt-E's controller (or W) picks the world to start in (see Main.StartWorld.cs)
+        if (state == GameState.Title && IsStartWorldButton(e))
+        {
+            StepStartWorld();
+            return;
+        }
+
         // On the menus, D-pad up never starts a game (it's easy to press by accident while pressing left or right)
         if ((state is GameState.Title or GameState.GameOver) && e is InputEventJoypadButton { ButtonIndex: JoyButton.DpadUp }) return;
 
@@ -674,7 +684,9 @@ public partial class Main : Node2D
                     PlayPressed();
                     break;
                 case GameState.Playing:
-                    if (jump && robot.Jump())
+                    if (jump && robot.FlipMode)
+                        FlipPressed(); // UPSIDE-DOWN STATION: jump FLIPS GRAVITY (see Main.Station.cs)
+                    else if (jump && robot.Jump())
                     {
                         LeaveJumpDust();
                         Burst(robot.Position, 8, new Color(0.9f, 0.85f, 0.75f), 120f);
@@ -751,6 +763,7 @@ public partial class Main : Node2D
             }
         }
 
+        UpdateStation(dt); // UPSIDE-DOWN STATION: its ceiling, flipping, and falling through gaps (see Main.Station.cs)
         robot.RunSpeed = speed * boost; // (so his music notes drift along with the world)
         MoveWorld(dt);
         // Flags come onto the road, and YOU PASSED DAD! (see Main.Family.cs). (After the road moved, so a new flag
@@ -760,8 +773,15 @@ public partial class Main : Node2D
         // Puff of dust (and a soft "thup") when landing
         if (robot.OnGround && !wasOnGround && !robot.Crashed)
         {
-            Burst(robot.Position, 10, new Color(0.9f, 0.85f, 0.75f), 150f);
-            sounds.Play(Sfx.Land);
+            if (robot.FlipMode)
+            {
+                StationLanded(); // (on the floor or the ceiling of UPSIDE-DOWN STATION: a spark and a thud)
+            }
+            else
+            {
+                Burst(robot.Position, 10, new Color(0.9f, 0.85f, 0.75f), 150f);
+                sounds.Play(Sfx.Land);
+            }
             stompCombo = 0; // touching the ground ends a stomp streak
             LandedWithPowers(); // after the parachute, or MEGA Bolt-E shaking the ground (see Main.PowerUps.cs)
         }
@@ -796,6 +816,8 @@ public partial class Main : Node2D
                 obstacles.RemoveAt(i);
             }
         }
+
+        MoveStationGaps(move); // (the gaps in UPSIDE-DOWN STATION's floor and ceiling)
 
         for (int i = bolts.Count - 1; i >= 0; i--)
         {
@@ -905,6 +927,7 @@ public partial class Main : Node2D
                 if (Bonk(obstacle)) return;
             }
         }
+        if (CheckStationGaps()) return; // riding onto a gap in UPSIDE-DOWN STATION: WHOOOA! (see Main.Station.cs)
 
         // Bad robots: land on their heads to squash them, but bumping into them is a crash!
         // (Up on the rocket board or the parachute, they can't reach Bolt-E at all.)
@@ -1247,6 +1270,13 @@ public partial class Main : Node2D
             return;
         }
 
+        // UPSIDE-DOWN STATION has its own dangers, in fair patterns (and nothing while its ceiling is still sliding shut)
+        if (InStation)
+        {
+            if (robot.FlipMode) SpawnStationThings(dt);
+            return;
+        }
+
         spawnCountdown -= speed * dt;
         if (spawnCountdown > 0) return;
 
@@ -1418,6 +1448,7 @@ public partial class Main : Node2D
         for (int i = 0; i < 18; i++)
             DrawCircle(new Vector2(Scrolled(i * 80f, groundScroll, 80f * 18, 20), GroundY + 18), 10, grass); // grass bumps
         DrawGroundDots();          // pebbles, sprinkles, road dashes or craters
+        DrawStation();             // the corridor of UPSIDE-DOWN STATION, over everything else (see StationScenery.cs)
 
         // (The self-test checks that these colors really change with the world)
         drawnColors["sky"] = skyTop;

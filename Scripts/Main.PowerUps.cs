@@ -122,7 +122,7 @@ public partial class Main
                 robot.ShowFace(RobotFace.Hearts, PowerUps.MagnetSeconds);
                 break;
             case PowerUp.Rocket:
-                robot.StartRocket(GroundY - PowerUps.RocketHeight);
+                robot.StartRocket(RocketFeetY); // (in UPSIDE-DOWN STATION: through the middle of the corridor)
                 sounds.Play(Sfx.Rocket);
                 break;
         }
@@ -187,7 +187,7 @@ public partial class Main
     /// <summary>Every frame while playing: the slot machine follows Bolt-E, and the power counts down.</summary>
     void UpdatePowerUps(float dt)
     {
-        roulette.Position = robot.Position + new Vector2(0, -175 * robot.Size); // over his head
+        roulette.Position = AboveBoltE(175 * robot.Size); // over his head (under it when he's upside-down)
         if (power is not PowerUp p) return;
 
         powerLeft -= dt;
@@ -227,7 +227,7 @@ public partial class Main
             if (rocketBoltTimer <= 0)
             {
                 rocketBoltTimer += 0.25f;
-                AddBolt(ScreenWidth + 40, GroundY - PowerUps.RocketHeight - 60);
+                AddBolt(ScreenWidth + 40, RocketFeetY - 60);
             }
         }
     }
@@ -235,7 +235,7 @@ public partial class Main
     /// <summary>BOLT MAGNET: a bolt close enough zooms over to Bolt-E (called for every bolt, every frame).</summary>
     void PullTowardMagnet(BoltPickup bolt, float dt)
     {
-        var target = robot.Position + new Vector2(0, -60 * robot.Size);
+        var target = robot.BodyMiddle;
         if (bolt.Position.DistanceTo(target) < PowerUps.MagnetReach)
             bolt.Position = bolt.Position.MoveToward(target, (700 + speed) * dt);
     }
@@ -252,6 +252,7 @@ public partial class Main
             bool Near(Node2D thing) => Mathf.Abs(thing.Position.X - robot.Position.X) < 300;
             PuffAway(obstacles, Near);
             PuffAway(enemies, Near);
+            PuffAway(stationGaps, Near);
             spawnCountdown = Mathf.Max(spawnCountdown, 500);
         }
 

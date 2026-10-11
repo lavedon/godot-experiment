@@ -13,6 +13,7 @@ public enum Sfx
     RevUp, Zoom, WallBonk, VacuumHum, BeepBoop, Spit, // VROOMBA
     RotorBuzz, BombWhistle, LowBattery, PowerDown, TakeOff, Bzzt, // DRONEZILLA
     RobotStep, BoxWhoosh, BoxCrunch, Boing, Kick, Chirp, Ding, ErrorBuzz, DanceBeat, // OPTI-MAX
+    FlipUp, FlipDown, FlipThud, SpaceFall, CeilingSlide, // UPSIDE-DOWN STATION
 }
 
 /// <summary>
@@ -99,6 +100,11 @@ public partial class SoundBoard : Node
         AddEffect(Sfx.Ding, SoundEffects.Ding(), -8f, voices: 1);
         AddEffect(Sfx.ErrorBuzz, SoundEffects.ErrorBuzz(), -10f, voices: 1);
         AddEffect(Sfx.DanceBeat, SoundEffects.DanceBeat(), -8f, voices: 1);
+        AddEffect(Sfx.FlipUp, SoundEffects.FlipWhoosh(up: true), -9f);
+        AddEffect(Sfx.FlipDown, SoundEffects.FlipWhoosh(up: false), -9f);
+        AddEffect(Sfx.FlipThud, SoundEffects.FlipThud(), -9f, voices: 3);
+        AddEffect(Sfx.SpaceFall, SoundEffects.SpaceFall(), -8f, voices: 1);
+        AddEffect(Sfx.CeilingSlide, SoundEffects.CeilingSlide(), -11f, voices: 1);
     }
 
     void AddEffect(Sfx name, float[] sound, float volumeDb, int voices = 2, bool loop = false)

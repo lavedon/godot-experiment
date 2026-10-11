@@ -1,7 +1,7 @@
 using Godot;
 
 /// <summary>What hangs in the sky of a world.</summary>
-public enum SkyThing { Sun, Moon, Earth }
+public enum SkyThing { Sun, Moon, Earth, RingedPlanet }
 
 /// <summary>The extra things in a world's background (on the hills and on the ground).</summary>
 public enum Scenery
@@ -11,13 +11,14 @@ public enum Scenery
     City,       // skyscrapers with glowing windows, and a road with yellow dashes
     Mountains,  // snowy mountains and pine trees
     Craters,    // a bumpy grey ground full of craters
+    Station,    // a space-station corridor with a floor AND a ceiling (see StationScenery.cs)
 }
 
 /// <summary>What twinkles in (or falls from) the sky.</summary>
 public enum Weather { None, Stars, Snow }
 
 /// <summary>What Big Rusty dresses up in, so he fits in with the world.</summary>
-public enum BossOutfit { None, PartyHat, Sunglasses, BobbleHat, SpaceHelmet }
+public enum BossOutfit { None, PartyHat, Sunglasses, BobbleHat, SpaceHelmet, NeonGoggles }
 
 /// <summary>
 /// One world on the World Tour: its colors (from the top of the sky down to the dirt), what's in the sky and on the hills,
@@ -29,8 +30,8 @@ public record World(string Name, Color SkyTop, Color SkyBottom, SkyThing Thing, 
                     Scenery Scenery, Weather Weather, float Gravity, float MusicSpeed, BossOutfit RustyOutfit, bool Dark);
 
 /// <summary>
-/// THE WORLD TOUR! Every time Bolt-E beats Big Rusty, he rides on into the next world. After the Moon, he's all the way
-/// around and it starts again in Sunny Hills. (Main.Worlds.cs changes the worlds and draws them.)
+/// THE WORLD TOUR! Every time Bolt-E beats Big Rusty, he rides on into the next world. After UPSIDE-DOWN STATION, he's
+/// all the way around and it starts again in Sunny Hills. (Main.Worlds.cs changes the worlds and draws them.)
 ///
 /// Make your own world! Every color is (red, green, blue) from 0 to 1, and a 4th number is how see-through it is.
 /// Two rules keep Bolt-E easy to see (the self-test checks them): the hills must not be too dark,
@@ -80,14 +81,27 @@ public static class Worlds
             FarHills: new(0.42f, 0.42f, 0.48f), NearHills: new(0.56f, 0.56f, 0.62f),
             Grass: new(0.72f, 0.72f, 0.76f), Dirt: new(0.56f, 0.56f, 0.6f), Pebbles: new(0.42f, 0.42f, 0.48f),
             Scenery: Scenery.Craters, Weather: Weather.Stars, Gravity: 0.55f, MusicSpeed: 0.92f, RustyOutfit: BossOutfit.SpaceHelmet, Dark: true),
+
+        // 5. UPSIDE-DOWN STATION: a neon space-station corridor with a FLOOR and a CEILING. Here JUMP flips gravity!
+        //    (Its "hills" colors are the corridor's metal walls, and its "grass" is the glowing floor rail: see StationScenery.cs.
+        //    Its Gravity is for boss fights: then the ceiling slides open and jumping is normal.)
+        new("UPSIDE-DOWN STATION",
+            SkyTop: new(0.04f, 0.02f, 0.1f), SkyBottom: new(0.16f, 0.06f, 0.26f),
+            Thing: SkyThing.RingedPlanet, ThingColor: new(1f, 0.6f, 0.35f), Clouds: new(1f, 1f, 1f, 0f), // (no clouds in space!)
+            FarHills: new(0.4f, 0.38f, 0.56f), NearHills: new(0.5f, 0.48f, 0.66f),
+            Grass: new(0.35f, 0.95f, 1f), Dirt: new(0.2f, 0.19f, 0.3f), Pebbles: new(1f, 0.35f, 0.85f), // cyan rail, floor metal, magenta lights
+            Scenery: Scenery.Station, Weather: Weather.Stars, Gravity: 1f, MusicSpeed: 1.1f, RustyOutfit: BossOutfit.NeonGoggles, Dark: true),
     };
+
+    /// <summary>Which world UPSIDE-DOWN STATION is (the 6th one: number 5, counting from 0).</summary>
+    public const int StationIndex = 5;
 
     /// <summary>How bright a color looks to our eyes (0 = black, 1 = white). Green looks brightest, blue darkest.</summary>
     public static float Brightness(Color color) => 0.299f * color.R + 0.587f * color.G + 0.114f * color.B;
 
     /// <summary>
     /// The line on the results card about how far Bolt-E got. "reached" counts the worlds he rode through:
-    /// 1 = only Sunny Hills, 3 = all the way to Night City, 6 or more = all the way around.
+    /// 1 = only Sunny Hills, 3 = all the way to Night City, 6 = all the way to UPSIDE-DOWN STATION, 7 or more = all the way around.
     /// </summary>
     public static string WorldLine(int reached)
     {

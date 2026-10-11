@@ -723,6 +723,10 @@ public partial class Boss : BossBase
     static readonly Color ShadesBlack = new(0.08f, 0.08f, 0.12f);
     static readonly Color BobbleRed = new(0.9f, 0.2f, 0.25f);
     static readonly Color HelmetGlass = new(0.7f, 0.9f, 1f, 0.25f);
+    static readonly Color GoggleStrap = new(0.15f, 0.13f, 0.22f);
+    static readonly Color NeonCyan = new(0.35f, 0.95f, 1f);
+    static readonly Color NeonPink = new(1f, 0.35f, 0.85f);
+    static readonly float[] GoggleLensX = { -24, 2 }; // (he faces left, so his eyes are on the left side of his head)
 
     // The party hat's cone, and the bobble hat's woolly half-circle (made once, not every time he's drawn)
     static readonly Vector2[] PartyHatCone = { new(-14, -155), new(14, -155), new(0, -195) };
@@ -741,7 +745,7 @@ public partial class Boss : BossBase
 
     /// <summary>
     /// Big Rusty dressed up for the world: a party hat in Candy Land, cool sunglasses in Night City,
-    /// a bobble hat in Snowy Peaks and a fishbowl space helmet on the Moon.
+    /// a bobble hat in Snowy Peaks, a fishbowl space helmet on the Moon, and glowing neon goggles in UPSIDE-DOWN STATION.
     /// It's drawn on his head, so it turns around with him.
     /// </summary>
     void DrawOutfit()
@@ -785,6 +789,24 @@ public partial class Boss : BossBase
                 DrawArc(new Vector2(0, -122), 50, 0, Mathf.Tau, 48, Colors.White, 3, true);
                 DrawArc(new Vector2(0, -122), 41, Mathf.Pi * 1.1f, Mathf.Pi * 1.4f, 10, new Color(1, 1, 1, 0.8f), 5, true);
                 break;
+
+            case BossOutfit.NeonGoggles:
+            {
+                // Space-station goggles pushed up on his forehead (so you always see his eyes): a strap around his head,
+                // and two round lenses with glowing neon rims that pulse
+                float glow = 0.6f + 0.4f * Mathf.Sin(time * 6);
+                DrawLine(new Vector2(-36, -150), new Vector2(36, -147), GoggleStrap, 6, true);
+                foreach (float x in GoggleLensX)
+                {
+                    var lens = new Vector2(x, -151);
+                    DrawCircle(lens, 15, new Color(NeonCyan, 0.25f * glow)); // the glow
+                    DrawCircle(lens, 11, GoggleStrap);
+                    DrawCircle(lens, 8, new Color(0.25f, 0.9f, 1f, 0.75f));
+                    DrawArc(lens, 11, 0, Mathf.Tau, 20, new Color(NeonPink, glow), 2.5f, true);
+                    DrawLine(lens + new Vector2(-4, -1), lens + new Vector2(0, -5), new Color(1, 1, 1, 0.8f), 2, true); // shine!
+                }
+                break;
+            }
         }
     }
 

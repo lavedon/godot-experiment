@@ -115,6 +115,7 @@ public partial class Main
         PutOn(SavedLookIndex());
         ShowBankNumber(Bank, counting: false);
         hud.ShowPostcards(Math.Min(Worlds.All.Length, farthestWorld)); // this player's World Tour postcards
+        ShowStartWorld(); // ...and the world the next game starts in (see Main.StartWorld.cs)
 
         unlockTimer = celebrate ? FirstPartyWait : 0;
         if (!celebrate || database is null) return;
