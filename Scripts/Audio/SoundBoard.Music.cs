@@ -1,36 +1,42 @@
 using Godot;
 
+/// <summary>A boss chooses its score independently of its name or implementation.</summary>
+public enum BossMusicTheme { TitanCircuit, RotorRush }
+
 public partial class SoundBoard
 {
     AudioStreamWav runnerTheme = null!;
     AudioStreamWav bossTheme = null!;
+    AudioStreamWav droneTheme = null!;
     AudioStreamPlayer outgoingMusic = null!;
     Tween? trackFade;
 
     /// <summary>The selected theme, even while muted or rebuilding (also read by the self-test).</summary>
-    public bool BossMusicActive => music.Stream == bossTheme;
+    public bool BossMusicActive => music.Stream == bossTheme || music.Stream == droneTheme;
+    public bool DroneMusicActive => music.Stream == droneTheme;
 
     void SetUpMusic()
     {
         runnerTheme = Synth.ToAudioStream(Song.Render(), loop: true);
         bossTheme = Synth.ToAudioStream(BossSong.Render(), loop: true);
+        droneTheme = Synth.ToAudioStream(DroneSong.Render(), loop: true);
         music = new AudioStreamPlayer { Stream = runnerTheme, VolumeDb = MusicVolumeDb };
         outgoingMusic = new AudioStreamPlayer();
         AddChild(music);
         AddChild(outgoingMusic);
     }
 
-    /// <summary>Every boss shares the battle theme. Speed still follows the world and the boss's anger.</summary>
-    public void SetBossMusic(bool enabled, float speed)
+    /// <summary>Existing bosses use Titan Circuit; the flying drone can choose Rotor Rush. Speed follows world and phase.</summary>
+    public void SetBossMusic(bool enabled, float speed, BossMusicTheme theme = BossMusicTheme.TitanCircuit)
     {
         musicSpeed = speed;
-        SelectTheme(enabled);
+        SelectTheme(enabled, theme);
         SetMusicSpeed(speed);
     }
 
-    void SelectTheme(bool boss)
+    void SelectTheme(bool boss, BossMusicTheme theme = BossMusicTheme.TitanCircuit)
     {
-        AudioStreamWav next = boss ? bossTheme : runnerTheme;
+        AudioStreamWav next = !boss ? runnerTheme : theme == BossMusicTheme.RotorRush ? droneTheme : bossTheme;
         if (music.Stream == next) return;
 
         musicFade?.Kill();

@@ -263,10 +263,15 @@ public partial class Main
                 (nameof(JumpDustLuresAndClogs), JumpDustLuresAndClogs),
                 (nameof(JumpDustCannotTrapBoss), JumpDustCannotTrapBoss),
                 (nameof(JumpDustAtArenaEdges), JumpDustAtArenaEdges),
+                (nameof(DroneMusicFlow), DroneMusicFlow),
+                (nameof(DroneMusicAudio), DroneMusicAudio),
             }).ToArray();
 
             if (OS.GetCmdlineUserArgs().Contains("--selftest-dust"))
                 tests = tests.Where(test => test.Name.StartsWith("JumpDust") || test.Name == nameof(VroombaDrawsInEveryPhase)).ToArray();
+            if (OS.GetCmdlineUserArgs().Contains("--selftest-music"))
+                tests = tests.Where(test => test.Name is nameof(BossMusicFlow) or nameof(BossMusicAudio)
+                    or nameof(DroneMusicFlow) or nameof(DroneMusicAudio)).ToArray();
 
             for (int i = 0; i < tests.Length; i++)
             {

@@ -392,8 +392,18 @@ game called `Player` in the scratch database, to check that games without a name
 
 The boss score is in `Scripts/Audio/BossSong.cs`: each melody line is one bar of eight eighth-note steps (`-` holds
 the previous note, `.` rests). `Chords` supplies the harmony; `BeatsPerMinute` is 144 before world and boss-phase
-speed changes. `Scripts/Audio/SoundBoard.Music.cs` caches the two synthesized themes and crossfades between them.
-The self-test also writes a listenable `titan-circuit.wav` beside its scratch database.
+speed changes. The flying drone's score, **Rotor Rush**, is in `Scripts/Audio/DroneSong.cs`: 32 bars in E minor at
+152 BPM (about 50.5 seconds), with a pulsing rotor arpeggio, climbing melody, hovering bridge, and diving final phrase.
+`Scripts/Audio/SoundBoard.Music.cs` caches all three synthesized themes and crossfades between them.
+The self-test writes listenable `titan-circuit.wav` and `rotor-rush.wav` files beside its scratch database.
+Add `--selftest-music` after `--selftest` to run just the music playback and audio checks.
+
+The drone boss can select its score at spawn with
+`sounds.SetBossMusic(true, 1.1f * CurrentWorld.MusicSpeed, BossMusicTheme.RotorRush)`.
+Use that in place of its usual two-argument `SetBossMusic` call. Existing bosses keep **Titan Circuit** by default;
+phase changes still use `SetMusicSpeed`, and victory still calls `SetBossMusic(false, CurrentWorld.MusicSpeed)`.
+Theme selection is independent of boss names and classes. New bosses opt in at spawn; the existing spawn calls
+continue using Titan Circuit until a different theme is selected explicitly.
 
 | File | What it does |
 |---|---|
