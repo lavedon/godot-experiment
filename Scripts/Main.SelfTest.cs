@@ -251,7 +251,7 @@ public partial class Main
                 (nameof(VroombaDrawsInEveryPhase), VroombaDrawsInEveryPhase),
             };
 
-            // Audio checks run last, keeping the existing tests' random seeds unchanged as bosses are added.
+            // Extra checks go here, keeping the existing tests' random seeds unchanged.
             tests = tests.Concat(new (string Name, Func<Task> Run)[]
             {
                 (nameof(BossMusicFlow), BossMusicFlow),
@@ -259,7 +259,14 @@ public partial class Main
                 // Two new robots: COZMOS and VECKTOR
                 (nameof(NewRobotsUnlocked), NewRobotsUnlocked),
                 (nameof(NewRobotsPlay), NewRobotsPlay),
+                (nameof(JumpDustComesFromInput), JumpDustComesFromInput),
+                (nameof(JumpDustLuresAndClogs), JumpDustLuresAndClogs),
+                (nameof(JumpDustCannotTrapBoss), JumpDustCannotTrapBoss),
+                (nameof(JumpDustAtArenaEdges), JumpDustAtArenaEdges),
             }).ToArray();
+
+            if (OS.GetCmdlineUserArgs().Contains("--selftest-dust"))
+                tests = tests.Where(test => test.Name.StartsWith("JumpDust") || test.Name == nameof(VroombaDrawsInEveryPhase)).ToArray();
 
             for (int i = 0; i < tests.Length; i++)
             {
@@ -5087,6 +5094,13 @@ public partial class Main
             drawn.UnionWith(inWorld.MovesDrawn);
             Check(SelfTestLogger.Errors == errors, $"VROOMBA in {CurrentWorld.Name} draws without errors");
         }
+
+        GoToTitle();
+        var dustFight = StartVroombaFight("TVroomDustDraw");
+        await Press("jump");
+        await Release("jump");
+        Check(await WaitUntil(() => dustFight.CanBeStomped, 7), "jump dust is chased and vacuumed before he gets dizzy");
+        drawn.UnionWith(dustFight.MovesDrawn);
 
         var missing = Vroomba.EveryMove.Where(move => !drawn.Contains(move)).ToList();
         Check(missing.Count == 0, $"every move was drawn ({drawn.Count} of {Vroomba.EveryMove.Count()}){(missing.Count > 0 ? ": missing " + string.Join(", ", missing) : "")}");
