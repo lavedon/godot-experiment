@@ -3,7 +3,8 @@ using Godot;
 /// <summary>
 /// Picking the world to START in! (This is more of Main: "partial" means one class spread over several files.)
 ///
-/// On the title screen, Y on Bolt-E's controller (or W on the keyboard) steps through the worlds this player may start in:
+/// On the title screen, DOWN steps through the worlds this player may start in (the D-pad or the stick on Bolt-E's
+/// controller, or the Down arrow or S on the keyboard; A, B, X and Y all start the game, like they always did):
 /// Sunny Hills, every world they have already reached, and UPSIDE-DOWN STATION (always, because it's the brand-new world).
 /// The picked world's postcard glows, and "START: ..." under the postcards says which one it is. The game remembers
 /// the pick until it's closed.
@@ -30,14 +31,13 @@ public partial class Main
     }
 
     /// <summary>
-    /// The button that picks the start world: Y on Bolt-E's own controller (Dad's second controller never gets here: see
-    /// _UnhandledInput), or W on the keyboard.
+    /// The button that picks the start world: DOWN ("menu_down": the D-pad or the stick pushed down on Bolt-E's own
+    /// controller, or the Down arrow or S). One push of the stick is one step. (Dad's second controller never gets
+    /// here: see _UnhandledInput.)
     /// </summary>
-    bool IsStartWorldButton(InputEvent e) =>
-        (e is InputEventJoypadButton { ButtonIndex: JoyButton.Y, Pressed: true } && e.Device == controllerOne) ||
-        e is InputEventKey { PhysicalKeycode: Key.W, Pressed: true, Echo: false };
+    static bool IsStartWorldButton(InputEvent e) => Input.IsActionJustPressedByEvent("menu_down", e);
 
-    /// <summary>Y on the title screen: the next world to start in (round and round).</summary>
+    /// <summary>DOWN on the title screen: the next world to start in (round and round).</summary>
     void StepStartWorld()
     {
         var allowed = AllowedStartWorlds();
@@ -77,11 +77,12 @@ public partial class Main
     /// <summary>
     /// How many worlds this game has reached after riding into world number n (it keeps counting: 6 is Sunny Hills again).
     /// A game from Sunny Hills: every world on the way counts, like always. A game that started in another world: see the
-    /// fair-play rule at the top of this file.
+    /// fair-play rule at the top of this file. A game that used WORLD WARP on the pause screen counts the same fair way
+    /// (see Main.Pause.cs), so warping somewhere and beating one boss can't win every postcard on the way.
     /// </summary>
     int WorldsReachedAfter(int n)
     {
-        if (gameStartWorld == 0) return Math.Max(worldsReached, n + 1);
+        if (gameStartWorld == 0 && !warpedThisRun) return Math.Max(worldsReached, n + 1);
         int world = n % Worlds.All.Length;
         bool next = world <= Math.Max(worldsReached, farthestAtStart); // (the next world after one he had really reached)
         return next ? Math.Max(worldsReached, world + 1) : worldsReached;
@@ -90,6 +91,7 @@ public partial class Main
     /// <summary>The World Tour line on the results card. A game that started in another world says where it went.</summary>
     string ResultsWorldLine()
     {
+        if (warpedThisRun) return $"World: {CurrentWorld.Name}"; // (a WORLD WARP game: where it ended)
         if (gameStartWorld == 0) return Worlds.WorldLine(worldsReached);
         string from = Worlds.All[gameStartWorld].Name;
         if (worldNumber == gameStartWorld) return $"World: {from}";

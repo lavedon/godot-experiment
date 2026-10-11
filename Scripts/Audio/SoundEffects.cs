@@ -661,6 +661,42 @@ public static class SoundEffects
         return Done(sound, 0.6f);
     }
 
+    // ---------- The pause screen ----------
+
+    /// <summary>"Bip-boop!" — the game pauses: two soft notes going down (and the menu plays them going up to resume).</summary>
+    public static float[] PauseBlip()
+    {
+        var sound = Synth.Silence(0.3f);
+        Synth.AddTone(sound, 0, 0.07f, Wave.Square25, 0.3f, Pluck, Synth.NoteToFrequency("E6"));
+        Synth.AddTone(sound, 0.08f, 0.14f, Wave.Square25, 0.3f, new Envelope(0.002f, 0.12f, 0f, 0.03f), Synth.NoteToFrequency("A5"));
+        return Done(sound, 0.7f);
+    }
+
+    /// <summary>
+    /// "WHOOOSH-sparkle!" — WORLD WARP! A whoosh of wind that swoops up high, a whistle sliding up with it, and a
+    /// little rainbow of sparkly notes at the top.
+    /// </summary>
+    public static float[] Warp()
+    {
+        const float length = 0.55f; // try changing this!
+        var sound = Synth.Silence(length + 0.35f);
+        var random = new Random(31);
+        float low = 0;
+        for (int i = 0; i < (int)(length * Synth.SampleRate); i++)
+        {
+            float t = (float)i / Synth.SampleRate / length; // 0 to 1
+            float cutoff = 250f + 6000f * t * t;            // the "shhh" gets brighter and brighter
+            float amount = 1f - MathF.Exp(-MathF.Tau * cutoff / Synth.SampleRate);
+            low += amount * (random.NextSingle() * 2f - 1f - low);
+            sound[i] = low * MathF.Sin(MathF.PI * t) * 0.9f; // swells in and out
+        }
+        Synth.AddTone(sound, 0, length, Wave.Sine, 0.35f, new Envelope(0.02f, 0.3f, 0.5f, 0.08f), 200, 1600); // the whistle
+        string[] sparkles = { "C7", "E7", "G7", "C8" };
+        for (int i = 0; i < sparkles.Length; i++)
+            Synth.AddTone(sound, length * 0.6f + i * 0.06f, 0.06f, Wave.Square12, 0.1f, Pluck, Synth.NoteToFrequency(sparkles[i]));
+        return Done(sound, 0.75f);
+    }
+
     /// <summary>Plays a list of (note, seconds) one after another.</summary>
     static float[] Tune((string Note, float Length)[] notes, Wave wave, bool normalize = true)
     {

@@ -3,8 +3,11 @@
 An endless runner starring **Bolt-E**, a tiny cute robot with headphones riding a hoverboard (designed from `hero-robot.png`). Made with Godot 4.7.2 (.NET / C#) and SQLite.
 
 ## How to play
-- **Space**, **Up arrow**, **W**, or **click**: jump (on the title screen, **W** picks the world to start in)
+- **Space**, **Up arrow**, **W**, or **click**: jump (and start a game from the title screen)
 - **Xbox controller** (or any game controller): **A, B, X, Y** or **D-pad up** to jump, **START** to start or play again.
+- **PAUSE:** in the middle of a game press **START** on the controller, or **P** or **Esc** on the keyboard. The pause
+  screen has **CONTINUE**, **WORLD WARP** (jump to another world!) and **QUIT TO TITLE**. See
+  [PAUSE and WORLD WARP](#pause-and-world-warp) below.
   The controller rumbles when Bolt-E blows up, and buzzes a tiny bit for each bolt.
   (On the menus, D-pad up never starts a game, so pressing the D-pad a bit crooked while picking a look is fine.)
   The **first controller plugged in is Bolt-E's**. A second controller never moves Bolt-E: it can only drive Big Rusty
@@ -21,8 +24,8 @@ An endless runner starring **Bolt-E**, a tiny cute robot with headphones riding 
 - **World Tour**: every time you beat a boss, Bolt-E rides into a new world: **Candy Land**, **Night City**,
   **Snowy Peaks**, **THE MOON** (with floaty moon jumps!), then **UPSIDE-DOWN STATION** (where jump FLIPS GRAVITY!),
   and all the way around again. See [World Tour](#world-tour) below.
-- **Pick a world to start in:** on the title screen press **Y** on the controller (or **W**) to step through the worlds
-  you may start in. UPSIDE-DOWN STATION is always one of them! See
+- **Pick a world to start in:** on the title screen press **DOWN** (the D-pad or the stick on the controller, or the
+  **Down arrow** or **S** on the keyboard) to step through the worlds you may start in. UPSIDE-DOWN STATION is always one of them! See
   [UPSIDE-DOWN STATION](#upside-down-station-the-6th-world) below.
 - **Bolt Bank & looks**: every bolt you ever grab goes into Bolt-E's **Bolt Bank** (top-left of the menus). It never
   goes down, and it wins Bolt-E new **looks**: Ninja, Fire Truck, Pirate, Hot Dog, King Bolt-E and more (17 in all).
@@ -144,11 +147,13 @@ An endless runner starring **Bolt-E**, a tiny cute robot with headphones riding 
 - The results card says how far you got, like **You rode all the way to NIGHT CITY!**
 - **Postcards** on the menus (on the left, next to the cards) show every world you have reached. Worlds you reached
   for the very first time get a gold **NEW!** ribbon, and worlds you haven't reached yet are grey with a **?**.
-- A new game starts in Sunny Hills, unless you **pick another world** on the title screen: press **Y** on the
-  controller (or **W** on the keyboard) to step through Sunny Hills, every world you have reached, and UPSIDE-DOWN
+- A new game starts in Sunny Hills, unless you **pick another world** on the title screen: press **DOWN** on the
+  controller's D-pad or stick (or the **Down arrow** or **S** on the keyboard) to step through Sunny Hills, every world
+  you have reached, and UPSIDE-DOWN
   STATION (always: it's the brand-new world). The picked world's postcard glows, and **START: ...** under the postcards
   says which one. The game remembers it until it's closed. Reaching the Moon from Sunny Hills takes 4 boss wins in one
-  game: spare batteries help!
+  game: spare batteries help! (A, B, X and Y all start the game. Only DOWN picks the world, so a Y press out of habit
+  never changes it by accident.)
 - **Fair play:** starting in another world never wins postcards or looks. In a game like that, a world only counts as
   reached when Bolt-E really rode into it by beating a boss, and only if it's the next one after a world he had already
   reached. (Start in the Station and beat 2 bosses: you ride into Sunny Hills and then Candy Land, so Candy Land counts.
@@ -385,7 +390,7 @@ and his knees bend when he crouches or lands. (He's built like a little skeleton
 A dark space-station corridor with a **FLOOR** and a **CEILING**: deep purple space with drifting stars and a big ringed
 planet outside the windows and portholes, metal walls with seams, rivets, blinking lights, glowing arrow signs and
 hazard stripes, a floor track with a glowing **cyan** edge and a ceiling track with a glowing **magenta** edge, with
-light dashes zooming along both. It comes after the Moon (or pick it on the title screen with **Y** / **W**).
+light dashes zooming along both. It comes after the Moon (or pick it on the title screen with **DOWN**, or jump there with **WORLD WARP** on the pause screen).
 - **Here the jump button FLIPS GRAVITY!** Bolt-E falls UP to the ceiling (WHOOSH!) in a little over a third of a second,
   doing a half-roll, and rides along it **upside-down**. Press again to flip back down. Sparkles fly off the floor or
   ceiling he leaves, and he lands with a little "tunk!", a spark and a rumble.
@@ -468,6 +473,34 @@ light dashes zooming along both. It comes after the Moon (or pick it on the titl
   boss fight, and only with the buttons above (its other buttons do nothing). The keyboard can't drive Big Rusty.
 - Want MOM or GRANDMA to drive? Change `DriverName` in `Scripts/Main.Driver.cs`.
 
+## PAUSE and WORLD WARP
+- **Pause** in the middle of a game: **START** on Bolt-E's controller, or **P** or **Esc** on the keyboard. Everything
+  freezes: the world, the bad robots, the bosses, the powers, the puffs and every timer, and the music waits right where
+  it was. A dark cover with the big word **PAUSED** comes over the game. **START** (or P or Esc) again goes on.
+- The pause screen has three big rows. **UP / DOWN** (the D-pad, the stick or the arrow keys) picks a row, and
+  **A** (or Enter or Space) picks it:
+  - **CONTINUE**: back to the game (it's picked first).
+  - **WORLD WARP**: the World Tour postcards, nice and big. **LEFT / RIGHT** picks a world and **A** warps there:
+    WHOOSH, a rainbow flash, and **WELCOME TO ...!** The game goes on in that world with the same score, bolts,
+    batteries and meters. Everything dangerous on the screen puffs away, and there's a little gap before new things
+    come. You can warp to the same worlds you can start in (Sunny Hills, every world you've reached, and always
+    UPSIDE-DOWN STATION). Grey **?** worlds can't be picked yet, and the world you're in says **YOU ARE HERE**.
+    Warp into UPSIDE-DOWN STATION and the ceiling shuts and jump flips gravity; warp out and gravity is normal again.
+    The world you warp to is also where your next game starts.
+  - **QUIT TO TITLE**: the game ends and is saved like any game over (score, Bolt Bank, family race), with no KABOOM:
+    the results card says **Game saved!** (or **NEW HIGH SCORE!**). START plays again, like after any game.
+- **In a boss fight** (or when **WARNING! BOSS AHEAD!** is up) you can pause, but WORLD WARP is grey: **Beat the boss
+  first!** Right after beating a boss it says **A new world is coming!** until the new world is here.
+- **While Bolt-E is in pieces** (or in slow motion, or falling through a gap in the station), START waits: the game
+  pauses the moment he's riding again.
+- **Only Bolt-E's controller and the keyboard** can pause. Dad's second controller does nothing on the pause screen.
+- **Controller unplugged?** If Bolt-E's controller comes unplugged in the middle of a game, the game pauses by itself.
+- **Fair play:** warping never wins postcards or looks. After a warp, a world only counts as reached when Bolt-E rides
+  into it by beating a boss, the same rule as starting in another world. The score is saved as usual, and the family
+  race flag goes where the game really ended.
+- Try changing: `WarpSafeGap` (the empty road after a warp) and the words in `Main.Pause.cs`; `CoverAlpha` (how dark the
+  cover is), `CardScale` (how big the postcards are) and `FlashSeconds` (the rainbow flash) in `PauseMenu.cs`.
+
 ## Running it
 Open `project.godot` in the Godot 4.7.2 **.NET** editor
 (`C:\my-coding-projects\godotPalaceRoomViewer\.tools\Godot_v4.7.2-stable_mono_win64\Godot_v4.7.2-stable_mono_win64.exe`)
@@ -523,11 +556,12 @@ To run only DRONEZILLA's checks (and the taking-turns rule), add `--selftest-dro
 him too, and some of them also run the game 3 times as fast.)
 To run only OPTI-MAX's checks (and the taking-turns rules), add `--selftest-optimax` instead.
 To run only UPSIDE-DOWN STATION's checks (and the start-world picker), add `--selftest-station` instead.
+To run only the PAUSE screen and WORLD WARP checks, add `--selftest-pause` instead.
 Exit codes: **0** = everything passed, **1** = something failed, **2** = refused to start (bad `--db`),
 **3** = it took too long. A good run has no lines with `FAIL:`, `ERROR:`, `SCRIPT ERROR` or `Unhandled exception`
 in the output or in `godot.log`. The tests are in `Scripts/Main.SelfTest.cs`, and new features add theirs there.
-Just before the DONE line it also prints how many seconds of game time the tests took (the watchdog stops them at 1500,
-so the commands above use `--quit-after 120000`).
+Just before the DONE line it also prints how many seconds of game time the tests took (the watchdog stops them at 1800,
+so the commands above use `--quit-after 120000`, which is 2000 seconds).
 (They expect the normal tuning numbers, so if you change a number like `StartingBatteries` or `MegaSeconds`,
 a world in `Worlds.cs`, a look in `Looks.cs`, a family race number in `Main.Family.cs`, Big Rusty's
 `AttacksBeforeHeMustPound`, `DriverWaitBeforeAI` or `LaughsInARow`, VROOMBA's numbers in `Vroomba.cs`, DRONEZILLA's
@@ -583,7 +617,7 @@ score selected. `StartMusic(speed)` resets to the original runner theme on the t
 | `Scripts/Main.PowerUps.cs` | Rainbow ? boxes: when a box comes, opening it, starting and ending powers, SMASH! and SPLAT!, the magnet pull, the rocket landing |
 | `Scripts/Main.Worlds.cs` | The World Tour: changing worlds after a Big Rusty win, the smooth color change, and drawing each world's special things (stars, moon, Earth, skyscrapers, mountains, lollipops, pine trees, sprinkles, road dashes, craters, snow, the night glow) |
 | `Scripts/Worlds.cs` | Every world on the World Tour: its colors, sky thing, scenery, weather, gravity, music speed and Big Rusty's outfit. **Make your own world here!** |
-| `Scripts/WorldPostcards.cs` | The World Tour postcards on the menus (pictures, grey "?" cards, gold NEW! ribbons, the glowing start world, "START: ..." and the "Y = pick a world" tip) |
+| `Scripts/WorldPostcards.cs` | The World Tour postcards on the menus (pictures, grey "?" cards, gold NEW! ribbons, the glowing start world, "START: ..." and the "DOWN = pick a world" tip), and the little world pictures the pause screen draws bigger |
 | `Scripts/Looks.cs` | All 17 looks: their colors, hats, boards, trails, which robot wears them (Bolt-E, COZMOS or VECKTOR) and what it takes to win them. **Invent your own look here!** |
 | `Scripts/Main.Looks.cs` | The Bolt Bank and the looks: loading a player's bank and look, changing looks on the menus, the count-up after a game, and the unlock parties and the first-launch "N NEW LOOKS!" note (which are never lost) |
 | `Scripts/Main.Family.cs` | The family race: who's playing (LB / RB, TAB), "GO, MAX!" and "DAD'S TURN!", the flags on the road and passing them, NEW HIGH SCORE! in the middle of a ride, fireworks, who's champ today, rounds, and "So close!" |
@@ -603,8 +637,11 @@ score selected. `StartMusic(speed)` resets to the original runner theme on the t
 | `Scripts/StationScenery.cs` | Drawing the station: space, stars and the ringed planet, the walls with windows, portholes, seams, blinking lights, arrow signs and hazard stripes, and the floor and ceiling tracks with their neon edges |
 | `Scripts/RobotFlip.cs` | Bolt-E flipping gravity: the flip, the one flip in the air, falling to the floor or the ceiling, the half-roll and drawing him upside-down, and falling out through a gap |
 | `Scripts/GravityArrow.cs` | The gravity arrow in the top-right corner in UPSIDE-DOWN STATION |
-| `Scripts/Main.StartWorld.cs` | Picking the world to start in (Y / W on the title screen), and the fair-play rule for how a game like that counts the worlds reached |
+| `Scripts/Main.StartWorld.cs` | Picking the world to start in (DOWN on the title screen), and the fair-play rule for how a game like that (or a WORLD WARP game) counts the worlds reached |
 | `Scripts/Main.StationTests.cs` | Self-test checks for UPSIDE-DOWN STATION and the start-world picker |
+| `Scripts/Main.Pause.cs` | The PAUSE screen: pausing (START, P, Esc, or Bolt-E's controller coming unplugged) and going on, a pause that waits while Bolt-E is in pieces, the pause screen's buttons, WORLD WARP (which worlds, when it's greyed, and the warp itself) and QUIT TO TITLE |
+| `Scripts/PauseMenu.cs` | Drawing the pause screen: the dark cover, PAUSED, the three rows, the big postcards (grey "?" cards and YOU ARE HERE), and the rainbow WARP! flash |
+| `Scripts/Main.PauseTests.cs` | Self-test checks for the PAUSE screen and WORLD WARP |
 | `Scripts/Main.SelfTest.cs` | Grown-up testing code: the headless self-test and all its checks |
 | `Scripts/PowerUps.cs` | The three powers: how long they last, how big, how high (the "try changing these!" numbers), their names and little icons |
 | `Scripts/PowerBox.cs` | The rainbow ? box with its two orbiting stars |
@@ -634,7 +671,7 @@ score selected. `StartMusic(speed)` resets to the original runner theme on the t
 | `Scripts/BatteryRow.cs` | The spare batteries under "Bolts" (green spares and the yellow charging one) |
 | `Scripts/ScoreDatabase.cs` | All the SQLite code (including everyone who plays, their bests, and today's scores) |
 | `Scripts/Audio/Song.cs` | The theme song, written as notes you can change |
-| `Scripts/Audio/SoundEffects.cs` | Every sound effect (jump, bolt, explosion, jingles, power-ups, SMASH, the rocket, the new-world jingle, the NEW LOOK! jingle, the "ta-da-DA!" for passing a flag, VROOMBA's rev-up, zoom, wall bonk, vacuum hum, BEEP BOOP and "ptoo!", and DRONEZILLA's rotor buzz, bomb whistle, LOW BATTERY beeps, power-down, take-off whir and BZZT BZZT, and OPTI-MAX's clanky footsteps, box whoosh and crunch, ball boing and kick, UPDATING chirps, DING!, error buzz and dance beat...) |
+| `Scripts/Audio/SoundEffects.cs` | Every sound effect (jump, bolt, explosion, jingles, power-ups, SMASH, the rocket, the new-world jingle, the NEW LOOK! jingle, the "ta-da-DA!" for passing a flag, VROOMBA's rev-up, zoom, wall bonk, vacuum hum, BEEP BOOP and "ptoo!", and DRONEZILLA's rotor buzz, bomb whistle, LOW BATTERY beeps, power-down, take-off whir and BZZT BZZT, and OPTI-MAX's clanky footsteps, box whoosh and crunch, ball boing and kick, UPDATING chirps, DING!, error buzz and dance beat, and the pause screen's "bip-boop" and the WORLD WARP whoosh...) |
 | `Scripts/Audio/Synth.cs` | The tiny synthesizer that turns notes into sound with math (with a buzzy saw wave for VROOMBA) |
 | `Scripts/Audio/SoundBoard.cs` | Plays the music and sound effects (and remembers how fast the music should play, so it wobbles down while Bolt-E is in pieces, even if you switch it off and on) |
 | `Scripts/Shapes.cs` | Drawing helpers (rounded rectangles, ovals, stars, happy eyes, X eyes, heart eyes) |

@@ -17,7 +17,9 @@ public partial class Main
     const int SelfTestDevice = 99;          // the self-test's pretend presses come from this "device" (real ones are 0, 1, 2...)
     const int SelfTestSecondPad = 98;       // ...and its pretend SECOND controller (the one that can drive Big Rusty)
     const string W16 = "WWWWWWWWWWWWWWWW";  // the widest name you can type: 16 W's (W is the fattest letter)
-    const int SelfTestWatchdogSeconds = 1500; // the self-test gives up if it takes longer than this (seconds of game time)
+    // The self-test gives up if it takes longer than this (seconds of game time). Raised from 1500 to 1800 for the PAUSE
+    // screen tests (the whole run took about 1230 seconds then, so there is room to spare).
+    const int SelfTestWatchdogSeconds = 1800;
 
     bool selfTesting;             // true when the game was started with --selftest
     float testMoveAxis;           // the self-test's pretend stick: -1 = left, 0 = stay, 1 = right
@@ -106,7 +108,7 @@ public partial class Main
         errorCounter = new SelfTestLogger();
         OS.AddLogger(errorCounter);
 
-        // The watchdog: if the tests ever get stuck, give up after 25 minutes instead of waiting forever
+        // The watchdog: if the tests ever get stuck, give up after 30 minutes instead of waiting forever
         GetTree().CreateTimer(SelfTestWatchdogSeconds, true, false, true).Timeout += () =>
         {
             GD.Print("FAIL: watchdog - the self-test took too long");
@@ -306,6 +308,15 @@ public partial class Main
                 (nameof(StationMusicFlow), StationMusicFlow),
                 (nameof(StationMusicAudio), StationMusicAudio),
                 (nameof(StationMusicLevel), StationMusicLevel),
+                // The PAUSE screen and WORLD WARP (see Main.PauseTests.cs)
+                (nameof(PauseFreezes), PauseFreezes),
+                (nameof(PauseMenuNav), PauseMenuNav),
+                (nameof(WarpToStation), WarpToStation),
+                (nameof(NoWarpInBossFight), NoWarpInBossFight),
+                (nameof(WarpSavesFairly), WarpSavesFairly),
+                (nameof(QuitToTitleSaves), QuitToTitleSaves),
+                (nameof(PauseSafety), PauseSafety),
+                (nameof(PauseDraws), PauseDraws),
             }).ToArray();
 
             if (OS.GetCmdlineUserArgs().Contains("--selftest-dust"))
@@ -324,6 +335,9 @@ public partial class Main
             // To run only UPSIDE-DOWN STATION's checks: add --selftest-station after --selftest
             if (OS.GetCmdlineUserArgs().Contains("--selftest-station"))
                 tests = tests.Where(test => StationTestNames.Contains(test.Name)).ToArray();
+            // To run only the PAUSE screen and WORLD WARP checks: add --selftest-pause after --selftest
+            if (OS.GetCmdlineUserArgs().Contains("--selftest-pause"))
+                tests = tests.Where(test => PauseTestNames.Contains(test.Name)).ToArray();
 
             for (int i = 0; i < tests.Length; i++)
             {
@@ -3632,7 +3646,8 @@ public partial class Main
         Check(rusty.CurrentMove == "Entering" && !rusty.DriverControlled, "while Big Rusty flies in, Dad can't take over yet");
         Check(await WaitUntil(() => rusty.CanBeDriven, 2), "he flew in");
         for (int button = 0; button <= (int)JoyButton.Touchpad; button++)
-            if ((JoyButton)button != JoyButton.Back) await PressButton((JoyButton)button); // (BACK switches the music)
+            if ((JoyButton)button is not (JoyButton.Back or JoyButton.Start))
+                await PressButton((JoyButton)button); // (BACK switches the music, and START pauses the game: see Main.Pause.cs)
         await StickX(1);
         await StickX(0);
         Check(!rusty.DriverControlled && hud.BossBarName == Boss.RustyName, "no button of Bolt-E's own controller can drive him");

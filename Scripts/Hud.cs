@@ -488,7 +488,7 @@ public partial class Hud : CanvasLayer
         titleScreen.Visible = true;
         gameOverScreen.Visible = false;
         menuStrip.Visible = true;
-        postcards.ShowPickHint = true; // "Y = pick a world" (only on the title screen)
+        postcards.ShowPickHint = true; // "DOWN = pick a world" (only on the title screen)
         postcards.QueueRedraw();
         PlaceWarning(onMenus: true);
         SetPlayingLabelsVisible(false);
@@ -539,7 +539,7 @@ public partial class Hud : CanvasLayer
         titleScreen.Visible = false;
         gameOverScreen.Visible = true;
         menuStrip.Visible = true;
-        postcards.ShowPickHint = false; // (here Y plays again)
+        postcards.ShowPickHint = false; // (only the title screen picks the start world)
         postcards.QueueRedraw();
         PlaceWarning(onMenus: true);
     }

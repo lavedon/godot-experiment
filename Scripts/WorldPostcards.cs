@@ -4,7 +4,7 @@ using Godot;
 /// The World Tour postcards on the menus: one little card for every world. A world you've been to shows a tiny
 /// picture of it (its sky, a hill, the ground, and a dot for its sun, moon or Earth). Worlds you haven't reached yet
 /// are grey with a "?". Worlds you reached for the first time in the game you just played get a gold border and a
-/// gold NEW! ribbon. The world the next game starts in glows (pick it with Y on the title screen), and "START: ..."
+/// gold NEW! ribbon. The world the next game starts in glows (pick it with DOWN on the title screen), and "START: ..."
 /// under the cards says which one it is. Everything is drawn with code.
 /// </summary>
 public partial class WorldPostcards : Control
@@ -21,7 +21,7 @@ public partial class WorldPostcards : Control
     const float CardsTop = 24;      // the cards go under the word "WORLDS"
     const float StartLineTop = 60;  // "START: SUNNY HILLS" goes under the cards
     const float Frame = 3;          // the frame around each little picture (gold for a NEW world)
-    const string PickHint = "Y = pick a world";
+    const string PickHint = "DOWN = pick a world";
 
     /// <summary>How many worlds this player has reached (1 = only Sunny Hills).</summary>
     public int Reached = 1;
@@ -29,7 +29,7 @@ public partial class WorldPostcards : Control
     public int NewFrom = 99;
     /// <summary>The world the next game starts in (its card glows).</summary>
     public int Picked;
-    /// <summary>True on the title screen: "Y = pick a world" shows next to the word "WORLDS".</summary>
+    /// <summary>True on the title screen: "DOWN = pick a world" shows next to the word "WORLDS".</summary>
     public bool ShowPickHint;
 
     /// <summary>True if card i gets a NEW! ribbon: a world reached for the first time in the last game.</summary>
@@ -55,7 +55,7 @@ public partial class WorldPostcards : Control
         DrawStringOutline(font, labelAt, "WORLDS", HorizontalAlignment.Left, -1, 18, 6, Ink);
         DrawString(font, labelAt, "WORLDS", HorizontalAlignment.Left, -1, 18, Colors.White);
 
-        // On the title screen: "Y = pick a world", on the right
+        // On the title screen: "DOWN = pick a world", on the right
         HintDrawn = ShowPickHint;
         if (ShowPickHint)
         {
@@ -82,7 +82,7 @@ public partial class WorldPostcards : Control
 
             if (i < Reached)
             {
-                DrawLittleWorld(inside, Worlds.All[i]);
+                DrawLittleWorld(this, inside, Worlds.All[i]);
                 PicturesDrawn++;
             }
             else
@@ -112,22 +112,26 @@ public partial class WorldPostcards : Control
         DrawnRight = Mathf.Max(DrawnRight, startAt.X + font.GetStringSize(StartLine, HorizontalAlignment.Left, -1, size).X);
     }
 
-    /// <summary>A tiny picture of a world: its sky, a hill, a strip of ground, and a dot for its sun, moon or Earth.</summary>
-    void DrawLittleWorld(Rect2 r, World world)
+    /// <summary>
+    /// A tiny picture of a world: its sky, a hill, a strip of ground, and a dot for its sun, moon or Earth.
+    /// "canvas" is what it's drawn on (the pause screen draws the same pictures, only bigger: see PauseMenu.cs).
+    /// The picture is made for a 40 x 28 box.
+    /// </summary>
+    public static void DrawLittleWorld(CanvasItem canvas, Rect2 r, World world)
     {
         // The sky, fading from its top color to its bottom color
-        DrawPolygon(
+        canvas.DrawPolygon(
             new[] { r.Position, new Vector2(r.End.X, r.Position.Y), r.End, new Vector2(r.Position.X, r.End.Y) },
             new[] { world.SkyTop, world.SkyTop, world.SkyBottom, world.SkyBottom });
 
         if (world.Scenery == Scenery.Station)
         {
-            DrawLittleStation(r, world);
+            DrawLittleStation(canvas, r, world);
             return;
         }
 
         // Its sun, moon or Earth (a little dot, 6 pixels across)
-        DrawCircle(new Vector2(r.End.X - 9, r.Position.Y + 8), 3, world.ThingColor);
+        canvas.DrawCircle(new Vector2(r.End.X - 9, r.Position.Y + 8), 3, world.ThingColor);
 
         // A hill: the top half of an oval, standing on the ground
         float groundTop = r.End.Y - 7;
@@ -137,24 +141,24 @@ public partial class WorldPostcards : Control
             float angle = Mathf.Pi + i * Mathf.Pi / (hill.Length - 1); // from the left side, over the top, to the right side
             hill[i] = new Vector2(r.Position.X + 15 + Mathf.Cos(angle) * 15, groundTop + Mathf.Sin(angle) * 11);
         }
-        DrawColoredPolygon(hill, world.NearHills);
+        canvas.DrawColoredPolygon(hill, world.NearHills);
 
         // The ground
-        DrawRect(new Rect2(r.Position.X, groundTop, r.Size.X, r.End.Y - groundTop), world.Grass);
+        canvas.DrawRect(new Rect2(r.Position.X, groundTop, r.Size.X, r.End.Y - groundTop), world.Grass);
     }
 
     /// <summary>UPSIDE-DOWN STATION's postcard: a ringed planet in space, a magenta ceiling and a glowing cyan floor.</summary>
-    void DrawLittleStation(Rect2 r, World world)
+    static void DrawLittleStation(CanvasItem canvas, Rect2 r, World world)
     {
         var planet = new Vector2(r.Position.X + r.Size.X * 0.62f, r.Position.Y + r.Size.Y * 0.5f);
-        DrawCircle(planet, 5, world.ThingColor);
-        DrawLine(planet + new Vector2(-9, 2), planet + new Vector2(9, -2), new Color(1, 0.9f, 0.7f), 1.5f);
-        DrawCircle(new Vector2(r.Position.X + 7, r.Position.Y + 12), 1, Colors.White);
-        DrawCircle(new Vector2(r.End.X - 6, r.End.Y - 10), 1, Colors.White);
-        DrawRect(new Rect2(r.Position.X, r.Position.Y, r.Size.X, 4), world.NearHills);
-        DrawRect(new Rect2(r.Position.X, r.Position.Y + 4, r.Size.X, 1.5f), world.Pebbles);   // the magenta ceiling edge
-        DrawRect(new Rect2(r.Position.X, r.End.Y - 5, r.Size.X, 5), world.Dirt);
-        DrawRect(new Rect2(r.Position.X, r.End.Y - 6, r.Size.X, 1.5f), world.Grass);          // the cyan floor edge
+        canvas.DrawCircle(planet, 5, world.ThingColor);
+        canvas.DrawLine(planet + new Vector2(-9, 2), planet + new Vector2(9, -2), new Color(1, 0.9f, 0.7f), 1.5f);
+        canvas.DrawCircle(new Vector2(r.Position.X + 7, r.Position.Y + 12), 1, Colors.White);
+        canvas.DrawCircle(new Vector2(r.End.X - 6, r.End.Y - 10), 1, Colors.White);
+        canvas.DrawRect(new Rect2(r.Position.X, r.Position.Y, r.Size.X, 4), world.NearHills);
+        canvas.DrawRect(new Rect2(r.Position.X, r.Position.Y + 4, r.Size.X, 1.5f), world.Pebbles);   // the magenta ceiling edge
+        canvas.DrawRect(new Rect2(r.Position.X, r.End.Y - 5, r.Size.X, 5), world.Dirt);
+        canvas.DrawRect(new Rect2(r.Position.X, r.End.Y - 6, r.Size.X, 1.5f), world.Grass);          // the cyan floor edge
     }
 
     /// <summary>Draws words with their middle at "middle". (We measure them, so they're exactly in the middle.)</summary>

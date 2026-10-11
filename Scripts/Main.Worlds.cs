@@ -60,8 +60,10 @@ public partial class Main
     /// </summary>
     void NextWorldSoon()
     {
+        newWorldComing = true; // (no WORLD WARP until it's here: see Main.Pause.cs)
         Later(NewWorldDelay, () =>
         {
+            newWorldComing = false;
             if (state is GameState.Playing or GameState.Rebuilding) ChangeWorld(worldNumber + 1);
         });
     }

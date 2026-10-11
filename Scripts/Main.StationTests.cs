@@ -113,9 +113,10 @@ public partial class Main
     // ---------- 2. Picking the world to start in ----------
 
     /// <summary>
-    /// Y on Bolt-E's controller (or W) on the title screen steps through the worlds this player may start in: Sunny Hills,
-    /// the worlds they reached, and always UPSIDE-DOWN STATION. Dad's Y does nothing. Starting in the Station: welcome,
-    /// tip, flipping. A picked start never wins a look or a postcard, and never makes a saved record smaller.
+    /// DOWN on Bolt-E's controller (the D-pad or the stick, or the Down arrow or S) on the title screen steps through the
+    /// worlds this player may start in: Sunny Hills, the worlds they reached, and always UPSIDE-DOWN STATION. Dad's DOWN
+    /// does nothing, and Y starts the game again (like A, B and X). Starting in the Station: welcome, tip, flipping.
+    /// A picked start never wins a look or a postcard, and never makes a saved record smaller.
     /// </summary>
     async Task StartWorldPicker()
     {
@@ -126,19 +127,35 @@ public partial class Main
             await Wait(0.2);
             var postcards = hud.Postcards;
             Check(startWorld == 0 && postcards.Picked == 0 && postcards.StartLine == "START: SUNNY HILLS" && postcards.HintDrawn,
-                  $"a new player starts in Sunny Hills ('{postcards.StartLine}', and the 'Y = pick a world' tip)");
+                  $"a new player starts in Sunny Hills ('{postcards.StartLine}', and the 'DOWN = pick a world' tip)");
 
-            await PressButton(JoyButton.Y);
+            await PressButton(JoyButton.DpadDown);
             Check(state == GameState.Title && startWorld == Worlds.StationIndex && postcards.StartLine == "START: UPSIDE-DOWN STATION",
-                  $"Y: the Station, the brand-new world, is always allowed ('{postcards.StartLine}', still on the title screen)");
+                  $"D-pad DOWN: the Station, the brand-new world, is always allowed ('{postcards.StartLine}', still on the title screen)");
             Check(postcards.PickedCard.Position.X > 200, $"...and its postcard (the 6th) glows (at x {postcards.PickedCard.Position.X:0})");
-            await PressButton(JoyButton.Y);
-            Check(startWorld == 0, "Y again: back to Sunny Hills (only those two for a new player)");
-            await TapKey(Key.W);
-            Check(state == GameState.Title && startWorld == Worlds.StationIndex, "W on the keyboard picks too (and doesn't start a game)");
-            await SecondPadButton(JoyButton.Y);
-            await SecondPadButton(JoyButton.Y);
-            Check(state == GameState.Title && startWorld == Worlds.StationIndex, "Dad's controller's Y does nothing on the title screen");
+            await PressButton(JoyButton.DpadDown);
+            Check(startWorld == 0, "DOWN again: back to Sunny Hills (only those two for a new player)");
+            await TapKey(Key.S);
+            Check(state == GameState.Title && startWorld == Worlds.StationIndex, "S on the keyboard picks too (and doesn't start a game)");
+            await SecondPadButton(JoyButton.DpadDown);
+            await SecondPadButton(JoyButton.DpadDown);
+            await SendInput(new InputEventJoypadMotion { Axis = JoyAxis.LeftY, AxisValue = 0.9f }, SelfTestSecondPad);
+            await SendInput(new InputEventJoypadMotion { Axis = JoyAxis.LeftY, AxisValue = 0 }, SelfTestSecondPad);
+            Check(state == GameState.Title && startWorld == Worlds.StationIndex, "Dad's controller's DOWN (and his stick) does nothing on the title screen");
+
+            // The Down arrow picks too, and the stick: one push down is one step (wiggling a little more doesn't step again)
+            await TapKey(Key.Down);
+            bool arrowPicked = startWorld == 0;
+            await SendInput(new InputEventJoypadMotion { Axis = JoyAxis.LeftY, AxisValue = 0.7f });
+            await SendInput(new InputEventJoypadMotion { Axis = JoyAxis.LeftY, AxisValue = 0.9f });
+            await SendInput(new InputEventJoypadMotion { Axis = JoyAxis.LeftY, AxisValue = 1f });
+            await SendInput(new InputEventJoypadMotion { Axis = JoyAxis.LeftY, AxisValue = 0 });
+            Check(state == GameState.Title && arrowPicked && startWorld == Worlds.StationIndex,
+                  $"the Down arrow picks, and one push of the stick is one step (now world {startWorld})");
+            await SendInput(new InputEventJoypadMotion { Axis = JoyAxis.LeftY, AxisValue = 0.4f });
+            await SendInput(new InputEventJoypadMotion { Axis = JoyAxis.LeftY, AxisValue = 0 });
+            await PressButton(JoyButton.DpadUp);
+            Check(state == GameState.Title && startWorld == Worlds.StationIndex, "a small stick wobble and D-pad UP do nothing on the title screen");
 
             // It all fits in the strip, next to the title card
             await NextFrame();
@@ -156,10 +173,16 @@ public partial class Main
             var steps = new List<int>();
             for (int i = 0; i < 4; i++)
             {
-                await PressButton(JoyButton.Y);
+                await PressButton(JoyButton.DpadDown);
                 steps.Add(startWorld);
             }
             Check(string.Join(" ", steps) == "1 2 5 0", $"a player who reached Night City steps through worlds {string.Join(" ", steps)}");
+
+            // Y starts the game again, like A, B and X (it used to pick the world: that got mixed up with A)
+            await PressButton(JoyButton.Y);
+            Check(state == GameState.Playing, "Y on Bolt-E's controller starts a game from the title screen again");
+            GoToTitle();
+            await Wait(0.2);
 
             // Starting in the Station: the welcome, the tip, the ceiling shut, and flipping right away
             hud.SetPlayerName(name);

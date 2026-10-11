@@ -14,6 +14,7 @@ public enum Sfx
     RotorBuzz, BombWhistle, LowBattery, PowerDown, TakeOff, Bzzt, // DRONEZILLA
     RobotStep, BoxWhoosh, BoxCrunch, Boing, Kick, Chirp, Ding, ErrorBuzz, DanceBeat, // OPTI-MAX
     FlipUp, FlipDown, FlipThud, SpaceFall, CeilingSlide, // UPSIDE-DOWN STATION
+    PauseBlip, MenuTick, Warp, // the pause screen and WORLD WARP
 }
 
 /// <summary>
@@ -105,13 +106,19 @@ public partial class SoundBoard : Node
         AddEffect(Sfx.FlipThud, SoundEffects.FlipThud(), -9f, voices: 3);
         AddEffect(Sfx.SpaceFall, SoundEffects.SpaceFall(), -8f, voices: 1);
         AddEffect(Sfx.CeilingSlide, SoundEffects.CeilingSlide(), -11f, voices: 1);
+        // The pause screen's sounds still play while the game is paused (see Main.Pause.cs). MenuTick is the same
+        // little tick as the slot machine's, but it's its own player, so the frozen game's sounds stay frozen.
+        AddEffect(Sfx.PauseBlip, SoundEffects.PauseBlip(), -9f, playsWhilePaused: true);
+        AddEffect(Sfx.MenuTick, SoundEffects.Tick(), -12f, voices: 3, playsWhilePaused: true);
+        AddEffect(Sfx.Warp, SoundEffects.Warp(), -7f, voices: 1, playsWhilePaused: true);
     }
 
-    void AddEffect(Sfx name, float[] sound, float volumeDb, int voices = 2, bool loop = false)
+    void AddEffect(Sfx name, float[] sound, float volumeDb, int voices = 2, bool loop = false, bool playsWhilePaused = false)
     {
         // "voices" = how many copies can play at the same time (so quick bolts don't cut each other off).
         // loop = it plays again and again until Stop (like VROOMBA's vacuum hum).
         var player = new AudioStreamPlayer { Stream = Synth.ToAudioStream(sound, loop), VolumeDb = volumeDb, MaxPolyphony = voices };
+        if (playsWhilePaused) player.ProcessMode = ProcessModeEnum.Always; // (every other sound freezes with the game)
         AddChild(player);
         effects[name] = player;
     }
@@ -208,6 +215,19 @@ public partial class SoundBoard : Node
         musicFade = CreateTween();
         musicFade.TweenProperty(music, AudioStreamPlayer.PropertyName.PitchScale.ToString(), musicSpeed, 0.6f);
     }
+
+    /// <summary>
+    /// The pause screen: the music waits right where it is (paused = true), and goes on from there (paused = false).
+    /// (Godot also pauses every sound of a paused game by itself. This makes sure the music does, too.)
+    /// </summary>
+    public void HoldMusicForPause(bool paused)
+    {
+        music.StreamPaused = paused;
+        outgoingMusic.StreamPaused = paused;
+    }
+
+    /// <summary>True while the music is waiting for the pause screen to close (the self-test reads this).</summary>
+    public bool MusicPausedNow => music.StreamPaused;
 
     /// <summary>Stops the music and every sound effect right away (the self-test does this before it quits).</summary>
     public void StopEverything()

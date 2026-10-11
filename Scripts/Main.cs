@@ -10,7 +10,7 @@ using Godot;
 /// (VROOMBA, the second boss, and how the bosses take turns), Main.Dronezilla.cs (DRONEZILLA, the third boss: his bombs,
 /// zap beam and mini-drones), Main.OptiMax.cs (OPTI-MAX, the fourth boss: his boxes, soccer balls and shockwaves),
 /// Main.Station.cs (UPSIDE-DOWN STATION, the 6th world, where jump FLIPS GRAVITY), Main.StartWorld.cs (picking the world
-/// to start in) and Main.SelfTest.cs (grown-up testing code).
+/// to start in), Main.Pause.cs (the PAUSE screen and WORLD WARP) and Main.SelfTest.cs (grown-up testing code).
 /// </summary>
 public partial class Main : Node2D
 {
@@ -118,6 +118,7 @@ public partial class Main : Node2D
         robot.Rebuilt += () => { if (state == GameState.Rebuilding) FinishRebuild(); };
 
         SetUpPowerUps(); // the slot machine for the rainbow ? boxes (see Main.PowerUps.cs)
+        SetUpPause();    // the PAUSE screen and WORLD WARP (see Main.Pause.cs)
 
         // A different player picked (or a name typed in): that player's Bolt Bank, look and postcards. Clicking the
         // picker's arrows changes the look. (See Main.Looks.cs.) While a name is still being typed, there are no
@@ -149,6 +150,11 @@ public partial class Main : Node2D
     /// The stick has to be pushed more than halfway (0.6) for those, and one push is one step. (Not the A and D keys:
     /// the menus say "(A)" for the controller's A button, so the A key must not do something else there.)
     /// "player_prev" / "player_next": LB / RB on a controller (and TAB for the next one): who's playing, on the menus.
+    /// "menu_down": DOWN (the D-pad, the stick pushed down past 0.6, the Down arrow or S): on the title screen it picks the
+    /// world to start in, and on the pause screen it moves down. "menu_up": UP (the D-pad, the stick, the Up arrow or W),
+    /// only on the pause screen. (On the title screen and the results card, UP still never starts a game.)
+    /// "pause": START on a controller, or P or Esc: pauses (and un-pauses) a game. "menu_ok": A, Enter or Space picks a
+    /// choice on the pause screen. (See Main.Pause.cs.)
     /// The keyboard and the mouse work for everything. The controller buttons and the stick here are on Bolt-E's own
     /// controller (controller one, the first one plugged in: see PickControllerOne). A SECOND controller never moves
     /// Bolt-E: it can only drive Big Rusty in a boss fight (see Main.Driver.cs).
@@ -171,6 +177,12 @@ public partial class Main : Node2D
         InputMap.ActionSetDeadzone("menu_right", 0.6f);
         AddAction("player_next", KeyPress(Key.Tab), ControllerButton(JoyButton.RightShoulder));
         AddAction("player_prev", ControllerButton(JoyButton.LeftShoulder));
+        AddAction("menu_up", KeyPress(Key.Up), KeyPress(Key.W), ControllerButton(JoyButton.DpadUp), StickY(-1));
+        AddAction("menu_down", KeyPress(Key.Down), KeyPress(Key.S), ControllerButton(JoyButton.DpadDown), StickY(1));
+        InputMap.ActionSetDeadzone("menu_up", 0.6f);
+        InputMap.ActionSetDeadzone("menu_down", 0.6f);
+        AddAction("pause", KeyPress(Key.P), KeyPress(Key.Escape), ControllerButton(JoyButton.Start));
+        AddAction("menu_ok", KeyPress(Key.Enter), KeyPress(Key.KpEnter), KeyPress(Key.Space), ControllerButton(JoyButton.A));
 
         // Godot's own menu actions (ui_left, ui_select... every ui_ action with controller buttons) listen to Bolt-E's
         // controller only too, so a second controller can never press a menu button or reach the name box
@@ -178,11 +190,17 @@ public partial class Main : Node2D
     }
 
     /// <summary>Everything Bolt-E does (the kid's actions). Their controller buttons and stick only listen to controller one.</summary>
-    static readonly string[] KidActions = { "jump", "start", "music", "left", "right", "menu_left", "menu_right", "player_next", "player_prev" };
+    static readonly string[] KidActions =
+    {
+        "jump", "start", "music", "left", "right", "menu_left", "menu_right", "player_next", "player_prev",
+        "menu_up", "menu_down", "pause", "menu_ok",
+    };
 
     // A button, or the left stick, on Bolt-E's controller (controller one)
     InputEventJoypadButton ControllerButton(JoyButton button) => new() { ButtonIndex = button, Device = controllerOne };
     InputEventJoypadMotion Stick(float direction) => new() { Axis = JoyAxis.LeftX, AxisValue = direction, Device = controllerOne };
+    // The left stick pushed up (-1) or down (1), on Bolt-E's controller
+    InputEventJoypadMotion StickY(float direction) => new() { Axis = JoyAxis.LeftY, AxisValue = direction, Device = controllerOne };
 
     static float Rand(float min, float max) => (float)GD.RandRange(min, max);
 
@@ -316,7 +334,16 @@ public partial class Main : Node2D
         }
     }
 
-    void OnControllerPluggedOrUnplugged(long device, bool connected) => UpdateControllerStatus();
+    /// <summary>
+    /// A controller was plugged in or unplugged. If Bolt-E's own controller comes unplugged in the middle of a game, the
+    /// game pauses by itself, so he doesn't crash while the kid plugs it back in (see Main.Pause.cs).
+    /// </summary>
+    void OnControllerPluggedOrUnplugged(long device, bool connected)
+    {
+        bool kidsControllerGone = !connected && device == controllerOne;
+        UpdateControllerStatus();
+        if (kidsControllerGone) AskToPause();
+    }
 
     /// <summary>
     /// A controller was plugged in or unplugged: which one is Bolt-E's now (his controls follow it when it changed),
@@ -390,9 +417,11 @@ public partial class Main : Node2D
     /// does the slot machine), and we're back in Sunny Hills with normal gravity. The Bolt Bank stops counting and waiting
     /// unlock parties are called off (they come back on the next menu: see Main.Looks.cs).
     /// It also starts a new run number, so anything still waiting to happen from the old game (see Later) is skipped.
+    /// And the game is never left paused (see Main.Pause.cs).
     /// </summary>
     void ClearWorld()
     {
+        ClearPause();
         StopPowersNow();
         CancelCelebrations();
         ResetWorlds(); // back to Sunny Hills (see Main.Worlds.cs)
@@ -426,11 +455,12 @@ public partial class Main : Node2D
     /// <summary>
     /// Does something a little later (in game seconds), but only if it's still the same game by then.
     /// If a new game started or we went back to the title, it's skipped, so nothing from an old game pops up in a new one.
+    /// While the game is paused the wait stops too (processAlways: false), so nothing happens behind the pause screen.
     /// </summary>
     void Later(double seconds, Action action)
     {
         int run = runNumber;
-        GetTree().CreateTimer(seconds).Timeout += () => { if (run == runNumber) action(); };
+        GetTree().CreateTimer(seconds, processAlways: false).Timeout += () => { if (run == runNumber) action(); };
     }
 
     /// <summary>
@@ -508,28 +538,39 @@ public partial class Main : Node2D
         StartInPickedWorld(); // picked another world to start in? Off we go! (see Main.StartWorld.cs)
     }
 
-    void GameOver()
+    /// <summary>
+    /// The end of a game: it's saved, and the results card shows. Normally that's a crash: KABOOM, slow motion, and
+    /// the card a moment later. quit = true is QUIT TO TITLE on the pause screen (see Main.Pause.cs): no KABOOM, the game
+    /// is saved just the same, and the results card shows right away.
+    /// </summary>
+    void GameOver(bool quit = false)
     {
         state = GameState.GameOver;
-        gameOverTimer = 0;
-        shake = 0.5f;
+        gameOverTimer = quit ? ResultsDelay : 0; // (quitting: no explosion to watch, so the card comes right away)
+        if (!quit) shake = 0.5f;
         StopPowersNow(); // any power ends right away, quietly (see Main.PowerUps.cs)
         robot.CanMove = false;
         robot.MoveInput = 0;
-        robot.Crash();
-        Rumble(0.6f, 1.0f, 0.6f); // big rumble: KABOOM!
-        sounds.Play(Sfx.Explosion);
+        if (!quit)
+        {
+            robot.Crash();
+            Rumble(0.6f, 1.0f, 0.6f); // big rumble: KABOOM!
+            sounds.Play(Sfx.Explosion);
+        }
         sounds.PowerDownMusic();
         boss?.FlyAway(); // Big Rusty zooms off
         hud.HideBossBar();
 
         // Slow motion for a moment, so you can see the boom! (TimeScale 0.3 = everything moves at 30% speed.)
         // The timer ignores the time scale, so it ends after 0.35 real seconds.
-        Engine.TimeScale = 0.3;
-        GetTree().CreateTimer(0.35, ignoreTimeScale: true).Timeout += () =>
+        if (!quit)
         {
-            if (state == GameState.GameOver) Engine.TimeScale = 1;
-        };
+            Engine.TimeScale = 0.3;
+            GetTree().CreateTimer(0.35, ignoreTimeScale: true).Timeout += () =>
+            {
+                if (state == GameState.GameOver) Engine.TimeScale = 1;
+            };
+        }
 
         int score = Score;
         int meters = Meters;
@@ -570,6 +611,7 @@ public partial class Main : Node2D
         var topScores = database?.TopScores(5) ?? new();
         int boltsThisGame = boltsCollected, stompsThisGame = stomps, bossesThisGame = bossesBeaten;
         string title = newBest ? "NEW HIGH SCORE!"
+                     : quit ? QuitTitle // "Game saved!" (QUIT TO TITLE: see Main.Pause.cs)
                      : DriverGotYou ? $"{DriverShortName} GOT YOU!" // Dad was driving Big Rusty (see Main.Driver.cs)
                      : batteriesUsed > 0 ? "Out of batteries!"
                      : "Bonk!";
@@ -637,6 +679,14 @@ public partial class Main : Node2D
             return;
         }
 
+        // START (or P or Esc) in the middle of a game: PAUSE! (See Main.Pause.cs. While the game is paused, the pause
+        // screen gets the presses instead: this doesn't run then.) On the menus START keeps its old job.
+        if ((state is GameState.Playing or GameState.Rebuilding) && Input.IsActionJustPressedByEvent("pause", e))
+        {
+            AskToPause();
+            return;
+        }
+
         // On the menus, LEFT / RIGHT change Bolt-E's look (one push of the stick = one step, see Main.Looks.cs),
         // and LB / RB (or TAB) change who's playing (see Main.Family.cs). Only TAB (a key) can pick NEW PLAYER:
         // the controller never ends up in the name box.
@@ -664,7 +714,8 @@ public partial class Main : Node2D
             }
         }
 
-        // On the title screen, Y on Bolt-E's controller (or W) picks the world to start in (see Main.StartWorld.cs)
+        // On the title screen, DOWN (the D-pad, the stick, the Down arrow or S) picks the world to start in
+        // (see Main.StartWorld.cs). A, B, X and Y all start the game, like they always did.
         if (state == GameState.Title && IsStartWorldButton(e))
         {
             StepStartWorld();
@@ -790,6 +841,7 @@ public partial class Main : Node2D
         UpdateParticles(dt);
         UpdateWorlds(dt); // the colors change into a new world, and snow falls (see Main.Worlds.cs)
         UpdateLooks(dt);  // the Bolt Bank counts up, and unlock parties (see Main.Looks.cs)
+        UpdatePause();    // START was pressed while Bolt-E couldn't pause yet? Now he can (see Main.Pause.cs)
 
         // Screen shake after a bump
         shake = Mathf.Max(0, shake - dt);
