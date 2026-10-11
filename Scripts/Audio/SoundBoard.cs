@@ -12,6 +12,7 @@ public enum Sfx
     PassFlag,
     RevUp, Zoom, WallBonk, VacuumHum, BeepBoop, Spit, // VROOMBA
     RotorBuzz, BombWhistle, LowBattery, PowerDown, TakeOff, Bzzt, // DRONEZILLA
+    RobotStep, BoxWhoosh, BoxCrunch, Boing, Kick, Chirp, Ding, ErrorBuzz, DanceBeat, // OPTI-MAX
 }
 
 /// <summary>
@@ -89,6 +90,15 @@ public partial class SoundBoard : Node
         AddEffect(Sfx.PowerDown, SoundEffects.PowerDown(), -9f, voices: 1);
         AddEffect(Sfx.TakeOff, SoundEffects.TakeOff(), -11f, voices: 1);
         AddEffect(Sfx.Bzzt, SoundEffects.Bzzt(), -8f, voices: 1);
+        AddEffect(Sfx.RobotStep, SoundEffects.RobotStep(), -11f, voices: 3);
+        AddEffect(Sfx.BoxWhoosh, SoundEffects.BoxWhoosh(), -13f, voices: 3);
+        AddEffect(Sfx.BoxCrunch, SoundEffects.BoxCrunch(), -9f, voices: 4);
+        AddEffect(Sfx.Boing, SoundEffects.Boing(), -10f, voices: 3);
+        AddEffect(Sfx.Kick, SoundEffects.Kick(), -7f);
+        AddEffect(Sfx.Chirp, SoundEffects.Chirp(), -15f, voices: 2);
+        AddEffect(Sfx.Ding, SoundEffects.Ding(), -8f, voices: 1);
+        AddEffect(Sfx.ErrorBuzz, SoundEffects.ErrorBuzz(), -10f, voices: 1);
+        AddEffect(Sfx.DanceBeat, SoundEffects.DanceBeat(), -8f, voices: 1);
     }
 
     void AddEffect(Sfx name, float[] sound, float volumeDb, int voices = 2, bool loop = false)

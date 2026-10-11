@@ -252,7 +252,7 @@ public partial class Main
             };
 
             // Extra checks go here, keeping the existing tests' random seeds unchanged.
-            // (DRONEZILLA's tests, the third boss, are in Main.DronezillaTests.cs.)
+            // (DRONEZILLA's tests, the third boss, are in Main.DronezillaTests.cs, and OPTI-MAX's, the fourth, in Main.OptiMaxTests.cs.)
             tests = tests.Concat(new (string Name, Func<Task> Run)[]
             {
                 (nameof(BossMusicFlow), BossMusicFlow),
@@ -278,6 +278,17 @@ public partial class Main
                 (nameof(DroneMusicFlow), DroneMusicFlow),
                 (nameof(DroneMusicAudio), DroneMusicAudio),
                 (nameof(DronezillaMusicBattle), DronezillaMusicBattle),
+                // OPTI-MAX, the fourth boss
+                (nameof(FourBossesTakeTurns), FourBossesTakeTurns),
+                (nameof(OptiMaxIsJumpable), OptiMaxIsJumpable),
+                (nameof(BoxToss), BoxToss),
+                (nameof(SuperStompWaves), SuperStompWaves),
+                (nameof(OptiMaxUpdatesAndStomp), OptiMaxUpdatesAndStomp),
+                (nameof(SoccerAndRun), SoccerAndRun),
+                (nameof(OptiMaxTauntOnRebuild), OptiMaxTauntOnRebuild),
+                (nameof(BeatOptiMax), BeatOptiMax),
+                (nameof(OptiMaxCantBeDriven), OptiMaxCantBeDriven),
+                (nameof(OptiMaxDrawsEverywhere), OptiMaxDrawsEverywhere),
                 (nameof(HumanoidMusicFlow), HumanoidMusicFlow),
                 (nameof(HumanoidMusicAudio), HumanoidMusicAudio),
             }).ToArray();
@@ -291,6 +302,9 @@ public partial class Main
             // To run only DRONEZILLA's checks (and the taking-turns rule): add --selftest-drone after --selftest
             if (OS.GetCmdlineUserArgs().Contains("--selftest-drone"))
                 tests = tests.Where(test => DroneTestNames.Contains(test.Name)).ToArray();
+            // To run only OPTI-MAX's checks (and the taking-turns rule): add --selftest-optimax after --selftest
+            if (OS.GetCmdlineUserArgs().Contains("--selftest-optimax"))
+                tests = tests.Where(test => OptiMaxTestNames.Contains(test.Name)).ToArray();
 
             for (int i = 0; i < tests.Length; i++)
             {
@@ -4704,8 +4718,8 @@ public partial class Main
     // ---------- VROOMBA, the second boss (the bosses take turns) ----------
 
     /// <summary>
-    /// The bosses take turns: BIG RUSTY, VROOMBA, DRONEZILLA, BIG RUSTY... and each game starts one boss further along
-    /// (game 1 with BIG RUSTY, game 2 with VROOMBA, game 3 with DRONEZILLA, game 4 with Big Rusty again), so every next
+    /// The bosses take turns: BIG RUSTY, VROOMBA, DRONEZILLA, OPTI-MAX, BIG RUSTY... and each game starts one boss further
+    /// along (game 1 with BIG RUSTY, game 2 with VROOMBA, game 3 with DRONEZILLA, game 4 with OPTI-MAX), so every next
     /// fight in a game is another boss. During the self-test SpawnBoss() always brings Big Rusty (so every old test
     /// keeps its boss), unless a test asks for the taking-turns rule: then it follows the rule like a real game.
     /// </summary>
@@ -4715,9 +4729,9 @@ public partial class Main
         string[] expected =
         {
             "BigRusty Vroomba Dronezilla", // game 1
-            "Vroomba Dronezilla BigRusty", // game 2
-            "Dronezilla BigRusty Vroomba", // game 3
-            "BigRusty Vroomba Dronezilla", // game 4 (like game 1)
+            "Vroomba Dronezilla OptiMax",  // game 2
+            "Dronezilla OptiMax BigRusty", // game 3
+            "OptiMax BigRusty Vroomba",    // game 4 (and game 5 is like game 1)
         };
         for (int game = 1; game <= expected.Length; game++)
         {

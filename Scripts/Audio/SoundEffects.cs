@@ -502,6 +502,108 @@ public static class SoundEffects
         return Done(sound);
     }
 
+    // ---------- OPTI-MAX, the humanoid robot ----------
+
+    /// <summary>"CLANK-thud" — one of OPTI-MAX's heavy metal footsteps: a low thud and a little metal ping.</summary>
+    public static float[] RobotStep()
+    {
+        var sound = Synth.Silence(0.3f);
+        Synth.AddTone(sound, 0, 0.12f, Wave.Sine, 0.8f, new Envelope(0.001f, 0.09f, 0f, 0.03f), 130, 50);          // thud
+        Synth.AddTone(sound, 0, 0.03f, Wave.Noise, 0.3f, new Envelope(0.001f, 0.02f, 0f, 0.01f), 1);              // the knock
+        Synth.AddTone(sound, 0.01f, 0.12f, Wave.Triangle, 0.25f, new Envelope(0.001f, 0.1f, 0f, 0.03f), 1250);     // clank!
+        Synth.AddTone(sound, 0.01f, 0.08f, Wave.Square12, 0.08f, new Envelope(0.001f, 0.06f, 0f, 0.02f), 1870);
+        return Done(sound, 0.75f);
+    }
+
+    /// <summary>"Fwoooosh" — a cardboard box flying through the air.</summary>
+    public static float[] BoxWhoosh()
+    {
+        var sound = Synth.Silence(0.55f);
+        Synth.AddTone(sound, 0, 0.42f, Wave.Noise, 0.3f, new Envelope(0.12f, 0.2f, 0.35f, 0.1f), 1);
+        Synth.AddTone(sound, 0, 0.4f, Wave.Sine, 0.2f, new Envelope(0.1f, 0.2f, 0.3f, 0.08f), 320, 160);
+        return Done(sound, 0.6f);
+    }
+
+    /// <summary>"Crrrunch!" — a cardboard box landing (or breaking): crinkly cardboard and a soft thud.</summary>
+    public static float[] BoxCrunch()
+    {
+        var sound = Synth.Silence(0.4f);
+        Synth.AddTone(sound, 0, 0.12f, Wave.Sine, 0.6f, new Envelope(0.001f, 0.1f, 0f, 0.03f), 150, 60);
+        float[] crinkles = { 0f, 0.035f, 0.08f, 0.13f, 0.19f };
+        foreach (float at in crinkles)
+            Synth.AddTone(sound, at, 0.03f, Wave.HighNoise, 0.5f, new Envelope(0.001f, 0.025f, 0f, 0.01f), 1);
+        Synth.AddTone(sound, 0, 0.2f, Wave.Noise, 0.15f, new Envelope(0.002f, 0.15f, 0f, 0.03f), 1);
+        return Done(sound);
+    }
+
+    /// <summary>"Boi-oing!" — the soccer ball bouncing.</summary>
+    public static float[] Boing()
+    {
+        var sound = Synth.Silence(0.4f);
+        Synth.AddTone(sound, 0, 0.3f, Wave.Triangle, 0.5f, new Envelope(0.002f, 0.22f, 0.1f, 0.05f), 160, 420, vibrato: 0.1f);
+        Synth.AddTone(sound, 0, 0.05f, Wave.Sine, 0.4f, new Envelope(0.001f, 0.04f, 0f, 0.01f), 120, 60);
+        return Done(sound, 0.7f);
+    }
+
+    /// <summary>"THWACK!" — OPTI-MAX kicking the ball.</summary>
+    public static float[] Kick()
+    {
+        var sound = Synth.Silence(0.25f);
+        Synth.AddTone(sound, 0, 0.1f, Wave.Sine, 0.8f, new Envelope(0.001f, 0.08f, 0f, 0.02f), 220, 70);
+        Synth.AddTone(sound, 0, 0.04f, Wave.Noise, 0.45f, new Envelope(0.001f, 0.03f, 0f, 0.01f), 1);
+        return Done(sound);
+    }
+
+    /// <summary>"Bip-bweep" — a little computer chirp while OPTI-MAX updates his software.</summary>
+    public static float[] Chirp()
+    {
+        var sound = Synth.Silence(0.18f);
+        Synth.AddTone(sound, 0, 0.045f, Wave.Square12, 0.25f, Pluck, 1700, 2300);
+        Synth.AddTone(sound, 0.06f, 0.05f, Wave.Square25, 0.2f, Pluck, 1300);
+        return Done(sound, 0.5f);
+    }
+
+    /// <summary>"DING!" — OPTI-MAX's update is finished.</summary>
+    public static float[] Ding()
+    {
+        var sound = Synth.Silence(1f);
+        var ring = new Envelope(0.002f, 0.7f, 0f, 0.2f);
+        Synth.AddTone(sound, 0, 0.75f, Wave.Sine, 0.5f, ring, Synth.NoteToFrequency("A6"));
+        Synth.AddTone(sound, 0, 0.5f, Wave.Sine, 0.2f, ring, Synth.NoteToFrequency("E7"));
+        Synth.AddTone(sound, 0, 0.75f, Wave.Triangle, 0.25f, ring, Synth.NoteToFrequency("A5"));
+        return Done(sound, 0.7f);
+    }
+
+    /// <summary>"BZZRT-BZZRT!" — the error buzz when OPTI-MAX is stomped in the middle of his update.</summary>
+    public static float[] ErrorBuzz()
+    {
+        var sound = Synth.Silence(0.6f);
+        var buzz = new Envelope(0.004f, 0.05f, 0.8f, 0.03f);
+        for (int i = 0; i < 2; i++)
+        {
+            Synth.AddTone(sound, i * 0.22f, 0.16f, Wave.Saw, 0.3f, buzz, 110, 95);
+            Synth.AddTone(sound, i * 0.22f, 0.16f, Wave.Square50, 0.18f, buzz, 222, 190);
+        }
+        return Done(sound);
+    }
+
+    /// <summary>"Boots-n-beeps!" — OPTI-MAX's little dance beat: drums and a bleepy robot tune.</summary>
+    public static float[] DanceBeat()
+    {
+        var sound = Synth.Silence(1.4f);
+        const float beat = 0.15f;
+        for (int i = 0; i < 8; i++)
+        {
+            float at = i * beat;
+            if (i % 2 == 0) Synth.AddTone(sound, at, 0.08f, Wave.Sine, 0.6f, new Envelope(0.001f, 0.07f, 0f, 0.02f), 140, 50); // boots
+            else Synth.AddTone(sound, at, 0.03f, Wave.HighNoise, 0.25f, Pluck, 1);                                             // ts
+        }
+        string[] tune = { "C6", "G5", "C6", "E6", "D6", "G5", "D6", "C7" }; // beep bop beep beep...
+        for (int i = 0; i < tune.Length; i++)
+            Synth.AddTone(sound, i * beat, beat * 0.7f, Wave.Square25, 0.18f, Pluck with { Decay = 0.12f }, Synth.NoteToFrequency(tune[i]));
+        return Done(sound);
+    }
+
     /// <summary>Plays a list of (note, seconds) one after another.</summary>
     static float[] Tune((string Note, float Length)[] notes, Wave wave, bool normalize = true)
     {

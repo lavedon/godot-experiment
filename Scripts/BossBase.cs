@@ -1,17 +1,18 @@
 using Godot;
 
 /// <summary>
-/// Which boss comes: BIG RUSTY (Boss.cs), VROOMBA, the giant robot vacuum (Vroomba.cs), or DRONEZILLA, the giant attack
-/// drone (Dronezilla.cs). (They take turns in this order: see BossForFight in Main.Vroomba.cs.)
+/// Which boss comes: BIG RUSTY (Boss.cs), VROOMBA, the giant robot vacuum (Vroomba.cs), DRONEZILLA, the giant attack
+/// drone (Dronezilla.cs), or OPTI-MAX, the humanoid robot (OptiMax.cs). (They take turns in this order: see BossForFight
+/// in Main.Vroomba.cs.)
 /// </summary>
-public enum BossKind { BigRusty, Vroomba, Dronezilla }
+public enum BossKind { BigRusty, Vroomba, Dronezilla, OptiMax }
 
 /// <summary>
 /// What every boss has, so Main can fight any of them the same way: health (6, with ANGRY and FURIOUS phases),
 /// a bump box, when he can be stomped and when bumping into him hurts, flying away when Bolt-E runs out of
 /// batteries, the "ha ha!" when Bolt-E crashes, and blowing up at the end.
-/// The bosses themselves are BIG RUSTY (Boss.cs), VROOMBA (Vroomba.cs) and DRONEZILLA (Dronezilla.cs). They take turns:
-/// see Main.Vroomba.cs.
+/// The bosses themselves are BIG RUSTY (Boss.cs), VROOMBA (Vroomba.cs), DRONEZILLA (Dronezilla.cs) and OPTI-MAX
+/// (OptiMax.cs). They take turns: see Main.Vroomba.cs.
 /// ("abstract" means there's never a plain BossBase: it's always one of the real bosses.)
 /// Position is the middle of the bottom of the boss.
 /// </summary>
@@ -20,7 +21,7 @@ public abstract partial class BossBase : Node2D
     /// <summary>How many stomps it takes to beat a boss.</summary>
     public const int MaxHealth = 6;
 
-    /// <summary>The boss's name, for his health bar and the big words, like "BIG RUSTY", "VROOMBA" or "DRONEZILLA".</summary>
+    /// <summary>The boss's name, for his health bar and the big words, like "BIG RUSTY", "VROOMBA", "DRONEZILLA" or "OPTI-MAX".</summary>
     public abstract string DisplayName { get; }
 
     public float GroundY;

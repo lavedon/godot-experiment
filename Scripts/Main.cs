@@ -8,7 +8,8 @@ using Godot;
 /// Big Rusty win), Main.Looks.cs (the Bolt Bank and Bolt-E's looks), Main.Family.cs (the family race: who's playing,
 /// and the flags on the road), Main.Driver.cs (Dad drives Big Rusty with a second controller), Main.Vroomba.cs
 /// (VROOMBA, the second boss, and how the bosses take turns), Main.Dronezilla.cs (DRONEZILLA, the third boss: his bombs,
-/// zap beam and mini-drones) and Main.SelfTest.cs (grown-up testing code).
+/// zap beam and mini-drones), Main.OptiMax.cs (OPTI-MAX, the fourth boss: his boxes, soccer balls and shockwaves) and
+/// Main.SelfTest.cs (grown-up testing code).
 /// </summary>
 public partial class Main : Node2D
 {
@@ -46,7 +47,7 @@ public partial class Main : Node2D
     readonly List<Blast> blasts = new();
     readonly List<Shockwave> shockwaves = new();
     readonly List<Laser> lasers = new();
-    BossBase? boss;          // Big Rusty, VROOMBA or DRONEZILLA (see BossBase.cs)
+    BossBase? boss;          // Big Rusty, VROOMBA, DRONEZILLA or OPTI-MAX (see BossBase.cs)
     ScorePopups popups = null!;
 
     float speed;
@@ -397,6 +398,7 @@ public partial class Main : Node2D
         ClearFlags();  // (see Main.Family.cs)
         ClearJumpDust();
         ClearDroneThings(); // DRONEZILLA's bombs and zap beam, and his rotor buzz (see Main.Dronezilla.cs)
+        ClearOptiThings();  // OPTI-MAX's boxes, balls, shockwaves and box stacks (see Main.OptiMax.cs)
         foreach (var o in obstacles) o.QueueFree();
         foreach (var b in bolts) b.QueueFree();
         foreach (var e in enemies) e.QueueFree();
@@ -711,6 +713,7 @@ public partial class Main : Node2D
 
         UpdateJumpDust(dt);
         UpdateDronezilla(dt); // his bombs, his zap beam, and the buzz of his rotors (see Main.Dronezilla.cs)
+        UpdateOptiMax(dt);    // tidying away OPTI-MAX's boxes, balls and shockwaves (see Main.OptiMax.cs)
 
         if (state == GameState.Playing)
         {
@@ -944,6 +947,7 @@ public partial class Main : Node2D
         }
 
         if (CheckDroneBumps(robotBox)) return; // DRONEZILLA's bombs and zap beam (see Main.Dronezilla.cs)
+        if (CheckOptiBumps(robotBox)) return;  // OPTI-MAX's boxes, balls and shockwaves (see Main.OptiMax.cs)
 
         if (boss is not null && robotBox.Intersects(boss.Hitbox))
         {
@@ -1090,7 +1094,8 @@ public partial class Main : Node2D
     }
 
     /// <summary>
-    /// A boss arrives! With no kind given, the bosses take turns (see Main.Vroomba.cs): BIG RUSTY, VROOMBA or DRONEZILLA.
+    /// A boss arrives! With no kind given, the bosses take turns (see Main.Vroomba.cs): BIG RUSTY, VROOMBA, DRONEZILLA or
+    /// OPTI-MAX.
     /// </summary>
     void SpawnBoss(BossKind? kind = null)
     {
@@ -1120,6 +1125,7 @@ public partial class Main : Node2D
         {
             BossKind.Vroomba => MakeVroomba(),
             BossKind.Dronezilla => MakeDronezilla(),
+            BossKind.OptiMax => MakeOptiMax(),
             _ => MakeBigRusty(),
         };
         boss = theBoss;
@@ -1128,8 +1134,8 @@ public partial class Main : Node2D
         theBoss.GotAngry += phase =>
         {
             hud.ShowBanner(phase == 2 ? $"{theBoss.DisplayName} IS ANGRY!" : $"{theBoss.DisplayName} IS FURIOUS!", new Color(1f, 0.35f, 0.25f));
-            // (VROOMBA's roar is a higher, robot-vacuum "GRRR!", and DRONEZILLA's is a buzzy one in between)
-            sounds.Play(Sfx.Roar, theBoss switch { Vroomba => 1.5f, Dronezilla => 1.3f, _ => 1f });
+            // (VROOMBA's roar is a higher, robot-vacuum "GRRR!", DRONEZILLA's is a buzzy one in between, and OPTI-MAX's is low)
+            sounds.Play(Sfx.Roar, theBoss switch { Vroomba => 1.5f, Dronezilla => 1.3f, OptiMax => 0.8f, _ => 1f });
             sounds.SetMusicSpeed((phase == 2 ? 1.15f : 1.22f) * CurrentWorld.MusicSpeed);
             shake = 0.35f;
             Rumble(0.5f, 0.6f, 0.5f);
@@ -1151,6 +1157,7 @@ public partial class Main : Node2D
         {
             Vroomba => "Jump to leave dust! Lure him, then STOMP when clogged!  ← → / stick to ride",
             Dronezilla => DronezillaHint,
+            OptiMax => OptiMaxHint,
             _ => "Ride left and right with  ← →  or the stick!",
         });
         sounds.SetBossMusic(true, 1.1f * CurrentWorld.MusicSpeed,

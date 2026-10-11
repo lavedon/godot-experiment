@@ -39,9 +39,10 @@ An endless runner starring **Bolt-E**, a tiny cute robot with headphones riding 
   - **Pup-Bot** (from `enemy-1.png`) zooms toward you on its wheels.
   - **Egg-Bot** (from `enemy-2.png`) hops up and down, so time your stomp!
   - Stomps in a row without landing score 25, 50, 100, then 200. Hold jump while landing to bounce higher.
-- **Bosses** show up at 400 m, then every 700 m after you beat one (**WARNING!  BOSS AHEAD!**). There are three,
+- **Bosses** show up at 400 m, then every 700 m after you beat one (**WARNING!  BOSS AHEAD!**). There are four,
   and they **take turns**: **BIG RUSTY**, **VROOMBA**, the giant robot vacuum (see [VROOMBA](#vroomba-the-second-boss)
-  below), and **DRONEZILLA**, the giant attack drone (see [DRONEZILLA](#dronezilla-the-third-boss) below). The world stops and it's an **arena fight**: ride left and right with the **arrow keys**, **A / D**,
+  below), **DRONEZILLA**, the giant attack drone (see [DRONEZILLA](#dronezilla-the-third-boss) below), and **OPTI-MAX**,
+  the humanoid robot (see [OPTI-MAX](#opti-max-the-fourth-boss) below). The world stops and it's an **arena fight**: ride left and right with the **arrow keys**, **A / D**,
   or the controller's **D-pad / left stick**. Every boss has 6 health and gets angrier as he gets hurt.
 - **Boss: BIG RUSTY** (from `enemy-boss-who-can-shoot.png`):
   - **Phase 1:** shoots bouncing fireballs (jump over them), then does a **GROUND POUND**. His shadow follows you,
@@ -57,6 +58,9 @@ An endless runner starring **Bolt-E**, a tiny cute robot with headphones riding 
 - **Boss: DRONEZILLA**, a giant attack drone (drawn in code): he flies high and attacks from the air: **BOMBS**
   (ride out of the red rings!), a low **SWOOP** (jump over him!), and when he's ANGRY a **ZAP BEAM** and **mini-drones**.
   After every attack his battery runs low and he **LANDS**: that's when you **jump on him**!
+- **Boss: OPTI-MAX**, a tall white-and-black humanoid robot (drawn in code): he **throws boxes**, does a **SUPER STOMP**
+  (jump the teal shockwaves!), and when he's ANGRY a **SOCCER KICK** and a **ROBOT RUN**. After every attack he stops
+  for a **SOFTWARE UPDATE** and kneels down: that's when you **jump on him**!
 - **Enter** also starts or restarts the game
 - **M** (or **BACK** on a controller): music on/off (the game remembers your choice)
 - BIG RUSTY and VROOMBA battles play **Titan Circuit**, an original 32-bar chiptune with a charging minor-key riff, galloping bass,
@@ -238,8 +242,8 @@ Two new robots to play as, picked from photos of two little real-life robots! Ev
 VROOMBA is a giant robot vacuum: a big, flat, dark dome on wheels, with a shiny silver rim, a glowing blue **CLEAN**
 button on top, two big sensor eyes on his front bumper, and two spinning side brushes. He's only 75 pixels tall, so
 Bolt-E can **jump right over him**.
-- **The bosses take turns** (see [DRONEZILLA](#dronezilla-the-third-boss) below for the whole rule): BIG RUSTY, VROOMBA,
-  DRONEZILLA, BIG RUSTY... and each game starts one boss further along.
+- **The bosses take turns** (see [OPTI-MAX](#opti-max-the-fourth-boss) below for the whole rule): BIG RUSTY, VROOMBA,
+  DRONEZILLA, OPTI-MAX, BIG RUSTY... and each game starts one boss further along.
 - He rolls in from the right, says **BEEP BOOP!**, and then it's the same kind of fight as Big Rusty's: 6 health, his
   name on the health bar, **VROOMBA IS ANGRY!** and **VROOMBA IS FURIOUS!**, +250 and the rainbow of bolts when you beat
   him (**YOU BEAT VROOMBA!**), and then on to the next world of the World Tour.
@@ -280,10 +284,8 @@ DRONEZILLA is a giant attack drone, seen from the side: a chunky gunmetal body w
 two arms with a spinning rotor on top of each, a big round red camera eye underneath, a dark visor with two little LED
 eyes, blinking red and green lights, an antenna, a battery on his side, and two landing skids. His shadow on the ground
 gets bigger as he comes lower, so you can always see where he is.
-- **The bosses take turns:** BIG RUSTY, then VROOMBA, then DRONEZILLA, then Big Rusty again... and every game starts one
-  boss further along: game 1 is RUSTY, VROOMBA, DRONEZILLA...; game 2 is VROOMBA, DRONEZILLA, RUSTY...; game 3 is
-  DRONEZILLA, RUSTY, VROOMBA...; and game 4 is like game 1 (counting from when the game was opened). So you meet every
-  boss, even if you only ever reach the first fight.
+- **The bosses take turns** (BIG RUSTY, VROOMBA, DRONEZILLA, OPTI-MAX): see [OPTI-MAX](#opti-max-the-fourth-boss) below
+  for the whole rule.
 - He flies in from the top-right with a rising buzz, and then it's the same kind of fight as the others: 6 health, his
   name on the health bar, **DRONEZILLA IS ANGRY!** and **DRONEZILLA IS FURIOUS!**, +250 and the rainbow of bolts when
   you beat him (**YOU BEAT DRONEZILLA!**), and then on to the next world of the World Tour.
@@ -316,6 +318,53 @@ gets bigger as he comes lower, so you can always see where he is.
   apart into his body, his 4 rotor blades, his 2 arms, his camera and his skids.
 - **Nobody can drive DRONEZILLA** (only Big Rusty): in his fights the second controller does nothing.
 - If Bolt-E runs out of batteries, DRONEZILLA zooms up and away, off the top of the screen.
+
+## OPTI-MAX (the fourth boss)
+OPTI-MAX is a tall, slim humanoid robot (a factory helper!), seen from the side and a little from the front: a glossy
+black egg-shaped head with a thin glowing **teal light strip** around his face and two soft glowing eyes, a black neck,
+a white chest plate and white shoulder caps, white arms and legs with black joints (shoulders, elbows, hips and knees),
+black hands with fingers, and black feet. He's about 290 pixels tall, but his bump box stays under 300 pixels, so a
+**double jump always clears him**. He moves like a person: his legs swing when he walks, his arms swing the other way,
+and his knees bend when he crouches or lands. (He's built like a little skeleton of angles: see `Pose` in `OptiMax.cs`.)
+- **The bosses take turns:** BIG RUSTY, then VROOMBA, then DRONEZILLA, then OPTI-MAX, then Big Rusty again... and every
+  game starts one boss further along: game 1 is RUSTY, VROOMBA, DRONEZILLA, OPTI-MAX...; game 2 is VROOMBA, DRONEZILLA,
+  OPTI-MAX, RUSTY...; game 3 starts with DRONEZILLA; game 4 starts with OPTI-MAX; and game 5 is like game 1 (counting
+  from when the game was opened). So you meet every boss, even if you only ever reach the first fight.
+- He walks in from the right with heavy clanky footsteps and does a little wave, and then it's the same kind of fight
+  as the others: 6 health, his name on the health bar, **OPTI-MAX IS ANGRY!** and **OPTI-MAX IS FURIOUS!**, +250 and
+  the rainbow of bolts when you beat him (**YOU BEAT OPTI-MAX!**), and then on to the next world of the World Tour.
+- **His moves:**
+  - **BOX TOSS!** There's a little stack of cardboard boxes at each end of the arena. He bends down, picks up the top
+    box, lifts it over his head and throws it in a high arc at Bolt-E (whoosh!). A **shadow** on the ground shows where
+    it will land: **ride away!** It lands (crunch!), bounces once more the same way (jump it!) and breaks into bits.
+    2 boxes (3 when he's ANGRY, 4 and faster when he's FURIOUS). Touching a box is a crash.
+  - **SUPER STOMP!** He crouches, jumps up high and lands with a STOMP: the screen shakes and two low glowing teal
+    **shockwaves** run along the ground, away from him both ways. **Jump over them!** FURIOUS: two stomps in a row.
+  - **SOCCER KICK!** (when he's ANGRY) He drops a ball and kicks it toward Bolt-E. It bounces in big hops (boing!):
+    **jump over it, or ride under it** while it's high up. It bounces off the far wall once, then pops. FURIOUS: 2 balls.
+  - **ROBOT RUN!** (when he's ANGRY) He sprints across the arena with pumping arms, so the fight moves around. Touching
+    him is a crash (double jump over him!), but he **never squashes Bolt-E against a wall**: he always stops at least
+    200 pixels before him.
+  - **SOFTWARE UPDATE: STOMP HIM!** Every attack ends with him **freezing** in the middle of what he was doing:
+    **UPDATING...** Then he **kneels on one knee** with his head bowed (the top of his head is only about 125 pixels up)
+    and a progress bar fills over his head, with little computer chirps, while a yellow arrow bounces over his back.
+    **Jump on his back!** (The update takes 2.6 seconds, 2.0 when he's FURIOUS, never less than 1.8.) He never kneels
+    on Bolt-E: if Bolt-E is close, he walks a few steps away first. Touching him while he updates never hurts.
+    Stomped: sparks fly from his head, an error buzz, the bar says **ERROR!** in red, and he wobbles back up. Missed
+    him? The bar reaches 100%, **DING!**, and he stands up.
+- **His plan:** BOX TOSS, update; SUPER STOMP, update; again and again. ANGRY: SOCCER KICK + BOX TOSS, update; ROBOT RUN
+  + SUPER STOMP, update. FURIOUS: the same, faster, with 4 boxes, 2 balls and double stomps. Every attack ends with an
+  update, so you always get your chance.
+- **How he looks:** his eyes are calm soft glows, narrow when he attacks, spinning loading circles while he updates,
+  happy arcs when he waves or dances, glitchy red flickers when he's stomped, and X eyes when he's beaten. His eyes
+  and face strip are teal, then orange (ANGRY), then red (FURIOUS, with crackly sparks).
+- **If Bolt-E crashes but has a spare battery**, he does a funny robot dance (**BEEP BOP DANCE!**) and waits until
+  Bolt-E is back. Boxes and balls already flying finish, but no new ones come, and the rebuild clears them. He never
+  dances in the middle of an update, so he never steals your stomp chance.
+- Beaten, every box, ball and wave (and his box stacks) puffs away. He sparks and stumbles, **falls over backward**
+  with a CLANK, and blows apart into his head, chest, arms, legs, hands and feet.
+- **Nobody can drive OPTI-MAX** (only Big Rusty): in his fights the second controller does nothing.
+- If Bolt-E runs out of batteries, OPTI-MAX waves goodbye and jogs off the screen.
 
 ## Dad drives Big Rusty
 - **With one controller (or none), the computer drives Big Rusty**, exactly like the original fight.
@@ -360,7 +409,7 @@ gets bigger as he comes lower, so you can always see where he is.
 - Beat him and it's **YOU BEAT DAD'S BIG RUSTY!** with the usual +250 and the rainbow of bolts (and Dad's cap flies off
   when he blows up!). Lose the last battery while Dad drives him, and the results card says **DAD GOT YOU!**
 - Every new Big Rusty starts out driving himself: press a button on the second controller again to take over.
-- **VROOMBA and DRONEZILLA can't be driven.** In their fights the second controller's buttons do nothing (no banner, no "Wait...").
+- **VROOMBA, DRONEZILLA and OPTI-MAX can't be driven.** In their fights the second controller's buttons do nothing (no banner, no "Wait...").
 - **The second controller never moves Bolt-E**: its buttons don't jump, its stick and D-pad don't ride, and on the
   menus it doesn't start games, switch the music, change looks or switch players. It only drives Big Rusty, only in a
   boss fight, and only with the buttons above (its other buttons do nothing). The keyboard can't drive Big Rusty.
@@ -419,6 +468,7 @@ VROOMBA tests run the game 3 times as fast while they wait for his moves, so the
 To run only the jump-dust checks and VROOMBA drawing coverage, add `--selftest-dust` after `--selftest` in the same command.
 To run only DRONEZILLA's checks (and the taking-turns rule), add `--selftest-drone` instead. (The DRONEZILLA tests ask for
 him too, and some of them also run the game 3 times as fast.)
+To run only OPTI-MAX's checks (and the taking-turns rules), add `--selftest-optimax` instead.
 Exit codes: **0** = everything passed, **1** = something failed, **2** = refused to start (bad `--db`),
 **3** = it took too long. A good run has no lines with `FAIL:`, `ERROR:`, `SCRIPT ERROR` or `Unhandled exception`
 in the output or in `godot.log`. The tests are in `Scripts/Main.SelfTest.cs`, and new features add theirs there.
@@ -427,7 +477,7 @@ so the commands above use `--quit-after 120000`).
 (They expect the normal tuning numbers, so if you change a number like `StartingBatteries` or `MegaSeconds`,
 a world in `Worlds.cs`, a look in `Looks.cs`, a family race number in `Main.Family.cs`, Big Rusty's
 `AttacksBeforeHeMustPound`, `DriverWaitBeforeAI` or `LaughsInARow`, VROOMBA's numbers in `Vroomba.cs`, DRONEZILLA's
-numbers in `Dronezilla.cs`, or Dad's
+numbers in `Dronezilla.cs`, OPTI-MAX's numbers in `OptiMax.cs`, or Dad's
 `DriveButtons` (the words on the screen
 follow your buttons, but the tests press the normal ones), some tests will say FAIL. Changing `DriverName`
 to MOM, or a flag's `PoleHeight`, is fine: the tests use whatever is there.)
@@ -480,6 +530,8 @@ The score already supports phase changes, muting, rebuilding, victory crossfades
 | `Scripts/Main.VroombaDustTests.cs` | Self-test checks for jump dust, luring and stomping, arena edges, and encounter cleanup |
 | `Scripts/Main.Dronezilla.cs` | DRONEZILLA's side of the game: his sounds (and the rotor buzz, which never keeps playing after the fight), his bombs, zap beam and mini-drones, checking if they bumped into Bolt-E, and puffing them away after a rebuild or when he's beaten |
 | `Scripts/Main.DronezillaTests.cs` | Self-test checks for DRONEZILLA (and the three bosses taking turns) |
+| `Scripts/Main.OptiMax.cs` | OPTI-MAX's side of the game: his sounds (none of them keep playing after the fight), his box stacks, thrown boxes, soccer balls and teal shockwaves, checking if they bumped into Bolt-E, and puffing them away after a rebuild or when he's beaten |
+| `Scripts/Main.OptiMaxTests.cs` | Self-test checks for OPTI-MAX (and the four bosses taking turns) |
 | `Scripts/Main.Driver.cs` | Dad drives Big Rusty with a second controller (only a real one: phantom controllers can't): its buttons (X, Y, A, B, LB and RB in `DriveButtons`), taking over ("DAD IS DRIVING BIG RUSTY!", with a tip made from `DriveButtons`), giving orders ("Wait...", "TIRED! Press A!", "Not yet!", which never pile up or float over his health bar), Dad's buzz when Bolt-E stomps him, and who's driving (`DriverName`) |
 | `Scripts/BankBox.cs` | The Bolt Bank box in the top-left corner of the menus (the number, the gold hexagon and the bar to the next prize) |
 | `Scripts/LookPicker.cs` | The look picker under Bolt-E on the menus (the arrows, the look's name, the padlock and what it takes to win it) |
@@ -495,6 +547,11 @@ The score already supports phase changes, muting, rebuilding, victory crossfades
 | `Scripts/Boss.cs` | Big Rusty: his size, his three phases, every attack, getting dizzy, blowing up, his World Tour outfits, and being driven by Dad (waiting for orders with thinking dots, the fair-play rules like TIRED and only 2 laughs in a row, and Dad's blue cap) |
 | `Scripts/Vroomba.cs` | VROOMBA, the giant robot vacuum: his moves (ZOOM, BONK, dizzy upside down, SUCK, dust bunnies, TURBO), his attack plan, his "try changing these!" numbers, and drawing him (lid, CLEAN button, bumper, sensor eyes, spinning brushes, wheels, dust, wind, and blowing apart) |
 | `Scripts/Dronezilla.cs` | DRONEZILLA, the giant attack drone: his moves (BOMBS AWAY, SWOOP, ZAP BEAM, MINI-DRONES, LOW BATTERY and landing, the loop-the-loop, crashing down), his attack plan, his "try changing these!" numbers, and drawing him (body, hazard stripes, arms, spinning rotors, camera eye, LED eyes, nav lights, antenna, battery, skids, shadow, and blowing apart) |
+| `Scripts/OptiMax.cs` | OPTI-MAX, the humanoid robot: his moves (BOX TOSS, SUPER STOMP, SOCCER KICK, ROBOT RUN, the SOFTWARE UPDATE and kneeling, the BEEP BOP DANCE, falling over), his attack plan, his "try changing these!" numbers, his skeleton of angles and poses (walking, running, kneeling...), and drawing him (glossy head with the teal face strip, eyes, white plates, black joints, hands and feet, the progress bar, and blowing apart) |
+| `Scripts/ThrownBox.cs` | OPTI-MAX's cardboard boxes: the high arc, the shadow where they'll land, one bounce, and breaking into bits |
+| `Scripts/KickBall.cs` | OPTI-MAX's soccer ball: big bouncy hops, one bounce off the wall, then POP |
+| `Scripts/StompWave.cs` | The low glowing teal shockwaves from OPTI-MAX's SUPER STOMP |
+| `Scripts/BoxStack.cs` | The little stacks of boxes at the ends of OPTI-MAX's arena (a new top box pops back on after he takes one) |
 | `Scripts/DroneBomb.cs` | DRONEZILLA's bombs: falling with a red target ring underneath, and the BOOM |
 | `Scripts/ZapBeam.cs` | DRONEZILLA's zap beam: the red circle that follows Bolt-E, locks, then the beam zapping straight down |
 | `Scripts/Blast.cs` | Big Rusty's bouncing fireballs |
@@ -503,11 +560,11 @@ The score already supports phase changes, muting, rebuilding, victory crossfades
 | `Scripts/ScorePopups.cs` | The floating "+25", "1-UP!", "SMASH! +25", "HA HA HA!" and "Wait..." words (how long they stay, how fast they float up) |
 | `Scripts/Obstacle.cs` | Crates, cones, crate stacks, and drones (and smashing them into pieces) |
 | `Scripts/BoltPickup.cs` | The spinning golden bolts (and bolts flying out of VROOMBA like a fountain) |
-| `Scripts/Hud.cs` | Score text, title screen (with "Who's playing?", Family Champions, and the controller line, which says when a 2nd controller can drive Big Rusty), game-over screen (results card, with the Today and So close lines and LB / RB around the play button), the flying spare battery, the power bar, the boss's health bar (it says "VROOMBA" or "DRONEZILLA", or "BIG RUSTY (DAD)" while Dad drives Big Rusty), the Best number flashing gold, the menu strip on the left (the Bolt Bank, the postcards, the NEW LOOK! words and the look picker) |
+| `Scripts/Hud.cs` | Score text, title screen (with "Who's playing?", Family Champions, and the controller line, which says when a 2nd controller can drive Big Rusty), game-over screen (results card, with the Today and So close lines and LB / RB around the play button), the flying spare battery, the power bar, the boss's health bar (it says "VROOMBA", "DRONEZILLA" or "OPTI-MAX", or "BIG RUSTY (DAD)" while Dad drives Big Rusty), the Best number flashing gold, the menu strip on the left (the Bolt Bank, the postcards, the NEW LOOK! words and the look picker) |
 | `Scripts/BatteryRow.cs` | The spare batteries under "Bolts" (green spares and the yellow charging one) |
 | `Scripts/ScoreDatabase.cs` | All the SQLite code (including everyone who plays, their bests, and today's scores) |
 | `Scripts/Audio/Song.cs` | The theme song, written as notes you can change |
-| `Scripts/Audio/SoundEffects.cs` | Every sound effect (jump, bolt, explosion, jingles, power-ups, SMASH, the rocket, the new-world jingle, the NEW LOOK! jingle, the "ta-da-DA!" for passing a flag, VROOMBA's rev-up, zoom, wall bonk, vacuum hum, BEEP BOOP and "ptoo!", and DRONEZILLA's rotor buzz, bomb whistle, LOW BATTERY beeps, power-down, take-off whir and BZZT BZZT...) |
+| `Scripts/Audio/SoundEffects.cs` | Every sound effect (jump, bolt, explosion, jingles, power-ups, SMASH, the rocket, the new-world jingle, the NEW LOOK! jingle, the "ta-da-DA!" for passing a flag, VROOMBA's rev-up, zoom, wall bonk, vacuum hum, BEEP BOOP and "ptoo!", and DRONEZILLA's rotor buzz, bomb whistle, LOW BATTERY beeps, power-down, take-off whir and BZZT BZZT, and OPTI-MAX's clanky footsteps, box whoosh and crunch, ball boing and kick, UPDATING chirps, DING!, error buzz and dance beat...) |
 | `Scripts/Audio/Synth.cs` | The tiny synthesizer that turns notes into sound with math (with a buzzy saw wave for VROOMBA) |
 | `Scripts/Audio/SoundBoard.cs` | Plays the music and sound effects (and remembers how fast the music should play, so it wobbles down while Bolt-E is in pieces, even if you switch it off and on) |
 | `Scripts/Shapes.cs` | Drawing helpers (rounded rectangles, ovals, stars, happy eyes, X eyes, heart eyes) |
@@ -591,7 +648,15 @@ To write your own song, change the notes in `Scripts/Audio/Song.cs`: `"C5"` is a
   `FuriousPlan`), and his colors (`DroneYellow` and friends). In `Main.Dronezilla.cs`: `MiniDroneChase` (how fast
   mini-drones drift after Bolt-E). In `DroneBomb.cs`: `Gravity` (how fast bombs fall) and `BlastHalfWidth`. In
   `Enemy.cs`: `MiniDroneHover` (how high mini-drones hover)
-- Which boss comes when: `BossForFight` in `Main.Vroomba.cs` (make it always DRONEZILLA: `BossKind.Dronezilla`!)
+- OPTI-MAX, all in `OptiMax.cs`: `BoxesWhenCalm`, `BoxesWhenAngry` and `BoxesWhenFurious` (how many boxes),
+  `BoxFlightSeconds` (how long a box flies: shorter is harder), `StompJumpHeight` (how high he jumps), `BallsWhenAngry`
+  and `BallsWhenFurious`, `WalkSpeed` and `RunSpeed`, `RunStopShort` (how far before Bolt-E a run stops), `UpdateSeconds`
+  and `FuriousUpdateSeconds` (your stomp time! `ShortestUpdate` keeps it at least 1.8 seconds), `KneelAway` (how far
+  from Bolt-E he kneels), `FuriousSpeedUp`, his attack plans (`PhaseOnePlan`, `AngryPlan`, `FuriousPlan`), his poses
+  (`StandPose`, `KneelPose`, `CrouchPose`... every angle is in radians: try making him lean way back!), his bone lengths
+  (`ThighLength`, `TorsoLength`...) and his colors (`Teal` and friends). In `ThrownBox.cs`: `Gravity` and `BounceUp`.
+  In `KickBall.cs`: `KickSpeed` and `HopSpeed` (how high the ball bounces). In `StompWave.cs`: `Speed` and `Height`
+- Which boss comes when: `BossForFight` in `Main.Vroomba.cs` (make it always OPTI-MAX: `BossKind.OptiMax`!)
 - How high Egg-Bot hops: the `80f` in `HopHeight` in `Enemy.cs`
 - Spare batteries, all in `Main.Batteries.cs`: `StartingBatteries` (0 = the classic game, 3 = super easy),
   `MaxBatteries` (how many he can carry), `BoltsPerBattery` (try 50 for lots of 1-UPs!)
