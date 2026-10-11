@@ -38,7 +38,7 @@ public partial class Main
         if (boltsTowardBattery >= BoltsPerBattery)
         {
             boltsTowardBattery = 0;
-            var aboveBoltE = robot.Position + new Vector2(0, -170);
+            var aboveBoltE = AboveBoltE(170); // (under him when he rides upside-down on the ceiling)
             if (spareBatteries < MaxBatteries)
             {
                 spareBatteries++;
@@ -126,6 +126,7 @@ public partial class Main
         bool Near(Node2D thing) => Mathf.Abs(thing.Position.X - robot.Position.X) < ClearAround;
         PuffAway(obstacles, Near);
         PuffAway(enemies, Near);
+        PuffAway(stationGaps, Near); // (the gaps in UPSIDE-DOWN STATION's floor and ceiling too)
         PuffAway(blasts, _ => true);
         PuffAway(shockwaves, _ => true);
         PuffAway(lasers, _ => true);

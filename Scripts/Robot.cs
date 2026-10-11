@@ -88,9 +88,11 @@ public partial class Robot : Node2D
 
     /// <summary>
     /// The box we use to check if the robot touched something (a bit smaller than the drawing, to be fair).
-    /// It grows with him when he's MEGA BOLT-E.
+    /// It grows with him when he's MEGA BOLT-E. Upside-down (in UPSIDE-DOWN STATION) his body hangs below his feet.
     /// </summary>
-    public Rect2 Hitbox => new(Position + new Vector2(-28, -128) * Size, new Vector2(56, 120) * Size);
+    public Rect2 Hitbox => UpsideDown
+        ? new(Position + new Vector2(-28, 8) * Size, new Vector2(56, 120) * Size)
+        : new(Position + new Vector2(-28, -128) * Size, new Vector2(56, 120) * Size);
 
     // ---- Powers from the rainbow ? boxes (see PowerUps.cs and Main.PowerUps.cs) ----
 
@@ -246,6 +248,9 @@ public partial class Robot : Node2D
         Modulate = Colors.White;
         Visible = true;
         trail.Clear();
+        FlipMode = false;            // (UPSIDE-DOWN STATION switches flipping on again: see Main.Station.cs)
+        CeilingY = NoCeiling;
+        ResetGravityFlip();
     }
 
     /// <summary>True if one of his flying pieces is the part with this name, like "head" or "hat" (the self-test reads this).</summary>
@@ -254,6 +259,7 @@ public partial class Robot : Node2D
     /// <summary>Returns true if the robot actually jumped. (No jumping on the rocket board or the parachute!)</summary>
     public bool Jump()
     {
+        if (FlipMode) return SwapGravity(); // (in UPSIDE-DOWN STATION, jump flips gravity: see RobotFlip.cs)
         if (Crashed || Rocketing || Parachuting || jumpsLeft <= 0) return false;
         velocityY = -JumpSpeed * (jumpsLeft == MaxJumps ? 1f : 0.85f) * JumpScale;
         jumpsLeft--;
@@ -276,6 +282,7 @@ public partial class Robot : Node2D
     /// <summary>Letting go of jump early makes a small hop.</summary>
     public void ReleaseJump()
     {
+        if (FlipMode) return; // (a flip always goes all the way across)
         float smallHop = -400f * JumpScale;
         if (velocityY < smallHop) velocityY = smallHop;
     }
@@ -329,6 +336,7 @@ public partial class Robot : Node2D
     /// <summary>ROCKET BOARD! He zooms up until his feet are at feetY and flies along up there (no jumping).</summary>
     public void StartRocket(float feetY)
     {
+        if (UpsideDown) TurnOver(); // (the rocket board always flies the right way up)
         Rocketing = true;
         Parachuting = false;
         rocketFeetY = feetY;
@@ -363,6 +371,17 @@ public partial class Robot : Node2D
         Modulate = Colors.White; // never see-through in pieces (the explosion doesn't update this)
         Visible = true;          // and never blinking in pieces
         Crashed = true;
+
+        // Upside-down (on the ceiling of UPSIDE-DOWN STATION)? Then his pieces start upside-down too, right where his body
+        // was, and gravity is normal again, so they fall down to the floor.
+        float turned = 0;
+        if (UpsideDown)
+        {
+            Position += new Vector2(0, 2 * -Pivot.Y); // (turned around the middle of his body, Pivot, his pieces land right where he was)
+            turned = Mathf.Pi;
+        }
+        ResetGravityFlip();
+
         var parts = OnTreads ? TankParts() : new List<RobotPart>
         {
             // Back to front, the same order the robot is normally drawn in.
@@ -381,7 +400,7 @@ public partial class Robot : Node2D
             bool helmet = Hat == Hat.SpaceHelmet; // (the space helmet is a big bubble around his whole head)
             parts.Add(new RobotPart("hat", helmet ? new Vector2(0, -98) : new Vector2(0, -150), helmet ? 52 : 22, DrawHat, FlatEvery: Mathf.Pi));
         }
-        explosion = new RobotExplosion(parts, Pivot, tilt - spin, GroundY - Position.Y, AccentColor,
+        explosion = new RobotExplosion(parts, Pivot, tilt - spin + turned, GroundY - Position.Y, AccentColor,
                                        onBounce: bigPart => PieceBounced?.Invoke(bigPart));
     }
 
@@ -449,6 +468,14 @@ public partial class Robot : Node2D
             Position = new Vector2(Position.X, Mathf.MoveToward(Position.Y, rocketFeetY, 900f * dt));
             velocityY = 0;
         }
+        else if (FallingIntoSpace)
+        {
+            UpdateSpaceFall(dt); // whoops, through a gap! (see RobotFlip.cs)
+        }
+        else if (!OnGround && FlipMode)
+        {
+            FlipFall(dt);        // UPSIDE-DOWN STATION: falling toward the floor or the ceiling (see RobotFlip.cs)
+        }
         else if (!OnGround)
         {
             // Gravity pulls the robot down (less on the Moon!). With the parachute open, only a little bit,
@@ -465,11 +492,13 @@ public partial class Robot : Node2D
                 jumpsLeft = MaxJumps;
                 Parachuting = false; // landed safely!
             }
+            BonkHeadOnCeiling(); // (only in UPSIDE-DOWN STATION, while its ceiling slides open or shut)
         }
+        UpdateRoll(dt);
 
         RideLeftAndRight(dt);
         float lean = velocityX * facing / 5000f; // lean forward when riding
-        float tiltTarget = Rocketing ? -0.12f : (OnGround ? 0.05f : -velocityY / 6000f) + lean; // on the rocket board: nose up!
+        float tiltTarget = Rocketing ? -0.12f : (OnGround ? 0.05f : FlipMode ? 0 : -velocityY / 6000f) + lean; // on the rocket board: nose up!
         tilt = Mathf.Lerp(tilt, tiltTarget, dt * 10f);
 
         spin = Mathf.MoveToward(spin, 0, dt * 14f);
@@ -508,7 +537,7 @@ public partial class Robot : Node2D
                 var back = OnTreads ? TreadTrailSpot : BoardTrailSpot;
                 trail.Add(new TrailBit
                 {
-                    Position = Position + new Vector2(back.X * facing, back.Y) * Size,
+                    Position = Position + TurnedSpot(new Vector2(back.X * facing, back.Y)) * Size,
                     Life = TrailLife,
                     Style = TrailStyle,
                     Gold = nextSparkleGold,
@@ -554,7 +583,7 @@ public partial class Robot : Node2D
             {
                 noteTimer = (float)GD.RandRange(0.8, 1.6);
                 var noteSpot = OnTreads ? new Vector2(-22, -114) : new Vector2(46, -112); // the headphones (or the side of the head)
-                notes.Add(new Note { Position = Position + noteSpot * Size, Life = 1.5f, Purple = GD.Randf() < 0.5f });
+                notes.Add(new Note { Position = Position + TurnedSpot(noteSpot) * Size, Life = 1.5f, Purple = GD.Randf() < 0.5f });
             }
         }
 
@@ -584,11 +613,12 @@ public partial class Robot : Node2D
             return;
         }
 
-        // A little shadow on the ground (it stays on the ground while we jump).
-        // (Everything we draw is made bigger by Size, so we divide by Size to keep the shadow exactly on the ground.)
-        float heightAboveGround = GroundY - Position.Y;
-        float shadowSize = Mathf.Clamp(1f - heightAboveGround / 400f, 0.3f, 1f);
-        DrawSetTransform(new Vector2(0, heightAboveGround / Size), 0, new Vector2(shadowSize, 0.2f * shadowSize));
+        // A little shadow on the ground (it stays on the ground while we jump). In UPSIDE-DOWN STATION it's on the floor
+        // or the ceiling he's heading to. (Everything we draw is made bigger by Size, so we divide by Size to keep the
+        // shadow exactly on the ground.)
+        float toTheGround = (FlipMode ? SurfaceY : GroundY) - Position.Y; // (falling UP, the ceiling is above him: less than 0)
+        float shadowSize = Mathf.Clamp(1f - Mathf.Abs(toTheGround) / 400f, 0.3f, 1f);
+        DrawSetTransform(new Vector2(0, toTheGround / Size), 0, new Vector2(shadowSize, 0.2f * shadowSize));
         DrawCircle(Vector2.Zero, 45, new Color(0, 0, 0, 0.18f));
 
         // Everything else gets squished, tilted, and spun around the robot's middle.
@@ -600,7 +630,7 @@ public partial class Robot : Node2D
         float angle = tilt - spin;
         var scaledPivot = Pivot * scale; // squash around the feet, spin around the middle
         var offset = scaledPivot - scaledPivot.Rotated(angle) + new Vector2(0, hover);
-        DrawSetTransform(offset, angle, scale);
+        DrawSetBodyTransform(offset, angle, scale); // (upside-down in UPSIDE-DOWN STATION: see RobotFlip.cs)
 
         // Draw from back to front: things drawn later cover things drawn earlier.
         if (Parachuting) DrawParachute();

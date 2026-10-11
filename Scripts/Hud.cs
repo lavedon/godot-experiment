@@ -33,6 +33,7 @@ public partial class Hud : CanvasLayer
     Label bestLabel = null!;
     Label warningLabel = null!;
     BatteryRow batteryRow = null!;
+    GravityArrow gravityArrow = null!;  // UPSIDE-DOWN STATION: which way is DOWN right now (top right, under the Best score)
     Tween? batteryPop;
 
     Control bossBar = null!;
@@ -178,6 +179,8 @@ public partial class Hud : CanvasLayer
     public bool MenuStripShowing => menuStrip.Visible;
     /// <summary>The World Tour postcards on the menus (the self-test reads them).</summary>
     public WorldPostcards Postcards => postcards;
+    /// <summary>The gravity arrow in UPSIDE-DOWN STATION (the self-test reads it).</summary>
+    public GravityArrow GravityArrow => gravityArrow;
     /// <summary>The World Tour line on the results card, like "You rode all the way to NIGHT CITY!".</summary>
     public string ResultsWorldLine => gameOverWorld.Visible ? gameOverWorld.Text : "";
     /// <summary>The name box on the title screen (the self-test types in it).</summary>
@@ -216,6 +219,11 @@ public partial class Hud : CanvasLayer
         bestLabel.Position = new Vector2(1280 - 24 - 300, 16);
         bestLabel.Size = new Vector2(300, 40);
         AddChild(bestLabel);
+
+        // UPSIDE-DOWN STATION's gravity arrow, under the Best score (it only shows while flipping is on)
+        gravityArrow = new GravityArrow { Position = new Vector2(1280 - 24 - 56, 62), Size = new Vector2(56, 56), Visible = false,
+                                          MouseFilter = Control.MouseFilterEnum.Ignore };
+        AddChild(gravityArrow);
 
         warningLabel = MakeLabel("", 18, new Color(1f, 0.85f, 0.85f), outline: true);
         warningLabel.Position = new Vector2(24, 690);
@@ -362,6 +370,20 @@ public partial class Hud : CanvasLayer
         postcards.QueueRedraw();
     }
 
+    /// <summary>The world the next game starts in: its postcard glows, and "START: ..." under the cards says its name.</summary>
+    public void ShowStartWorld(int world)
+    {
+        postcards.Picked = world;
+        postcards.QueueRedraw();
+    }
+
+    /// <summary>Shows (or hides) UPSIDE-DOWN STATION's gravity arrow, turned the way DOWN is (0 = down, Pi = up).</summary>
+    public void SetGravityArrow(bool show, float angle)
+    {
+        gravityArrow.Visible = show;
+        if (show) gravityArrow.Point(angle);
+    }
+
     void BuildTitleScreen()
     {
         var box = MakePanel(out titleScreen, out titleCard);
@@ -466,6 +488,8 @@ public partial class Hud : CanvasLayer
         titleScreen.Visible = true;
         gameOverScreen.Visible = false;
         menuStrip.Visible = true;
+        postcards.ShowPickHint = true; // "Y = pick a world" (only on the title screen)
+        postcards.QueueRedraw();
         PlaceWarning(onMenus: true);
         SetPlayingLabelsVisible(false);
         UpdatePickerButtons();
@@ -515,6 +539,8 @@ public partial class Hud : CanvasLayer
         titleScreen.Visible = false;
         gameOverScreen.Visible = true;
         menuStrip.Visible = true;
+        postcards.ShowPickHint = false; // (here Y plays again)
+        postcards.QueueRedraw();
         PlaceWarning(onMenus: true);
     }
 

@@ -3,7 +3,7 @@
 An endless runner starring **Bolt-E**, a tiny cute robot with headphones riding a hoverboard (designed from `hero-robot.png`). Made with Godot 4.7.2 (.NET / C#) and SQLite.
 
 ## How to play
-- **Space**, **Up arrow**, **W**, or **click**: jump
+- **Space**, **Up arrow**, **W**, or **click**: jump (on the title screen, **W** picks the world to start in)
 - **Xbox controller** (or any game controller): **A, B, X, Y** or **D-pad up** to jump, **START** to start or play again.
   The controller rumbles when Bolt-E blows up, and buzzes a tiny bit for each bolt.
   (On the menus, D-pad up never starts a game, so pressing the D-pad a bit crooked while picking a look is fine.)
@@ -19,8 +19,11 @@ An endless runner starring **Bolt-E**, a tiny cute robot with headphones riding 
   Bolt-E's head spins and lands on a power: **MEGA BOLT-E**, the **BOLT MAGNET** or the **ROCKET BOARD**.
   See [Mystery ? boxes](#mystery--boxes) below.
 - **World Tour**: every time you beat a boss, Bolt-E rides into a new world: **Candy Land**, **Night City**,
-  **Snowy Peaks**, then **THE MOON** (with floaty moon jumps!), and all the way around again.
-  See [World Tour](#world-tour) below.
+  **Snowy Peaks**, **THE MOON** (with floaty moon jumps!), then **UPSIDE-DOWN STATION** (where jump FLIPS GRAVITY!),
+  and all the way around again. See [World Tour](#world-tour) below.
+- **Pick a world to start in:** on the title screen press **Y** on the controller (or **W**) to step through the worlds
+  you may start in. UPSIDE-DOWN STATION is always one of them! See
+  [UPSIDE-DOWN STATION](#upside-down-station-the-6th-world) below.
 - **Bolt Bank & looks**: every bolt you ever grab goes into Bolt-E's **Bolt Bank** (top-left of the menus). It never
   goes down, and it wins Bolt-E new **looks**: Ninja, Fire Truck, Pirate, Hot Dog, King Bolt-E and more (17 in all).
   On the menus, press **LEFT / RIGHT** (arrow keys, the D-pad or the stick), or click the arrows under him,
@@ -127,20 +130,30 @@ An endless runner starring **Bolt-E**, a tiny cute robot with headphones riding 
   4. **Snowy Peaks**: snowy mountains, pine trees and falling snow.
   5. **The Moon**: the Earth in a black starry sky, grey ground full of craters, and **FLOATY moon jumps**:
      Bolt-E jumps just as high, but hangs in the air longer (obstacles come a bit farther apart to match).
-- After the Moon you're back in Sunny Hills: **YOU WENT ALL THE WAY AROUND!**
+  6. **UPSIDE-DOWN STATION**: a neon space-station corridor where jump **FLIPS GRAVITY** (see below!).
+- After UPSIDE-DOWN STATION you're back in Sunny Hills: **YOU WENT ALL THE WAY AROUND!**
 - If a new world comes while Bolt-E is in the middle of a jump (kids love jumping for the prize bolts!), the jump
   still goes just as high, on the Moon and back in Sunny Hills.
 - **Big Rusty dresses up** for every world: a party hat in Candy Land, cool sunglasses in Night City (he pushes them
   up when he winds up a ground pound, gets hurt or is dizzy, so you can still see his eyes), a bobble hat in
-  Snowy Peaks and a fishbowl space helmet on the Moon. When he blows up, his hat flies off too!
-- In the dark worlds (Night City and the Moon) a soft glow around Bolt-E keeps him easy to see.
+  Snowy Peaks, a fishbowl space helmet on the Moon and glowing neon goggles in UPSIDE-DOWN STATION. When he blows up,
+  his hat flies off too!
+- In the dark worlds (Night City, the Moon and UPSIDE-DOWN STATION) a soft glow around Bolt-E keeps him easy to see.
 - Each world has its own **music speed** (a bit faster in Candy Land and Snowy Peaks, slower at night and on the Moon).
   Sunny Hills' speed plays on the title screen and from the very start of every game.
 - The results card says how far you got, like **You rode all the way to NIGHT CITY!**
 - **Postcards** on the menus (on the left, next to the cards) show every world you have reached. Worlds you reached
   for the very first time get a gold **NEW!** ribbon, and worlds you haven't reached yet are grey with a **?**.
-- A new game always starts in Sunny Hills again. Reaching the Moon takes 4 boss wins in one game:
-  spare batteries help!
+- A new game starts in Sunny Hills, unless you **pick another world** on the title screen: press **Y** on the
+  controller (or **W** on the keyboard) to step through Sunny Hills, every world you have reached, and UPSIDE-DOWN
+  STATION (always: it's the brand-new world). The picked world's postcard glows, and **START: ...** under the postcards
+  says which one. The game remembers it until it's closed. Reaching the Moon from Sunny Hills takes 4 boss wins in one
+  game: spare batteries help!
+- **Fair play:** starting in another world never wins postcards or looks. In a game like that, a world only counts as
+  reached when Bolt-E really rode into it by beating a boss, and only if it's the next one after a world he had already
+  reached. (Start in the Station and beat 2 bosses: you ride into Sunny Hills and then Candy Land, so Candy Land counts.
+  Start on the Moon, if you reached it before, and beat a boss: the Station's postcard is yours!) Just starting in the
+  Station counts as Sunny Hills only, and your best World Tour record never gets smaller.
 
 ## Bolt Bank & looks
 - **The Bolt Bank** (top-left of the title screen and the results screen) holds every bolt this player has EVER grabbed,
@@ -368,6 +381,41 @@ and his knees bend when he crouches or lands. (He's built like a little skeleton
 - **Nobody can drive OPTI-MAX** (only Big Rusty): in his fights the second controller does nothing.
 - If Bolt-E runs out of batteries, OPTI-MAX waves goodbye and jogs off the screen.
 
+## UPSIDE-DOWN STATION (the 6th world)
+A dark space-station corridor with a **FLOOR** and a **CEILING**: deep purple space with drifting stars and a big ringed
+planet outside the windows and portholes, metal walls with seams, rivets, blinking lights, glowing arrow signs and
+hazard stripes, a floor track with a glowing **cyan** edge and a ceiling track with a glowing **magenta** edge, with
+light dashes zooming along both. It comes after the Moon (or pick it on the title screen with **Y** / **W**).
+- **Here the jump button FLIPS GRAVITY!** Bolt-E falls UP to the ceiling (WHOOSH!) in a little over a third of a second,
+  doing a half-roll, and rides along it **upside-down**. Press again to flip back down. Sparkles fly off the floor or
+  ceiling he leaves, and he lands with a little "tunk!", a spark and a rumble.
+- **A second chance:** you can flip once more in the air (like the double jump), so if you flipped too early, flip back!
+  Touching the floor or the ceiling gives your flips back. Holding the button doesn't keep flipping.
+- The **gravity arrow** in the top-right corner (under Best) always points the way DOWN is right now.
+- **The dangers** come on the floor or hanging from the ceiling, so read the track and flip at the right moment:
+  - **spike strips**: low rows of spikes with glowing pink tips;
+  - **laser gates**: a crackling red laser beam between two emitters;
+  - **gaps**: a missing piece of track with space showing through. Ride onto one while gravity pulls you toward it and
+    you fall out into space (**WHOOOA!**)... KABOOM. (MEGA BOLT-E is too big to fall in.)
+  - **space junk**: an old broken satellite slowly spinning in the MIDDLE of the corridor (it comes after 40 seconds).
+    Riding along the floor or the ceiling you pass it safely, but don't flip into it!
+- **It's always fair** (the code makes sure, and the self-test checks thousands of patterns): a danger is never on the
+  floor and the ceiling at the same spot, each pattern has its dangers on one side (one flip, or none, gets you
+  through), and between needing to be on one side and needing to be on the other there's always time to see it coming
+  AND flip (about a second), with no junk in the way. The first 20 seconds are easy: one danger at a time, far apart.
+- **Bolts** float along the floor and the ceiling, and in arcs right where a flip goes: flip there and grab them all!
+- **? boxes** float in the middle of the corridor (a flip goes right through them). **MEGA BOLT-E** fits (234 pixels tall
+  in the 430 pixel corridor), smashes spikes, lasers and junk, and strides over gaps. The **MAGNET** works upside-down
+  too. The **ROCKET BOARD** turns him the right way up and flies through the middle of the corridor; then the parachute
+  floats down to the floor.
+- **Crash with a spare battery:** the KABOOM works on the ceiling too (his pieces fall down to the floor), and the magic
+  rebuild always puts him back on the FLOOR, the right way up, with any gap near him gone.
+- **Boss fights:** when **WARNING! BOSS AHEAD!** sounds, it's **GRAVITY ON!**: Bolt-E drops to the floor, the station's
+  dangers puff away, and the **ceiling slides open** (up off the screen), so every boss fights exactly like everywhere
+  else, with normal jumps. Win, and you ride on to Sunny Hills: **YOU WENT ALL THE WAY AROUND!**
+- The music plays a bit faster here (1.1). Record flags stand on the floor, like always.
+- Leaving the station, a game over, or going back to the title always puts gravity back to normal.
+
 ## Dad drives Big Rusty
 - **With one controller (or none), the computer drives Big Rusty**, exactly like the original fight.
 - **Plug in a second controller** and Dad (or Mom) can drive him, while the kid keeps playing on the first controller
@@ -471,6 +519,7 @@ To run only the jump-dust checks and VROOMBA drawing coverage, add `--selftest-d
 To run only DRONEZILLA's checks (and the taking-turns rule), add `--selftest-drone` instead. (The DRONEZILLA tests ask for
 him too, and some of them also run the game 3 times as fast.)
 To run only OPTI-MAX's checks (and the taking-turns rules), add `--selftest-optimax` instead.
+To run only UPSIDE-DOWN STATION's checks (and the start-world picker), add `--selftest-station` instead.
 Exit codes: **0** = everything passed, **1** = something failed, **2** = refused to start (bad `--db`),
 **3** = it took too long. A good run has no lines with `FAIL:`, `ERROR:`, `SCRIPT ERROR` or `Unhandled exception`
 in the output or in `godot.log`. The tests are in `Scripts/Main.SelfTest.cs`, and new features add theirs there.
@@ -479,7 +528,8 @@ so the commands above use `--quit-after 120000`).
 (They expect the normal tuning numbers, so if you change a number like `StartingBatteries` or `MegaSeconds`,
 a world in `Worlds.cs`, a look in `Looks.cs`, a family race number in `Main.Family.cs`, Big Rusty's
 `AttacksBeforeHeMustPound`, `DriverWaitBeforeAI` or `LaughsInARow`, VROOMBA's numbers in `Vroomba.cs`, DRONEZILLA's
-numbers in `Dronezilla.cs`, OPTI-MAX's numbers in `OptiMax.cs`, or Dad's
+numbers in `Dronezilla.cs`, OPTI-MAX's numbers in `OptiMax.cs`, UPSIDE-DOWN STATION's numbers in `RobotFlip.cs`,
+`StationThings.cs` or `Main.Station.cs`, or Dad's
 `DriveButtons` (the words on the screen
 follow your buttons, but the tests press the normal ones), some tests will say FAIL. Changing `DriverName`
 to MOM, or a flag's `PoleHeight`, is fine: the tests use whatever is there.)
@@ -519,7 +569,7 @@ Phase changes use `SetMusicSpeed`, and victory calls `SetBossMusic(false, Curren
 | `Scripts/Main.PowerUps.cs` | Rainbow ? boxes: when a box comes, opening it, starting and ending powers, SMASH! and SPLAT!, the magnet pull, the rocket landing |
 | `Scripts/Main.Worlds.cs` | The World Tour: changing worlds after a Big Rusty win, the smooth color change, and drawing each world's special things (stars, moon, Earth, skyscrapers, mountains, lollipops, pine trees, sprinkles, road dashes, craters, snow, the night glow) |
 | `Scripts/Worlds.cs` | Every world on the World Tour: its colors, sky thing, scenery, weather, gravity, music speed and Big Rusty's outfit. **Make your own world here!** |
-| `Scripts/WorldPostcards.cs` | The World Tour postcards on the menus (pictures, grey "?" cards and gold NEW! ribbons) |
+| `Scripts/WorldPostcards.cs` | The World Tour postcards on the menus (pictures, grey "?" cards, gold NEW! ribbons, the glowing start world, "START: ..." and the "Y = pick a world" tip) |
 | `Scripts/Looks.cs` | All 17 looks: their colors, hats, boards, trails, which robot wears them (Bolt-E, COZMOS or VECKTOR) and what it takes to win them. **Invent your own look here!** |
 | `Scripts/Main.Looks.cs` | The Bolt Bank and the looks: loading a player's bank and look, changing looks on the menus, the count-up after a game, and the unlock parties and the first-launch "N NEW LOOKS!" note (which are never lost) |
 | `Scripts/Main.Family.cs` | The family race: who's playing (LB / RB, TAB), "GO, MAX!" and "DAD'S TURN!", the flags on the road and passing them, NEW HIGH SCORE! in the middle of a ride, fireworks, who's champ today, rounds, and "So close!" |
@@ -534,6 +584,13 @@ Phase changes use `SetMusicSpeed`, and victory calls `SetBossMusic(false, Curren
 | `Scripts/Main.Driver.cs` | Dad drives Big Rusty with a second controller (only a real one: phantom controllers can't): its buttons (X, Y, A, B, LB and RB in `DriveButtons`), taking over ("DAD IS DRIVING BIG RUSTY!", with a tip made from `DriveButtons`), giving orders ("Wait...", "TIRED! Press A!", "Not yet!", which never pile up or float over his health bar), Dad's buzz when Bolt-E stomps him, and who's driving (`DriverName`) |
 | `Scripts/BankBox.cs` | The Bolt Bank box in the top-left corner of the menus (the number, the gold hexagon and the bar to the next prize) |
 | `Scripts/LookPicker.cs` | The look picker under Bolt-E on the menus (the arrows, the look's name, the padlock and what it takes to win it) |
+| `Scripts/Main.Station.cs` | UPSIDE-DOWN STATION: arriving (the ceiling slides shut, the tip), flipping (whoosh, sparkles, the landing "tunk!"), falling out through gaps, putting the planned dangers, bolt arcs and ? boxes on the track, and GRAVITY ON! with the ceiling sliding open for a boss |
+| `Scripts/StationThings.cs` | The station's dangers (spike strips, laser gates and space junk, on the floor or hanging from the ceiling), its gaps (`StationGap`), and `StationPlanner`, which puts them in fair patterns |
+| `Scripts/StationScenery.cs` | Drawing the station: space, stars and the ringed planet, the walls with windows, portholes, seams, blinking lights, arrow signs and hazard stripes, and the floor and ceiling tracks with their neon edges |
+| `Scripts/RobotFlip.cs` | Bolt-E flipping gravity: the flip, the one flip in the air, falling to the floor or the ceiling, the half-roll and drawing him upside-down, and falling out through a gap |
+| `Scripts/GravityArrow.cs` | The gravity arrow in the top-right corner in UPSIDE-DOWN STATION |
+| `Scripts/Main.StartWorld.cs` | Picking the world to start in (Y / W on the title screen), and the fair-play rule for how a game like that counts the worlds reached |
+| `Scripts/Main.StationTests.cs` | Self-test checks for UPSIDE-DOWN STATION and the start-world picker |
 | `Scripts/Main.SelfTest.cs` | Grown-up testing code: the headless self-test and all its checks |
 | `Scripts/PowerUps.cs` | The three powers: how long they last, how big, how high (the "try changing these!" numbers), their names and little icons |
 | `Scripts/PowerBox.cs` | The rainbow ? box with its two orbiting stars |
@@ -557,7 +614,7 @@ Phase changes use `SetMusicSpeed`, and victory calls `SetBossMusic(false, Curren
 | `Scripts/Shockwave.cs` | The waves that roll out from his ground pound |
 | `Scripts/Laser.cs` | His giant laser (warning line, then the beam) |
 | `Scripts/ScorePopups.cs` | The floating "+25", "1-UP!", "SMASH! +25", "HA HA HA!" and "Wait..." words (how long they stay, how fast they float up) |
-| `Scripts/Obstacle.cs` | Crates, cones, crate stacks, and drones (and smashing them into pieces) |
+| `Scripts/Obstacle.cs` | Crates, cones, crate stacks, and drones (and smashing them into pieces). UPSIDE-DOWN STATION's spikes, lasers and junk are in `StationThings.cs` |
 | `Scripts/BoltPickup.cs` | The spinning golden bolts (and bolts flying out of VROOMBA like a fountain) |
 | `Scripts/Hud.cs` | Score text, title screen (with "Who's playing?", Family Champions, and the controller line, which says when a 2nd controller can drive Big Rusty), game-over screen (results card, with the Today and So close lines and LB / RB around the play button), the flying spare battery, the power bar, the boss's health bar (it says "VROOMBA", "DRONEZILLA" or "OPTI-MAX", or "BIG RUSTY (DAD)" while Dad drives Big Rusty), the Best number flashing gold, the menu strip on the left (the Bolt Bank, the postcards, the NEW LOOK! words and the look picker) |
 | `Scripts/BatteryRow.cs` | The spare batteries under "Bolts" (green spares and the yellow charging one) |
@@ -678,6 +735,14 @@ To write your own song, change the notes in `Scripts/Audio/Song.cs`: `"C5"` is a
 - How long the colors take to change: `WorldChangeSeconds` in `Main.Worlds.cs`, and `NewWorldDelay`
   (how long "YOU BEAT BIG RUSTY!" shows before the new world comes)
 - Big Rusty's outfit colors: `PartyPink`, `BobbleRed` and friends in `Boss.cs`
+- UPSIDE-DOWN STATION: how hard flipped gravity pulls, `FlipGravity` (bigger = a faster trip across), `FlipKick` (the
+  push at the start), `MaxFlips` (try 3 for TWO flips in the air!) and `FlipRollSeconds` (how long the half-roll takes),
+  all in `RobotFlip.cs`. The corridor's height, `CeilingSurfaceY` (170 = a 430 pixel corridor; keep MEGA BOLT-E's 234
+  pixels in mind!), `CeilingSlideSeconds`, `SpaceFallSeconds` and `GapEdgeForgiveness` in `Main.Station.cs`. The fair
+  patterns in `StationPlanner` (`StationThings.cs`): `ReactionSeconds` (time to see a danger coming), `EasySeconds` (how
+  long the easy start lasts), `JunkFromSeconds` (when space junk starts coming), and `GapMin` and `GapMax` (how wide the
+  gaps are). The dangers' sizes and `JunkSpinSpeed` (how fast the junk spins) are at the top of `StationThings.cs`, and
+  the station's look (`WindowTop`, `PillarSpacing`, `DashSpacing`...) at the top of `StationScenery.cs`
 - The bolt song: `ScaleSteps` in `Main.cs` (the notes bolts play when you grab them quickly one after another)
 - The family race, all in `Main.Family.cs`: `MinFlagMeters` (rides shorter than this get no flag), `MaxOtherFlags`
   (how many other people get a flag: try 1 for just the best one), `SoCloseMeters` (how close counts as "So close!"),

@@ -604,6 +604,63 @@ public static class SoundEffects
         return Done(sound);
     }
 
+    // ---------- UPSIDE-DOWN STATION ----------
+
+    /// <summary>
+    /// "FWOOOSH!" — flipping gravity: rushing air that sweeps UP (flipping up to the ceiling) or DOWN (back to the floor),
+    /// with a sliding tone and a little sparkle on top.
+    /// </summary>
+    public static float[] FlipWhoosh(bool up)
+    {
+        const float length = 0.34f;
+        var sound = Synth.Silence(length + 0.1f);
+        var random = new Random(up ? 21 : 22);
+        float low = 0;
+        for (int i = 0; i < (int)(length * Synth.SampleRate); i++)
+        {
+            float t = (float)i / Synth.SampleRate / length; // 0 to 1
+            float sweep = up ? t : 1 - t;
+            // Noise through a "filter" that opens (up) or closes (down): "shhh" getting brighter or darker
+            float cutoff = 300f + 4500f * sweep * sweep;
+            float amount = 1f - MathF.Exp(-MathF.Tau * cutoff / Synth.SampleRate);
+            low += amount * (random.NextSingle() * 2f - 1f - low);
+            float loudness = MathF.Sin(MathF.PI * t); // swells in and out
+            sound[i] = low * loudness * 0.9f;
+        }
+        Synth.AddTone(sound, 0, length * 0.8f, Wave.Sine, 0.35f, new Envelope(0.02f, 0.2f, 0.4f, 0.05f), up ? 260 : 900, up ? 900 : 260);
+        Synth.AddTone(sound, length * 0.55f, 0.08f, Wave.Square12, 0.08f, Pluck, Synth.NoteToFrequency(up ? "E7" : "G6"));
+        return Done(sound, 0.75f);
+    }
+
+    /// <summary>"Tunk!" — landing on the floor or the ceiling: a little metal thud.</summary>
+    public static float[] FlipThud()
+    {
+        var sound = Synth.Silence(0.2f);
+        Synth.AddTone(sound, 0, 0.08f, Wave.Sine, 0.7f, new Envelope(0.001f, 0.06f, 0f, 0.02f), 180, 70);
+        Synth.AddTone(sound, 0, 0.06f, Wave.Sine, 0.2f, new Envelope(0.001f, 0.04f, 0f, 0.02f), 1300);
+        Synth.AddTone(sound, 0, 0.02f, Wave.Noise, 0.25f, new Envelope(0.001f, 0.01f, 0f, 0.01f), 1);
+        return Done(sound, 0.65f);
+    }
+
+    /// <summary>"Wheeeeooooo..." — falling out of the station through a gap: a slide whistle going all the way down.</summary>
+    public static float[] SpaceFall()
+    {
+        var sound = Synth.Silence(0.7f);
+        Synth.AddTone(sound, 0, 0.55f, Wave.Sine, 0.5f, new Envelope(0.01f, 0.4f, 0.6f, 0.1f), 1500, 180);
+        Synth.AddTone(sound, 0, 0.55f, Wave.Triangle, 0.2f, new Envelope(0.01f, 0.4f, 0.6f, 0.1f), 1520, 185);
+        return Done(sound, 0.7f);
+    }
+
+    /// <summary>"Vvvvrrrr-KSSHH" — the ceiling sliding open (or shut): a whirring motor and a puff of air.</summary>
+    public static float[] CeilingSlide()
+    {
+        var sound = Synth.Silence(1.0f);
+        Synth.AddTone(sound, 0, 0.75f, Wave.Saw, 0.18f, new Envelope(0.05f, 0.5f, 0.7f, 0.1f), 70, 110);
+        Synth.AddTone(sound, 0, 0.75f, Wave.Square25, 0.06f, new Envelope(0.05f, 0.5f, 0.7f, 0.1f), 140, 220);
+        Synth.AddTone(sound, 0.72f, 0.18f, Wave.Noise, 0.35f, new Envelope(0.005f, 0.12f, 0f, 0.05f), 1);
+        return Done(sound, 0.6f);
+    }
+
     /// <summary>Plays a list of (note, seconds) one after another.</summary>
     static float[] Tune((string Note, float Length)[] notes, Wave wave, bool normalize = true)
     {

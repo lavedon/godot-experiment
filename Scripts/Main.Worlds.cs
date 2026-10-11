@@ -5,7 +5,7 @@ using Godot;
 ///
 /// Every time Bolt-E beats Big Rusty, "YOU BEAT BIG RUSTY!" shows first, and a moment later he rides into a new world:
 /// the sky, the sun, the clouds, the hills and the ground all change color smoothly over 3 seconds.
-/// Sunny Hills, Candy Land, Night City, Snowy Peaks, The Moon... then all the way around to Sunny Hills again!
+/// Sunny Hills, Candy Land, Night City, Snowy Peaks, The Moon, UPSIDE-DOWN STATION... then all the way around to Sunny Hills!
 /// The worlds themselves (their colors, gravity, music speed and Big Rusty's outfits) are in Worlds.cs.
 /// This file changes the worlds and draws the special things in them: stars, the moon, the Earth, skyscrapers,
 /// mountains, lollipops, pine trees, sprinkles, road dashes, craters, falling snow, and a glow around Bolt-E at night.
@@ -16,7 +16,7 @@ public partial class Main
     const float WorldChangeSeconds = 3f;   // how long the colors take to change into the new world
     const float NewWorldDelay = 2.2f;      // seconds after beating Big Rusty before the new world comes ("YOU BEAT BIG RUSTY!" shows first)
 
-    int worldNumber;                       // 0 = Sunny Hills, 1 = Candy Land, 2 = Night City... (it keeps counting after the Moon)
+    int worldNumber;                       // 0 = Sunny Hills, 1 = Candy Land, 2 = Night City... (it keeps counting after the Station)
     int worldsReached = 1;                 // how many worlds this game has ridden through (it's saved with the score)
     World fromWorld = Worlds.All[0];       // the world we're changing from...
     World toWorld = Worlds.All[0];         // ...and the world we're changing to
@@ -28,7 +28,7 @@ public partial class Main
     /// <summary>The colors of the sky, hills and ground drawn in the last frame, like "grass" (the self-test checks these).</summary>
     readonly Dictionary<string, Color> drawnColors = new();
 
-    /// <summary>The world we're in now. (After the Moon it goes around again: world 5 is Sunny Hills.)</summary>
+    /// <summary>The world we're in now. (After UPSIDE-DOWN STATION it goes around again: world 6 is Sunny Hills.)</summary>
     World CurrentWorld => Worlds.All[worldNumber % Worlds.All.Length];
 
     /// <summary>A color part-way between the old world's color and the new world's color (for the smooth change).</summary>
@@ -47,6 +47,7 @@ public partial class Main
         fromWorld = toWorld = Worlds.All[0];
         worldBlend = 1;
         robot.SetGravityScale(1);
+        gameStartWorld = 0; // (a new game picks its start world again: see Main.StartWorld.cs)
     }
 
     /// <summary>
@@ -72,12 +73,13 @@ public partial class Main
         worldNumber = n;
         toWorld = CurrentWorld;
         worldBlend = 0;
-        worldsReached = Math.Max(worldsReached, n + 1);
+        worldsReached = WorldsReachedAfter(n); // (a game that started in another world counts differently: see Main.StartWorld.cs)
 
         var gold = new Color(1f, 0.85f, 0.2f);
         if (n % Worlds.All.Length == 0) hud.ShowBanner("YOU WENT ALL THE WAY AROUND!", gold);
         else hud.ShowBanner($"WELCOME TO {toWorld.Name}!", gold);
         if (toWorld.Gravity < 1) hud.ShowHint("Moon jumps are FLOATY!"); // (only the Moon has low gravity)
+        StationWorldChanged(); // into UPSIDE-DOWN STATION (or out of it): see Main.Station.cs
 
         sounds.Play(Sfx.NewWorld);
         robot.SetGravityScale(toWorld.Gravity);
@@ -205,6 +207,10 @@ public partial class Main
                 Shapes.Ellipse(this, at + new Vector2(-10, 27), new Vector2(14, 6), land);
                 DrawArc(at, 38, Mathf.Pi * 1.05f, Mathf.Pi * 1.55f, 12, new Color(1, 1, 1, 0.85f * alpha), 6, true); // a white cloud
                 drawnWorldThings.Add("earth");
+                break;
+
+            case SkyThing.RingedPlanet:
+                DrawRingedPlanet(at, 48, world.ThingColor, alpha); // (UPSIDE-DOWN STATION's: see StationScenery.cs)
                 break;
         }
     }
@@ -397,7 +403,7 @@ public partial class Main
     {
         float dark = MixAmount(w => w.Dark);
         if (dark < 0.02f) return;
-        DrawCircle(robot.Position + new Vector2(0, -60 * robot.Size), 95 * robot.Size, new Color(1, 1, 1, 0.12f * dark));
+        DrawCircle(robot.BodyMiddle, 95 * robot.Size, new Color(1, 1, 1, 0.12f * dark)); // (upside-down too)
         drawnWorldThings.Add("night glow");
     }
 }

@@ -6,6 +6,11 @@ public enum ObstacleKind
     Cone,        // an orange traffic cone: jump over it!
     CrateStack,  // two boxes: a big jump!
     Drone,       // a grumpy flying drone: DON'T jump, ride under it!
+
+    // UPSIDE-DOWN STATION's dangers (see StationThings.cs). They stand on the floor, or hang from the ceiling.
+    SpikeStrip,  // a low, wide row of glowing spikes
+    LaserGate,   // a laser beam between two emitters: a short glowing post
+    SpaceJunk,   // a slowly spinning piece of junk floating in the MIDDLE of the corridor: don't flip into it!
 }
 
 /// <summary>
@@ -35,7 +40,8 @@ public partial class Obstacle : Node2D
         ObstacleKind.Crate => new Rect2(Position + new Vector2(-23, -50), new Vector2(46, 50)),
         ObstacleKind.CrateStack => new Rect2(Position + new Vector2(-23, -106), new Vector2(46, 106)),
         ObstacleKind.Cone => new Rect2(Position + new Vector2(-13, -56), new Vector2(26, 56)),
-        _ => new Rect2(Position + new Vector2(-30, -16), new Vector2(60, 32)),
+        ObstacleKind.Drone => new Rect2(Position + new Vector2(-30, -16), new Vector2(60, 32)),
+        _ => StationHitbox(), // (UPSIDE-DOWN STATION's dangers: see StationThings.cs)
     };
 
     /// <summary>SMASH! It bursts into bouncing pieces, like Bolt-E does when he crashes.</summary>
@@ -60,8 +66,11 @@ public partial class Obstacle : Node2D
             case ObstacleKind.Cone:
                 parts.Add(new RobotPart("cone", new Vector2(0, -33), 26, DrawCone, FlatEvery: Mathf.Pi));
                 break;
-            default:
+            case ObstacleKind.Drone:
                 parts.Add(new RobotPart("drone", Vector2.Zero, 34, DrawDrone, FlatEvery: Mathf.Pi));
+                break;
+            default:
+                AddStationParts(parts); // (see StationThings.cs)
                 break;
         }
         // The KABOOM starts right in its middle, so the pieces pop up and out.
@@ -70,13 +79,17 @@ public partial class Obstacle : Node2D
             ObstacleKind.Crate => new Vector2(0, -28),
             ObstacleKind.CrateStack => new Vector2(0, -56),
             ObstacleKind.Cone => new Vector2(0, -33),
+            ObstacleKind.SpikeStrip => new Vector2(0, -14),
+            ObstacleKind.LaserGate => new Vector2(0, -56),
             _ => Vector2.Zero,
         };
         // Drones are little robots, and crates are full of spare robot parts, so gears, screws and springs fly out.
         // A cone is just orange plastic.
         int littleBits = Kind == ObstacleKind.Cone ? 0 : 12;
         // (A drone floats 175 pixels above the ground, so its pieces fall that far before they bounce.)
-        explosion = new RobotExplosion(parts, new Vector2(0, drone ? 0 : -30), 0, drone ? 175f : 0f, new Color(1f, 0.85f, 0.4f),
+        // (Space junk floats in the middle of UPSIDE-DOWN STATION: its pieces fall FloatHeight down to the floor.)
+        bool floating = drone || Kind == ObstacleKind.SpaceJunk;
+        explosion = new RobotExplosion(parts, new Vector2(0, floating ? 0 : -30), 0, drone ? 175f : FloatHeight, new Color(1f, 0.85f, 0.4f),
                                        boomAt: middle, littleBits: littleBits);
     }
 
@@ -114,6 +127,9 @@ public partial class Obstacle : Node2D
                 break;
             case ObstacleKind.Drone:
                 DrawDrone();
+                break;
+            default:
+                DrawStationThing(); // (see StationThings.cs)
                 break;
         }
     }

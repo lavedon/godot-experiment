@@ -292,6 +292,17 @@ public partial class Main
                 (nameof(HumanoidMusicFlow), HumanoidMusicFlow),
                 (nameof(HumanoidMusicAudio), HumanoidMusicAudio),
                 (nameof(OptiMaxMusicBattle), OptiMaxMusicBattle),
+                // UPSIDE-DOWN STATION, the 6th world (see Main.StationTests.cs)
+                (nameof(StationIsSixth), StationIsSixth),
+                (nameof(StartWorldPicker), StartWorldPicker),
+                (nameof(FlipGravity), FlipGravity),
+                (nameof(StationDangers), StationDangers),
+                (nameof(StationFairness), StationFairness),
+                (nameof(StationRebuild), StationRebuild),
+                (nameof(StationBoss), StationBoss),
+                (nameof(StationPowers), StationPowers),
+                (nameof(StationResets), StationResets),
+                (nameof(StationDraws), StationDraws),
             }).ToArray();
 
             if (OS.GetCmdlineUserArgs().Contains("--selftest-dust"))
@@ -306,6 +317,9 @@ public partial class Main
             // To run only OPTI-MAX's checks (and the taking-turns rule): add --selftest-optimax after --selftest
             if (OS.GetCmdlineUserArgs().Contains("--selftest-optimax"))
                 tests = tests.Where(test => OptiMaxTestNames.Contains(test.Name)).ToArray();
+            // To run only UPSIDE-DOWN STATION's checks: add --selftest-station after --selftest
+            if (OS.GetCmdlineUserArgs().Contains("--selftest-station"))
+                tests = tests.Where(test => StationTestNames.Contains(test.Name)).ToArray();
 
             for (int i = 0; i < tests.Length; i++)
             {
@@ -320,6 +334,7 @@ public partial class Main
                 testPluggedIn = null;
                 testKnownPads = null;
                 testTakeTurns = false;
+                startWorld = 0; // (every test starts its games in Sunny Hills, unless it picks another world)
                 Engine.TimeScale = 1;
                 await Wait(0.2);
 
@@ -505,7 +520,7 @@ public partial class Main
             CloseLine = $"So close! Only {SoCloseMeters} m to {Hud.ShortName(W16, 10).ToUpperInvariant()}'s flag!",
         };
 
-        hud.ShowGameOver(BiggestResults(Worlds.WorldLine(6)));
+        hud.ShowGameOver(BiggestResults(Worlds.WorldLine(7)));
         await Wait(0.2);
         Check(hud.ResultsWorldLine == "You went all the way around the world!", $"the results card says how far the World Tour went ({hud.ResultsWorldLine})");
         Check(hud.ResultsTodayLine.StartsWith("Today: WWWWWWWWW. 99999 (champ!)") && hud.ResultsCloseLine.StartsWith("So close! Only 150 m"),
@@ -1460,8 +1475,8 @@ public partial class Main
     async Task WorldColorsReadable()
     {
         await NextFrame();
-        Check(string.Join(", ", Worlds.All.Select(w => w.Name)) == "SUNNY HILLS, CANDY LAND, NIGHT CITY, SNOWY PEAKS, THE MOON",
-              $"the 5 worlds, in order ({string.Join(", ", Worlds.All.Select(w => w.Name))})");
+        Check(string.Join(", ", Worlds.All.Select(w => w.Name)) == "SUNNY HILLS, CANDY LAND, NIGHT CITY, SNOWY PEAKS, THE MOON, UPSIDE-DOWN STATION",
+              $"the 6 worlds, in order ({string.Join(", ", Worlds.All.Select(w => w.Name))})");
         foreach (var world in Worlds.All)
         {
             float near = Worlds.Brightness(world.NearHills), far = Worlds.Brightness(world.FarHills), sky = Worlds.Brightness(world.SkyTop);
@@ -1471,9 +1486,9 @@ public partial class Main
 
         string Numbers(Func<World, object> pick) =>
             string.Join(" ", Worlds.All.Select(w => Convert.ToString(pick(w), System.Globalization.CultureInfo.InvariantCulture)));
-        Check(Numbers(w => w.MusicSpeed) == "1 1.05 0.95 1.05 0.92", $"each world has its own music speed ({Numbers(w => w.MusicSpeed)})");
-        Check(Numbers(w => w.Gravity) == "1 1 1 1 0.55", $"only the Moon has floaty gravity ({Numbers(w => w.Gravity)})");
-        Check(Numbers(w => w.RustyOutfit) == "None PartyHat Sunglasses BobbleHat SpaceHelmet", $"Big Rusty's outfits ({Numbers(w => w.RustyOutfit)})");
+        Check(Numbers(w => w.MusicSpeed) == "1 1.05 0.95 1.05 0.92 1.1", $"each world has its own music speed ({Numbers(w => w.MusicSpeed)})");
+        Check(Numbers(w => w.Gravity) == "1 1 1 1 0.55 1", $"only the Moon has floaty gravity ({Numbers(w => w.Gravity)})");
+        Check(Numbers(w => w.RustyOutfit) == "None PartyHat Sunglasses BobbleHat SpaceHelmet NeonGoggles", $"Big Rusty's outfits ({Numbers(w => w.RustyOutfit)})");
         var sunny = Worlds.All[0];
         Check(sunny.SkyTop == new Color(0.45f, 0.75f, 1f) && sunny.SkyBottom == new Color(0.85f, 0.95f, 1f) &&
               sunny.NearHills == new Color(0.45f, 0.78f, 0.45f) && sunny.Grass == new Color(0.38f, 0.75f, 0.3f) &&
@@ -1483,8 +1498,8 @@ public partial class Main
         Check(Worlds.WorldLine(1) == "World: SUNNY HILLS", $"1 world: '{Worlds.WorldLine(1)}'");
         Check(Worlds.WorldLine(3) == "You rode all the way to NIGHT CITY!", $"3 worlds: '{Worlds.WorldLine(3)}'");
         Check(Worlds.WorldLine(5) == "You rode all the way to THE MOON!", $"5 worlds: '{Worlds.WorldLine(5)}'");
-        Check(Worlds.WorldLine(6) == "You went all the way around the world!" && Worlds.WorldLine(9) == Worlds.WorldLine(6),
-              $"6 or more: '{Worlds.WorldLine(6)}'");
+        Check(Worlds.WorldLine(7) == "You went all the way around the world!" && Worlds.WorldLine(9) == Worlds.WorldLine(7),
+              $"7 or more: '{Worlds.WorldLine(7)}'");
     }
 
     /// <summary>
@@ -1663,21 +1678,22 @@ public partial class Main
             new[] { "moon", "clouds", "stars", "city", "road dashes", "night glow" },     // Night City
             new[] { "sun", "clouds", "mountains", "pines", "pebbles", "snow" },           // Snowy Peaks
             new[] { "earth", "stars", "craters", "night glow" },                          // The Moon
+            new[] { "stars", "station", "ringed planet", "portholes", "ceiling", "floor rail", "night glow" }, // UPSIDE-DOWN STATION
         };
-        for (int i = 0; i <= 5; i++)
+        for (int i = 0; i <= 6; i++)
         {
             int errorsBefore = SelfTestLogger.Errors;
             ChangeWorld(i);
             Burst(robot.Position, 10, Colors.White, 200f); // (some puffs on top, too)
             await Wait(0.4);
-            var expected = specialThings[i % 5];
+            var expected = specialThings[i % 6];
             var missing = expected.Where(thing => !drawnWorldThings.Contains(thing)).ToList();
             Check(missing.Count == 0, $"{CurrentWorld.Name} draws its {string.Join(", ", expected)}" +
                                       (missing.Count > 0 ? $" (missing: {string.Join(", ", missing)})" : ""));
             Check(SelfTestLogger.Errors == errorsBefore, $"{CurrentWorld.Name} draws without errors");
         }
-        Check(hud.BannerText == "YOU WENT ALL THE WAY AROUND!" && CurrentWorld.Name == "SUNNY HILLS" && worldsReached == 6,
-              $"after the Moon: '{hud.BannerText}', back in {CurrentWorld.Name} (worlds reached: {worldsReached})");
+        Check(hud.BannerText == "YOU WENT ALL THE WAY AROUND!" && CurrentWorld.Name == "SUNNY HILLS" && worldsReached == 7,
+              $"after UPSIDE-DOWN STATION: '{hud.BannerText}', back in {CurrentWorld.Name} (worlds reached: {worldsReached})");
 
         await Wait(3);
         Check(drawnWorldThings.SetEquals(specialThings[0]), $"back in Sunny Hills it looks like it always did ({string.Join(", ", drawnWorldThings)})");
@@ -1704,34 +1720,34 @@ public partial class Main
         await Wait(2);
         Check(hud.ResultsShowing && hud.ResultsWorldLine == "You rode all the way to NIGHT CITY!", $"the results card says '{hud.ResultsWorldLine}'");
         var postcards = hud.Postcards;
-        Check(hud.MenuStripShowing && postcards.Reached == Math.Max(3, Math.Min(5, before)) && postcards.NewFrom == Math.Min(5, before),
+        Check(hud.MenuStripShowing && postcards.Reached == Math.Max(3, Math.Min(6, before)) && postcards.NewFrom == Math.Min(6, before),
               $"the postcards show the worlds reached ({postcards.Reached}), NEW from the old farthest world ({postcards.NewFrom})");
         if (before < 2)
             Check(postcards.IsNew(1) && postcards.IsNew(2) && !postcards.IsNew(0) && !postcards.IsNew(3), "Candy Land and Night City get a NEW! ribbon");
         await NextFrame();
         await NextFrame();
-        Check(postcards.PicturesDrawn == postcards.Reached && postcards.QuestionMarksDrawn == 5 - postcards.Reached,
+        Check(postcards.PicturesDrawn == postcards.Reached && postcards.QuestionMarksDrawn == 6 - postcards.Reached,
               $"pictures of the worlds reached, '?' for the rest ({postcards.PicturesDrawn} pictures, {postcards.QuestionMarksDrawn} question marks)");
 
         // The next game goes all the way around (the results card says so, and every postcard has a picture)
         before = database?.FarthestWorld("TWORLD") ?? 1;
         StartGame();
         QuietRoad();
-        ChangeWorld(5);
+        ChangeWorld(6);
         spareBatteries = 0;
         bestScore = 1_000_000;
         Check(Bonk(null) && state == GameState.GameOver, "game over after going all the way around");
         await Wait(2);
         Check(hud.ResultsWorldLine == "You went all the way around the world!", $"the results card says '{hud.ResultsWorldLine}'");
-        Check(postcards.Reached == 5 && postcards.NewFrom == Math.Min(5, before), $"all 5 postcards ({postcards.Reached}), NEW from {postcards.NewFrom}");
+        Check(postcards.Reached == 6 && postcards.NewFrom == Math.Min(6, before), $"all 6 postcards ({postcards.Reached}), NEW from {postcards.NewFrom}");
         if (before == 3)
             Check(postcards.IsNew(3) && postcards.IsNew(4) && !postcards.IsNew(2), "Snowy Peaks and the Moon get a NEW! ribbon (Night City isn't new anymore)");
         Check(AskDatabase(selfTestDbPath, "SELECT world_reached FROM runs WHERE player_name = $name COLLATE NOCASE ORDER BY id DESC LIMIT 1;",
-                          ("$name", "TWORLD")) == 6, "the saved game says 6 worlds (all the way around)");
+                          ("$name", "TWORLD")) == 7, "the saved game says 7 worlds (all the way around)");
 
         // Back on the title screen: the postcards of every world this player has been to, and no NEW! ribbons
         GoToTitle();
-        Check(hud.PlayerName == "TWORLD" && postcards.Reached == 5 && postcards.NewFrom == 99 && !postcards.IsNew(4),
+        Check(hud.PlayerName == "TWORLD" && postcards.Reached == 6 && postcards.NewFrom == 99 && !postcards.IsNew(4),
               $"the title screen shows {hud.PlayerName}'s postcards ({postcards.Reached}), none NEW");
     }
 
@@ -1801,14 +1817,14 @@ public partial class Main
         await NextFrame();
         await NextFrame();
         var postcards = hud.Postcards;
-        Check(postcards.PicturesDrawn == 2 && postcards.QuestionMarksDrawn == 3 && postcards.RibbonsDrawn == 1,
-              $"2 pictures, 3 question marks and 1 NEW! ribbon ({postcards.PicturesDrawn}, {postcards.QuestionMarksDrawn}, {postcards.RibbonsDrawn})");
+        Check(postcards.PicturesDrawn == 2 && postcards.QuestionMarksDrawn == 4 && postcards.RibbonsDrawn == 1,
+              $"2 pictures, 4 question marks and 1 NEW! ribbon ({postcards.PicturesDrawn}, {postcards.QuestionMarksDrawn}, {postcards.RibbonsDrawn})");
 
-        hud.ShowPostcards(5);
+        hud.ShowPostcards(6);
         await NextFrame();
         await NextFrame();
-        Check(postcards.PicturesDrawn == 5 && postcards.QuestionMarksDrawn == 0 && postcards.RibbonsDrawn == 0,
-              $"all 5 worlds reached: 5 pictures, and no ribbons on the title screen ({postcards.PicturesDrawn}, {postcards.RibbonsDrawn})");
+        Check(postcards.PicturesDrawn == 6 && postcards.QuestionMarksDrawn == 0 && postcards.RibbonsDrawn == 0,
+              $"all 6 worlds reached: 6 pictures, and no ribbons on the title screen ({postcards.PicturesDrawn}, {postcards.RibbonsDrawn})");
 
         PlayAs("TPostcards");
         StartGame();
@@ -1882,7 +1898,8 @@ public partial class Main
     /// </summary>
     async Task RustyDressesUp()
     {
-        var outfits = new[] { BossOutfit.None, BossOutfit.PartyHat, BossOutfit.Sunglasses, BossOutfit.BobbleHat, BossOutfit.SpaceHelmet };
+        var outfits = new[] { BossOutfit.None, BossOutfit.PartyHat, BossOutfit.Sunglasses, BossOutfit.BobbleHat, BossOutfit.SpaceHelmet,
+                              BossOutfit.NeonGoggles };
         for (int i = 0; i < Worlds.All.Length; i++)
         {
             PlayAs("TRustyOutfits");
@@ -3940,7 +3957,7 @@ public partial class Main
         float toMoon = await JumpAndChangeWorldOnTheWay(4);
         Check(CurrentWorld.Name == "THE MOON" && Mathf.Abs(toMoon - 212) < 15,
               $"the Moon comes in the middle of a jump: it still goes {toMoon:0} px high (it would have gone about 330)");
-        float toSunny = await JumpAndChangeWorldOnTheWay(5);
+        float toSunny = await JumpAndChangeWorldOnTheWay(6);
         Check(CurrentWorld.Name == "SUNNY HILLS" && Mathf.Abs(toSunny - 212) < 15,
               $"Sunny Hills comes in the middle of a Moon jump: it still goes {toSunny:0} px high (it would have gone about 150)");
 
