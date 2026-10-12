@@ -59,7 +59,8 @@ public partial class Main
     /// through a gap. (Otherwise the pause waits a moment: see UpdatePause.)
     /// </summary>
     bool CanPauseNow => state == GameState.Playing && !paused && Engine.TimeScale == 1 && fallingThrough is null && !robot.Crashed &&
-                        !VolcanoBusy; // (not while dropping into a LAVA CAVE, blasting out, or hopping in the lava: see Main.Volcano.cs)
+                        !VolcanoBusy && // (not while dropping into a LAVA CAVE, blasting out, or hopping in the lava: see Main.Volcano.cs)
+                        !mapOpen;       // (not over the WORLD MAP: the game is already frozen there, see Main.WorldMap.cs)
 
     /// <summary>START (or P or Esc), or Bolt-E's controller came unplugged: pause now, or as soon as he can.</summary>
     void AskToPause()
@@ -120,6 +121,7 @@ public partial class Main
     {
         pauseMenu.Here = WorldHere;
         pauseMenu.CanWarpTo = WarpWorlds();
+        pauseMenu.Cleared = clearedWorlds; // (a CLEARED world's postcard gets a little gold flag: see Main.WorldMap.cs)
         pauseMenu.WarpBlocked = WhyNoWarp();
         pauseMenu.QueueRedraw();
     }

@@ -58,14 +58,26 @@ public partial class Main
     /// <summary>
     /// After beating Big Rusty: the next world comes a little later, so "YOU BEAT BIG RUSTY!" shows first.
     /// It doesn't come after a game over, and Later skips it if a new game started in the meantime.
+    /// Then the WORLD MAP takes Bolt-E there (see Main.WorldMap.cs): it opens as soon as it safely can.
     /// </summary>
     void NextWorldSoon()
     {
         newWorldComing = true; // (no WORLD WARP until it's here: see Main.Pause.cs)
         Later(NewWorldDelay, () =>
         {
-            newWorldComing = false;
-            if (state is GameState.Playing or GameState.Rebuilding) ChangeWorld(worldNumber + 1);
+            if (state is not (GameState.Playing or GameState.Rebuilding))
+            {
+                newWorldComing = false; // (game over: never mind)
+                return;
+            }
+            if (WorldMapOn)
+            {
+                mapWantedFor = worldNumber + 1; // the WORLD MAP takes him there (newWorldComing stays true until GO)
+                mapWaitTime = 0;
+                return;
+            }
+            newWorldComing = false; // (the self-test's older tests: straight on, exactly like before)
+            ChangeWorld(worldNumber + 1);
         });
     }
 

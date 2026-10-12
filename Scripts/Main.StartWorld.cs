@@ -8,7 +8,8 @@ using Godot;
 /// Sunny Hills, every world they have already reached, and UPSIDE-DOWN STATION and VOLCANO ISLAND (always, because they're
 /// the newest worlds).
 /// The picked world's postcard glows, and "START: ..." under the postcards says which one it is. The game remembers
-/// the pick until it's closed.
+/// the pick until it's closed. On the WORLD MAP before every game (see Main.WorldMap.cs), every world this player has
+/// CLEARED, and the world right after it, may be picked too: beating a world's boss opens the road to the next one.
 ///
 /// Fair play: starting somewhere else never wins postcards or looks you haven't earned. In a game that started in another
 /// world, a world only counts as "reached" when Bolt-E really rode into it by beating a boss, and only if it's the next
@@ -23,13 +24,24 @@ public partial class Main
     int gameStartWorld;       // the world THIS game started in
     int farthestAtStart = 1;  // the most worlds this player had reached before this game
 
-    /// <summary>The worlds this player may start in: Sunny Hills, the worlds they've reached, and UPSIDE-DOWN STATION.</summary>
-    List<int> AllowedStartWorlds()
+    /// <summary>
+    /// The worlds this player may start in: Sunny Hills, the worlds they've reached, UPSIDE-DOWN STATION and VOLCANO ISLAND
+    /// (always, because they're the newest worlds), and every CLEARED world and the world right after it (see
+    /// Main.WorldMap.cs). This one list is used by DOWN on the title screen, the WORLD MAP and WORLD WARP.
+    /// </summary>
+    List<int> AllowedStartWorlds() => AllowedStartWorlds(clearedWorlds);
+
+    /// <summary>The worlds this player may start in, if these were the worlds they have CLEARED (the WORLD MAP's show uses this).</summary>
+    List<int> AllowedStartWorlds(IReadOnlySet<int> cleared)
     {
         var allowed = new List<int>();
-        for (int world = 0; world < Math.Min(farthestWorld, Worlds.All.Length); world++) allowed.Add(world);
-        if (!allowed.Contains(Worlds.StationIndex)) allowed.Add(Worlds.StationIndex);
-        if (!allowed.Contains(Worlds.VolcanoIndex)) allowed.Add(Worlds.VolcanoIndex);
+        for (int world = 0; world < Worlds.All.Length; world++)
+        {
+            int before = (world + Worlds.All.Length - 1) % Worlds.All.Length; // (the world whose road leads here)
+            if (world < Math.Min(farthestWorld, Worlds.All.Length) || world is Worlds.StationIndex or Worlds.VolcanoIndex ||
+                cleared.Contains(world) || cleared.Contains(before))
+                allowed.Add(world);
+        }
         return allowed;
     }
 
@@ -50,11 +62,15 @@ public partial class Main
         ShowStartWorld();
     }
 
-    /// <summary>Shows the start world on the postcards (back to Sunny Hills if this player can't start in it).</summary>
+    /// <summary>
+    /// Shows the start world on the postcards (back to Sunny Hills if this player can't start in it), and a little gold
+    /// flag on the postcard of every world this player has CLEARED (see Main.WorldMap.cs).
+    /// </summary>
     void ShowStartWorld()
     {
         if (!AllowedStartWorlds().Contains(startWorld)) startWorld = 0;
         hud.ShowStartWorld(startWorld);
+        hud.ShowClearedFlags(clearedWorlds);
     }
 
     /// <summary>

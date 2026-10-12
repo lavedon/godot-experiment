@@ -4,8 +4,9 @@ using Godot;
 /// The World Tour postcards on the menus: one little card for every world. A world you've been to shows a tiny
 /// picture of it (its sky, a hill, the ground, and a dot for its sun, moon or Earth). Worlds you haven't reached yet
 /// are grey with a "?". Worlds you reached for the first time in the game you just played get a gold border and a
-/// gold NEW! ribbon. The world the next game starts in glows (pick it with DOWN on the title screen), and "START: ..."
-/// under the cards says which one it is. Everything is drawn with code.
+/// gold NEW! ribbon. A world you have CLEARED on the WORLD MAP (you beat its boss) has a little gold flag in the corner.
+/// The world the next game starts in glows (pick it with DOWN on the title screen), and "START: ..." under the cards
+/// says which one it is. Everything is drawn with code.
 /// </summary>
 public partial class WorldPostcards : Control
 {
@@ -31,6 +32,8 @@ public partial class WorldPostcards : Control
     public int Picked;
     /// <summary>True on the title screen: "DOWN = pick a world" shows next to the word "WORLDS".</summary>
     public bool ShowPickHint;
+    /// <summary>The worlds this player has CLEARED on the WORLD MAP (their cards get a little gold flag).</summary>
+    public IReadOnlySet<int> Cleared = new HashSet<int>();
 
     /// <summary>True if card i gets a NEW! ribbon: a world reached for the first time in the last game.</summary>
     public bool IsNew(int i) => i >= NewFrom && i < Reached;
@@ -39,6 +42,7 @@ public partial class WorldPostcards : Control
     public int PicturesDrawn { get; private set; }
     public int QuestionMarksDrawn { get; private set; }
     public int RibbonsDrawn { get; private set; }
+    public int FlagsDrawn { get; private set; }
     /// <summary>The "START: ..." words, where the glowing card is, and the right edge of everything drawn.</summary>
     public string StartLine { get; private set; } = "";
     public Rect2 PickedCard { get; private set; }
@@ -66,7 +70,7 @@ public partial class WorldPostcards : Control
             DrawnRight = Mathf.Max(DrawnRight, hintAt.X + hintWidth);
         }
 
-        PicturesDrawn = QuestionMarksDrawn = RibbonsDrawn = 0;
+        PicturesDrawn = QuestionMarksDrawn = RibbonsDrawn = FlagsDrawn = 0;
         int picked = Mathf.Clamp(Picked, 0, Worlds.All.Length - 1);
         for (int i = 0; i < Worlds.All.Length; i++)
         {
@@ -90,6 +94,12 @@ public partial class WorldPostcards : Control
                 DrawRect(inside, NotYet);
                 DrawCentered(font, "?", inside.GetCenter(), 22, Colors.White);
                 QuestionMarksDrawn++;
+            }
+
+            if (Cleared.Contains(i))
+            {
+                DrawLittleFlag(this, inside.Position); // CLEARED on the WORLD MAP!
+                FlagsDrawn++;
             }
 
             if (IsNew(i))
@@ -180,6 +190,28 @@ public partial class WorldPostcards : Control
         canvas.DrawRect(new Rect2(r.Position.X, r.Position.Y + 4, r.Size.X, 1.5f), world.Pebbles);   // the magenta ceiling edge
         canvas.DrawRect(new Rect2(r.Position.X, r.End.Y - 5, r.Size.X, 5), world.Dirt);
         canvas.DrawRect(new Rect2(r.Position.X, r.End.Y - 6, r.Size.X, 1.5f), world.Grass);          // the cyan floor edge
+    }
+
+    // A CLEARED world's little gold flag: about 8 x 6 pixels (made once, then moved into place: no new lists every time)
+    static readonly Vector2[] LittleFlagShape = { new(0, 0), new(8, 0.8f), new(8, 6.2f), new(0, 6) };
+    static readonly Vector2[] littleFlag = new Vector2[4];
+
+    /// <summary>
+    /// A little gold flag on a 1-pixel pole in the top-left corner of a postcard's picture ("corner" = the picture's
+    /// top-left corner): this world is CLEARED on the WORLD MAP. (The pause screen draws the same flag, made bigger.)
+    /// </summary>
+    public static void DrawLittleFlag(CanvasItem canvas, Vector2 corner)
+    {
+        var pole = corner + new Vector2(4, 2);
+        canvas.DrawRect(new Rect2(pole.X - 1, pole.Y - 1, 3, 13), Ink);  // the pole's dark edge...
+        canvas.DrawRect(new Rect2(pole.X, pole.Y, 1, 11), Colors.White); // ...and the pole
+        for (int pass = 0; pass < 2; pass++)
+        {
+            float grow = pass == 0 ? 1 : 0; // (the first pass is the dark outline, a little bigger)
+            for (int i = 0; i < littleFlag.Length; i++)
+                littleFlag[i] = pole + new Vector2(1, 0) + LittleFlagShape[i] + new Vector2(i is 1 or 2 ? grow : 0, i < 2 ? -grow : grow);
+            canvas.DrawColoredPolygon(littleFlag, pass == 0 ? Ink : Gold);
+        }
     }
 
     /// <summary>Draws words with their middle at "middle". (We measure them, so they're exactly in the middle.)</summary>

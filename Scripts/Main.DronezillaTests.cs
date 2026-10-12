@@ -14,15 +14,6 @@ public partial class Main
         nameof(BeatDronezilla), nameof(DroneCantBeDriven), nameof(DroneDrawsEverywhere),
     };
 
-    /// <summary>Which kind of boss this is (Big Rusty, VROOMBA, DRONEZILLA or OPTI-MAX).</summary>
-    static BossKind KindOf(BossBase? someBoss) => someBoss switch
-    {
-        Vroomba => BossKind.Vroomba,
-        Dronezilla => BossKind.Dronezilla,
-        OptiMax => BossKind.OptiMax,
-        _ => BossKind.BigRusty,
-    };
-
     /// <summary>How high Bolt-E's feet get with a jump and a double jump on a normal world (about 365 pixels).</summary>
     static float DoubleJumpReach =>
         Robot.JumpSpeed * Robot.JumpSpeed / (2 * Robot.Gravity) + Mathf.Pow(0.85f * Robot.JumpSpeed, 2) / (2 * Robot.Gravity);

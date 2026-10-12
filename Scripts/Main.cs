@@ -121,6 +121,7 @@ public partial class Main : Node2D
         SetUpPowerUps(); // the slot machine for the rainbow ? boxes (see Main.PowerUps.cs)
         SetUpPause();    // the PAUSE screen and WORLD WARP (see Main.Pause.cs)
         SetUpVolcano();  // the curtain for dropping into the LAVA CAVES (see Main.Volcano.cs)
+        SetUpWorldMap(); // the WORLD MAP between worlds and before every game (see Main.WorldMap.cs)
 
         // A different player picked (or a name typed in): that player's Bolt Bank, look and postcards. Clicking the
         // picker's arrows changes the look. (See Main.Looks.cs.) While a name is still being typed, there are no
@@ -419,11 +420,12 @@ public partial class Main : Node2D
     /// does the slot machine), and we're back in Sunny Hills with normal gravity. The Bolt Bank stops counting and waiting
     /// unlock parties are called off (they come back on the next menu: see Main.Looks.cs).
     /// It also starts a new run number, so anything still waiting to happen from the old game (see Later) is skipped.
-    /// And the game is never left paused (see Main.Pause.cs).
+    /// And the game is never left paused (see Main.Pause.cs), and no WORLD MAP is left open or waiting (see Main.WorldMap.cs).
     /// </summary>
     void ClearWorld()
     {
         ClearPause();
+        ClearMap();
         StopPowersNow();
         CancelCelebrations();
         ResetWorlds(); // back to Sunny Hills (see Main.Worlds.cs)
@@ -603,6 +605,7 @@ public partial class Main : Node2D
         {
             GD.PushError($"Could not save the score: {e.Message}");
         }
+        SaveNewClears(player); // (a CLEARED world the map never saved: the game ended too soon, or the database was busy)
 
         // The World Tour postcards: every world reached (in this game too, even if it couldn't be saved),
         // and the ones reached for the very first time get a gold NEW! ribbon.
@@ -639,6 +642,7 @@ public partial class Main : Node2D
             });
             StartBankCountUp(player, bankBefore, bankAfter); // Bolt-E's corner, and the Bolt Bank counts up (see Main.Looks.cs)
             hud.ShowPostcards(postcardsReached, postcardsNewFrom);
+            hud.ShowClearedFlags(clearedWorlds); // (a world CLEARED in this game gets its little gold flag: see Main.WorldMap.cs)
             sounds.Play(newBest ? Sfx.HighScore : Sfx.GameOver);
         };
     }
@@ -847,6 +851,7 @@ public partial class Main : Node2D
         UpdateWorlds(dt); // the colors change into a new world, and snow falls (see Main.Worlds.cs)
         UpdateLooks(dt);  // the Bolt Bank counts up, and unlock parties (see Main.Looks.cs)
         UpdatePause();    // START was pressed while Bolt-E couldn't pause yet? Now he can (see Main.Pause.cs)
+        UpdateMap(dt);    // a boss was beaten: the WORLD MAP opens at a safe moment (see Main.WorldMap.cs)
 
         // Screen shake after a bump
         shake = Mathf.Max(0, shake - dt);
@@ -1161,6 +1166,7 @@ public partial class Main : Node2D
         if (state == GameState.GameOver) return;
 
         bossesBeaten++;
+        RecordWorldCleared(WorldHere); // this world is CLEARED! (see Main.WorldMap.cs)
         bonusPoints += PointsForBeatingBoss;
         popups.Add($"+{PointsForBeatingBoss}", boss!.Position + new Vector2(0, -200), new Color(1f, 0.85f, 0.2f), 46);
         // (When Dad was driving him: "YOU BEAT DAD'S BIG RUSTY!" - see Main.Driver.cs)
@@ -1337,6 +1343,13 @@ public partial class Main : Node2D
         }
         if (boss is null && bossWarningShown && meters >= nextBossAt) SpawnBoss();
         if (bossWarningShown) return; // nothing else shows up just before and during a boss fight
+
+        // The WORLD MAP is coming (a boss was just beaten): nothing new until the next world (see Main.WorldMap.cs)
+        if (newWorldComing && WorldMapOn)
+        {
+            spawnCountdown = Mathf.Max(spawnCountdown, MapSafeGap);
+            return;
+        }
 
         // Nothing new comes while Bolt-E is up on the rocket board or floating down on the parachute
         if (power == PowerUp.Rocket || robot.Parachuting)

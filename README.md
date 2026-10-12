@@ -633,7 +633,7 @@ To run only VOLCANO ISLAND's and the LAVA CAVES' checks, add `--selftest-volcano
 Exit codes: **0** = everything passed, **1** = something failed, **2** = refused to start (bad `--db`),
 **3** = it took too long. A good run has no lines with `FAIL:`, `ERROR:`, `SCRIPT ERROR` or `Unhandled exception`
 in the output or in `godot.log`. The tests are in `Scripts/Main.SelfTest.cs`, and new features add theirs there.
-Just before the DONE line it also prints how many seconds of game time the tests took (the watchdog stops them at 1800,
+Just before the DONE line it also prints how many seconds of game time the tests took (the watchdog stops them at 1950,
 so the commands above use `--quit-after 120000`, which is 2000 seconds).
 (They expect the normal tuning numbers, so if you change a number like `StartingBatteries` or `MegaSeconds`,
 a world in `Worlds.cs`, a look in `Looks.cs`, a family race number in `Main.Family.cs`, Big Rusty's

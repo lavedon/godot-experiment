@@ -107,8 +107,9 @@ public partial class Main
         bool riding = state is GameState.Playing or GameState.Rebuilding;
         noBossSeconds = boss is null && !bossWarningShown ? noBossSeconds + dt : 0;
 
-        // The ceiling is shut in the station, except when a boss is coming (or was just here)
-        bool ceilingWanted = InStation && state != GameState.Title && noBossSeconds >= CeilingBackSeconds;
+        // The ceiling is shut in the station, except when a boss is coming (or was just here, or the WORLD MAP is coming
+        // after him: see Main.WorldMap.cs)
+        bool ceilingWanted = InStation && state != GameState.Title && noBossSeconds >= CeilingBackSeconds && !newWorldComing;
         float before = ceilingOpen;
         ceilingOpen = Mathf.MoveToward(ceilingOpen, ceilingWanted ? 0 : 1, dt / CeilingSlideSeconds);
         bool startedMoving = (before <= 0 && ceilingOpen > 0) || (before >= 1 && ceilingOpen < 1);

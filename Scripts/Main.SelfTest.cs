@@ -17,9 +17,9 @@ public partial class Main
     const int SelfTestDevice = 99;          // the self-test's pretend presses come from this "device" (real ones are 0, 1, 2...)
     const int SelfTestSecondPad = 98;       // ...and its pretend SECOND controller (the one that can drive Big Rusty)
     const string W16 = "WWWWWWWWWWWWWWWW";  // the widest name you can type: 16 W's (W is the fattest letter)
-    // The self-test gives up if it takes longer than this (seconds of game time). Raised from 1500 to 1800 for the PAUSE
-    // screen tests (the whole run took about 1230 seconds then, so there is room to spare).
-    const int SelfTestWatchdogSeconds = 1800;
+    // The self-test gives up if it takes longer than this (seconds of game time). Raised from 1800 to 1950 for the WORLD MAP
+    // tests (the whole run took about 1550 seconds then, so there is room to spare).
+    const int SelfTestWatchdogSeconds = 1950;
 
     bool selfTesting;             // true when the game was started with --selftest
     float testMoveAxis;           // the self-test's pretend stick: -1 = left, 0 = stay, 1 = right
@@ -108,7 +108,7 @@ public partial class Main
         errorCounter = new SelfTestLogger();
         OS.AddLogger(errorCounter);
 
-        // The watchdog: if the tests ever get stuck, give up after 30 minutes instead of waiting forever
+        // The watchdog: if the tests ever get stuck, give up after about 32 minutes (SelfTestWatchdogSeconds) instead of waiting forever
         GetTree().CreateTimer(SelfTestWatchdogSeconds, true, false, true).Timeout += () =>
         {
             GD.Print("FAIL: watchdog - the self-test took too long");
@@ -331,6 +331,18 @@ public partial class Main
                 (nameof(VolcanoPowersAndPause), VolcanoPowersAndPause),
                 (nameof(VolcanoDraws), VolcanoDraws),
                 (nameof(EasierOptiMaxKicks), EasierOptiMaxKicks),
+                // The WORLD MAP between worlds, and before every game (see Main.MapTests.cs)
+                (nameof(MapClearsSaved), MapClearsSaved),
+                (nameof(MapAfterBossWin), MapAfterBossWin),
+                (nameof(MapGoButtons), MapGoButtons),
+                (nameof(StartMapPicksAWorld), StartMapPicksAWorld),
+                (nameof(MapThroughSpace), MapThroughSpace),
+                (nameof(MapWaitsForSafety), MapWaitsForSafety),
+                (nameof(MapNeverAfterGameOver), MapNeverAfterGameOver),
+                (nameof(MapNeverStuck), MapNeverStuck),
+                (nameof(MapBeatsEveryBoss), MapBeatsEveryBoss),
+                (nameof(MapDrawsEverywhere), MapDrawsEverywhere),
+                (nameof(MapMusicAndSounds), MapMusicAndSounds),
             }).ToArray();
 
             if (OS.GetCmdlineUserArgs().Contains("--selftest-dust"))
@@ -355,6 +367,9 @@ public partial class Main
             // To run only VOLCANO ISLAND's checks: add --selftest-volcano after --selftest
             if (OS.GetCmdlineUserArgs().Contains("--selftest-volcano"))
                 tests = tests.Where(test => VolcanoTestNames.Contains(test.Name)).ToArray();
+            // To run only the WORLD MAP's checks (and the old World Tour tests next to it): add --selftest-map after --selftest
+            if (OS.GetCmdlineUserArgs().Contains("--selftest-map"))
+                tests = tests.Where(test => MapTestNames.Contains(test.Name)).ToArray();
 
             for (int i = 0; i < tests.Length; i++)
             {
@@ -370,6 +385,7 @@ public partial class Main
                 testKnownPads = null;
                 testTakeTurns = false;
                 testRideOverHoles = false;
+                testWorldMap = false; // (only the WORLD MAP's own tests use the map: see Main.WorldMap.cs)
                 startWorld = 0; // (every test starts its games in Sunny Hills, unless it picks another world)
                 Engine.TimeScale = 1;
                 await Wait(0.2);
@@ -1902,6 +1918,7 @@ public partial class Main
         QuietRoad();
         ChangeWorld(1);
         robot.BlinkTime = 1e9f; // (nothing Big Rusty does can crash Bolt-E in this test)
+        bestScore = 1_000_000;  // (so a NEW HIGH SCORE! banner can't cover the victory words, even in a fresh database)
         SpawnBoss();
         var rusty = (Boss)boss!;
         Check(rusty.Outfit == BossOutfit.PartyHat && rusty.OutfitOnHead, "in Candy Land Big Rusty wears a party hat");
@@ -5510,8 +5527,9 @@ public partial class Main
     }
 
     /// <summary>
-    /// A test player name with no games and no saved looks in this database yet: the name itself, or with a number on
-    /// the end ("TCOW2") if the self-test already ran on this database before.
+    /// A test player name with no games, no saved looks and no WORLD MAP clears in this database yet (and none from this
+    /// run of the game either): the name itself, or with a number on the end ("TCOW2") if the self-test already ran on
+    /// this database before.
     /// </summary>
     string FreshName(string name)
     {
@@ -5519,8 +5537,10 @@ public partial class Main
         {
             string tryName = number == 1 ? name : $"{name}{number}";
             string key = PlayerKey(tryName);
+            if (clearedThisSession.ContainsKey(key) || partiesWaiting.ContainsKey(key)) continue; // (CLEARED a world today)
             if (database is null || (database.StatsFor(tryName).GamesPlayed == 0 &&
-                                     database.GetSetting("look:" + key) is null && database.GetSetting("looks_seen:" + key) is null))
+                                     database.GetSetting("look:" + key) is null && database.GetSetting("looks_seen:" + key) is null &&
+                                     database.GetSetting(MapSeenKey(key)) is null && database.WorldsCleared(tryName).Count == 0))
                 return tryName;
         }
     }

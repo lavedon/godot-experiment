@@ -16,7 +16,9 @@ public record PlayerBest(string Name, int BestScore, int FarthestM);
 ///   runs     - one row for every game played (name, score, distance, bolts, enemies stomped, bosses beaten,
 ///              spare batteries used, how many worlds of the World Tour, how long, when)
 ///   settings - simple key/value pairs, like the last player picked ("player_name"), and for each player (in small letters):
-///              "look:sam" = the look Sam wears, "looks_seen:sam" = the looks Sam already had an unlock party for
+///              "look:sam" = the look Sam wears, "looks_seen:sam" = the looks Sam already had an unlock party for,
+///              "map_seen:sam" = Sam's first WORLD MAP already showed "YOUR OLD GAMES COUNT!"
+///   world_clears - one row for every world a player CLEARED on the WORLD MAP (beat its boss there), with the date
 /// </summary>
 public sealed class ScoreDatabase : IDisposable
 {
@@ -59,6 +61,16 @@ public sealed class ScoreDatabase : IDisposable
         // How many worlds the game rode through: 1 = only Sunny Hills, 3 = all the way to Night City, 6+ = all the way around.
         // (Old games count as Sunny Hills only, so postcards are earned by really going there.)
         AddColumnIfMissing("runs", "world_reached", "INTEGER NOT NULL DEFAULT 1");
+
+        // The WORLD MAP: which worlds each player has CLEARED (beaten the boss there). "Sam" and "sam" are the same player.
+        Execute("""
+            CREATE TABLE IF NOT EXISTS world_clears (
+                player_name TEXT    NOT NULL COLLATE NOCASE,
+                world       INTEGER NOT NULL,
+                cleared_at  TEXT    NOT NULL DEFAULT (datetime('now', 'localtime')),
+                PRIMARY KEY (player_name, world)
+            );
+            """);
     }
 
     void AddColumnIfMissing(string table, string column, string definition)
@@ -103,6 +115,36 @@ public sealed class ScoreDatabase : IDisposable
         cmd.CommandText = "SELECT COALESCE(MAX(world_reached), 1) FROM runs WHERE player_name = $name COLLATE NOCASE;";
         cmd.Parameters.AddWithValue("$name", playerName);
         return Convert.ToInt32(cmd.ExecuteScalar());
+    }
+
+    /// <summary>
+    /// Remembers that this player beat the boss of world number "world" (0 = Sunny Hills). True the first time.
+    /// (It never waits more than about a second for a database someone else is using: the game must not freeze.)
+    /// </summary>
+    public bool SaveWorldCleared(string playerName, int world)
+    {
+        using var cmd = connection.CreateCommand();
+        cmd.CommandTimeout = 1;
+        cmd.CommandText = "INSERT OR IGNORE INTO world_clears (player_name, world) VALUES ($name, $world);";
+        cmd.Parameters.AddWithValue("$name", playerName);
+        cmd.Parameters.AddWithValue("$world", world);
+        return cmd.ExecuteNonQuery() > 0;
+    }
+
+    /// <summary>Every world whose boss this player has beaten, like {0, 1, 5}. ("Sam" and "sam" are the same player.)</summary>
+    public HashSet<int> WorldsCleared(string playerName)
+    {
+        using var cmd = connection.CreateCommand();
+        cmd.CommandText = "SELECT world FROM world_clears WHERE player_name = $name COLLATE NOCASE;";
+        cmd.Parameters.AddWithValue("$name", playerName);
+        var worlds = new HashSet<int>();
+        using var reader = cmd.ExecuteReader();
+        while (reader.Read())
+        {
+            int world = reader.GetInt32(0);
+            if (world >= 0 && world < Worlds.All.Length) worlds.Add(world);
+        }
+        return worlds;
     }
 
     public List<RunRecord> TopScores(int count)

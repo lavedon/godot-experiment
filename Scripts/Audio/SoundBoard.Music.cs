@@ -99,4 +99,40 @@ public partial class SoundBoard
         outgoingMusic.Stop();
         music.VolumeDb = MusicVolumeDb;
     }
+
+    // ---------- The WORLD MAP's own tune: "Island Hop" (see MapSong.cs and Main.WorldMap.cs) ----------
+
+    AudioStreamPlayer mapMusic = null!; // it keeps playing while the game is frozen behind the map
+
+    /// <summary>Makes the map's tune. (Called at the very END of _Ready, so every older sound stays exactly the same.)</summary>
+    void SetUpMapMusic()
+    {
+        mapMusic = new AudioStreamPlayer
+        {
+            Stream = Synth.ToAudioStream(MapSong.Render(), loop: true),
+            VolumeDb = MusicVolumeDb - 2,
+            ProcessMode = ProcessModeEnum.Always, // (the game is paused, but this one plays on, like the pause screen's blip)
+        };
+        AddChild(mapMusic);
+    }
+
+    /// <summary>True while the map's tune is playing (the self-test reads this).</summary>
+    public bool MapMusicPlaying => mapMusic.Playing;
+
+    /// <summary>The map opens: the level's music waits right where it is, and the map's tune plays from the start.</summary>
+    public void StartMapMusic()
+    {
+        HoldMusicForPause(true);
+        if (MusicOn) mapMusic.Play();
+    }
+
+    /// <summary>
+    /// The map closes: its tune STOPS (it's never just paused), and the level's music goes on. (Main unpauses the game
+    /// FIRST: the music's fades belong to the frozen game.)
+    /// </summary>
+    public void StopMapMusic()
+    {
+        mapMusic.Stop();
+        HoldMusicForPause(false);
+    }
 }

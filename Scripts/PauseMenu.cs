@@ -6,6 +6,7 @@ using Godot;
 ///   CONTINUE,
 ///   WORLD WARP: the World Tour postcards, much bigger (the same little pictures as on the menus, just scaled up).
 ///               Worlds you can't pick yet are grey with a "?", and the world you're in has a gold YOU ARE HERE ribbon.
+///               A world CLEARED on the WORLD MAP has a little gold flag in its corner (bigger here too).
 ///   QUIT TO TITLE.
 /// The picked row glows. It also draws the rainbow WARP! flash, after the game goes on.
 /// It never freezes itself (ProcessMode.Always, set by Main on its layer), so it still works while the game is paused.
@@ -49,6 +50,8 @@ public partial class PauseMenu : Control
     public int Here;
     /// <summary>The worlds that can be picked (the rest are grey with a "?").</summary>
     public HashSet<int> CanWarpTo = new() { 0 };
+    /// <summary>The worlds this player has CLEARED on the WORLD MAP (their postcards get a little gold flag).</summary>
+    public IReadOnlySet<int> Cleared = new HashSet<int>();
     /// <summary>Why WORLD WARP is greyed out, like "Beat the boss first!" (null = it isn't).</summary>
     public string? WarpBlocked;
     /// <summary>The WARP! flash: 1 = bright, fading to 0.</summary>
@@ -60,6 +63,7 @@ public partial class PauseMenu : Control
     public int PicturesDrawn { get; private set; }
     public int QuestionMarksDrawn { get; private set; }
     public int HereRibbonOn { get; private set; } = -1;
+    public int FlagsDrawn { get; private set; }
     public string NameLine { get; private set; } = "";
     public Rect2 DrawnArea { get; private set; }
     public int TimesDrawn { get; private set; }
@@ -162,7 +166,7 @@ public partial class PauseMenu : Control
     /// <summary>The seven big postcards. Returns the area they cover.</summary>
     Rect2 DrawCards(Font font)
     {
-        PicturesDrawn = QuestionMarksDrawn = 0;
+        PicturesDrawn = QuestionMarksDrawn = FlagsDrawn = 0;
         HereRibbonOn = -1;
         var area = CardRect(0);
         for (int i = 0; i < Worlds.All.Length; i++)
@@ -191,6 +195,15 @@ public partial class PauseMenu : Control
                 DrawRect(inside, Grey);
                 Words(font, "?", inside.GetCenter().X, inside.GetCenter().Y + 20, 56, Colors.White);
                 QuestionMarksDrawn++;
+            }
+
+            if (Cleared.Contains(i))
+            {
+                // CLEARED on the WORLD MAP: the menu postcards' little gold flag, scaled up like the picture
+                DrawSetTransform(inside.Position, 0, new Vector2(CardScale, CardScale));
+                WorldPostcards.DrawLittleFlag(this, Vector2.Zero);
+                DrawSetTransform(Vector2.Zero, 0, Vector2.One);
+                FlagsDrawn++;
             }
 
             if (WarpGreyed) DrawRect(inside, new Color(0.3f, 0.3f, 0.35f, 0.65f)); // greyed out: beat the boss first!

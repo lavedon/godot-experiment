@@ -59,13 +59,16 @@ public partial class Main
     }
 
     /// <summary>
-    /// START, A, Space, Enter or a click on the play button: a new game! But on the results card with NEW PLAYER
-    /// picked, it goes to the title card, where the name box is ready to type the new name.
+    /// START, A, Space, Enter or a click on the play button: the WORLD MAP, to pick a world, and then GO! starts the game
+    /// (see Main.WorldMap.cs). But on the results card with NEW PLAYER picked, it goes to the title card, where the name
+    /// box is ready to type the new name.
     /// </summary>
     void PlayPressed()
     {
+        if (mapOpen) return; // (the map is up: its own GO starts the game)
         if (state == GameState.GameOver && hud.NewPlayerPicked) GoToTitle(typing: true);
-        else StartGame();
+        else if (WorldMapOn) OpenStartMap();
+        else StartGame(); // (the self-test's older tests: straight into the game, like before the map existed)
     }
 
     /// <summary>

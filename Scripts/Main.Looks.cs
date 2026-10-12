@@ -50,7 +50,8 @@ public partial class Main
     string SeenKey => "looks_seen:" + bankKey;
 
     /// <summary>True on the menus, where LEFT / RIGHT change Bolt-E's look: the title screen, or once the results card shows.</summary>
-    bool MenuInputOn => state == GameState.Title || (state == GameState.GameOver && gameOverTimer > ResultsDelay && showResults is null);
+    bool MenuInputOn => (state == GameState.Title || (state == GameState.GameOver && gameOverTimer > ResultsDelay && showResults is null)) &&
+                        !mapOpen; // (not while the WORLD MAP covers the menu)
 
     /// <summary>
     /// Has the loaded player won this look? (Without a database, only the looks everyone has from the start:
@@ -111,6 +112,7 @@ public partial class Main
         bankKey = PlayerKey(name);
         playerStats = database?.StatsFor(name);
         farthestWorld = database?.FarthestWorld(name) ?? 1;
+        clearedWorlds = LoadClearedWorlds(name); // the WORLD MAP's CLEARED worlds (see Main.WorldMap.cs)
 
         PutOn(SavedLookIndex());
         ShowBankNumber(Bank, counting: false);

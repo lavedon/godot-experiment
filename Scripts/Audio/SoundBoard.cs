@@ -16,6 +16,7 @@ public enum Sfx
     FlipUp, FlipDown, FlipThud, SpaceFall, CeilingSlide, // UPSIDE-DOWN STATION
     PauseBlip, MenuTick, Warp, // the pause screen and WORLD WARP
     LavaBubble, LavaPlop, Sizzle, RockSink, Wheee, GeyserWhoosh, CaveClear, BatFlap, StalactiteCrack, Eruption, // VOLCANO ISLAND
+    MapIris, MapPip, MapFlag, MapPoof, MapRocket, MapSplash, MapReady, MapGo, MapHop, MapAllClear, MapBossSting, // the WORLD MAP
 }
 
 /// <summary>
@@ -122,6 +123,51 @@ public partial class SoundBoard : Node
         AddEffect(Sfx.PauseBlip, SoundEffects.PauseBlip(), -9f, playsWhilePaused: true);
         AddEffect(Sfx.MenuTick, SoundEffects.Tick(), -12f, voices: 3, playsWhilePaused: true);
         AddEffect(Sfx.Warp, SoundEffects.Warp(), -7f, voices: 1, playsWhilePaused: true);
+
+        // The WORLD MAP's sounds play while the game waits behind the map, frozen (see Main.WorldMap.cs). They come last,
+        // and they make their own noise, so every older sound (and every song) stays exactly the same.
+        AddEffect(Sfx.MapIris, SoundEffects.MapIris(), -9f, voices: 2, playsWhilePaused: true);
+        AddEffect(Sfx.MapPip, SoundEffects.MapPip(), -14f, voices: 3, playsWhilePaused: true);
+        AddEffect(Sfx.MapFlag, SoundEffects.MapFlag(), -6f, voices: 1, playsWhilePaused: true);
+        AddEffect(Sfx.MapPoof, SoundEffects.MapPoof(), -10f, voices: 3, playsWhilePaused: true);
+        AddEffectLike(Sfx.MapRocket, Sfx.Rocket, -8f, voices: 1);  // (the rocket board's blast-off, on the map too)
+        AddEffect(Sfx.MapSplash, SoundEffects.MapSplash(), -8f, voices: 2, playsWhilePaused: true);
+        AddEffectLike(Sfx.MapReady, Sfx.Ding, -10f, voices: 1);    // (OPTI-MAX's "ding!": little Bolt-E has arrived)
+        AddEffect(Sfx.MapGo, SoundEffects.MapGo(), -8f, voices: 1, playsWhilePaused: true);
+        AddEffectLike(Sfx.MapHop, Sfx.Jump, -12f, voices: 2);      // (Bolt-E's own "boing!")
+        AddEffect(Sfx.MapAllClear, SoundEffects.MapAllClear(), -6f, voices: 1, playsWhilePaused: true);
+        AddEffect(Sfx.MapBossSting, SoundEffects.MapBossSting(), -7f, voices: 1, playsWhilePaused: true);
+        SetUpMapMusic(); // "Island Hop", the WORLD MAP's own tune (see SoundBoard.Music.cs)
+    }
+
+    /// <summary>
+    /// A WORLD MAP sound that is the same as a game sound (like the rocket's blast-off), on its own player that still
+    /// plays while the game is frozen behind the map. It uses the same sound, so nothing has to be made again.
+    /// </summary>
+    void AddEffectLike(Sfx name, Sfx sameAs, float volumeDb, int voices)
+    {
+        var player = new AudioStreamPlayer
+        {
+            Stream = effects[sameAs].Stream, VolumeDb = volumeDb, MaxPolyphony = voices, ProcessMode = ProcessModeEnum.Always,
+        };
+        AddChild(player);
+        effects[name] = player;
+    }
+
+    /// <summary>True if this sound still plays while the game is paused (the self-test reads this).</summary>
+    public bool PlaysWhilePaused(Sfx name) => effects[name].ProcessMode == ProcessModeEnum.Always;
+
+    /// <summary>
+    /// The WORLD MAP opens over the game: the game's short sounds stop now. (A jingle frozen behind the map would come
+    /// back after it, like the GAME OVER jingle at the start of the next game.) Sounds that loop, and sounds that play
+    /// while the game is paused, are left alone.
+    /// </summary>
+    public void HushGameSounds()
+    {
+        foreach (var player in effects.Values)
+            if (player.ProcessMode != ProcessModeEnum.Always &&
+                player.Stream is AudioStreamWav { LoopMode: AudioStreamWav.LoopModeEnum.Disabled })
+                player.Stop();
     }
 
     void AddEffect(Sfx name, float[] sound, float volumeDb, int voices = 2, bool loop = false, bool playsWhilePaused = false)
@@ -246,6 +292,7 @@ public partial class SoundBoard : Node
         FinishTrackFade();
         musicFade?.Kill();
         music.Stop();
+        mapMusic.Stop(); // (the WORLD MAP's tune too)
         foreach (var player in effects.Values) player.Stop();
     }
 

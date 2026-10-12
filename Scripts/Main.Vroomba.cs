@@ -32,6 +32,15 @@ public partial class Main
     static BossKind BossForFight(int gameNumber, int fightNumber) =>
         (BossKind)((gameNumber - 1 + fightNumber - 1) % 4);
 
+    /// <summary>Which kind of boss this is (Big Rusty, VROOMBA, DRONEZILLA or OPTI-MAX).</summary>
+    static BossKind KindOf(BossBase? someBoss) => someBoss switch
+    {
+        Vroomba => BossKind.Vroomba,
+        Dronezilla => BossKind.Dronezilla,
+        OptiMax => BossKind.OptiMax,
+        _ => BossKind.BigRusty,
+    };
+
     /// <summary>
     /// The boss for the next fight, by the taking-turns rule. (During the self-test it's always Big Rusty, so every old
     /// test still meets the boss it expects. The VROOMBA, DRONEZILLA and OPTI-MAX tests ask for them: SpawnBoss(BossKind.Vroomba).)

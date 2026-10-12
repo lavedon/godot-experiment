@@ -377,6 +377,13 @@ public partial class Hud : CanvasLayer
         postcards.QueueRedraw();
     }
 
+    /// <summary>The worlds this player has CLEARED on the WORLD MAP: their postcards get a little gold flag in the corner.</summary>
+    public void ShowClearedFlags(IReadOnlySet<int> cleared)
+    {
+        postcards.Cleared = cleared;
+        postcards.QueueRedraw();
+    }
+
     /// <summary>Shows (or hides) UPSIDE-DOWN STATION's gravity arrow, turned the way DOWN is (0 = down, Pi = up).</summary>
     public void SetGravityArrow(bool show, float angle)
     {
@@ -897,6 +904,12 @@ public partial class Hud : CanvasLayer
         bannerFade.TweenInterval(1.6);
         bannerFade.TweenProperty(banner, "modulate:a", 0f, 0.5);
     }
+
+    /// <summary>
+    /// The WORLD MAP opens over the game: the big words and the tip go away now. (Their fades would freeze behind the
+    /// map and come back after it.)
+    /// </summary>
+    public void HideBigWords() => HideBannerAndHint();
 
     /// <summary>Hides the big banner words and the tip right away.</summary>
     void HideBannerAndHint()

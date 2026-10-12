@@ -807,6 +807,140 @@ public static class SoundEffects
         return Done(sound, 0.7f);
     }
 
+    // ---------- The WORLD MAP ----------
+    // (These make their own "shhh" noise with their own dice, so the noise of every older sound and song stays the same.)
+
+    /// <summary>
+    /// "Fwoop!" — the screen closing (or opening) like an eye: soft rushing air that gets brighter, a whistle sliding up,
+    /// and a tiny "plink" at the top. (The map plays it lower when the eye closes, and higher when it opens.)
+    /// </summary>
+    public static float[] MapIris()
+    {
+        const float length = 0.35f; // try changing this!
+        var sound = Synth.Silence(length + 0.25f);
+        var random = new Random(61);
+        float low = 0;
+        for (int i = 0; i < (int)(length * Synth.SampleRate); i++)
+        {
+            float t = (float)i / Synth.SampleRate / length; // 0 to 1
+            float cutoff = 400f + 3000f * t;                 // the "shhh" opens up from dark to bright
+            float amount = 1f - MathF.Exp(-MathF.Tau * cutoff / Synth.SampleRate);
+            low += amount * (random.NextSingle() * 2f - 1f - low);
+            sound[i] = low * MathF.Sin(MathF.PI * t) * 0.8f; // swells in and out
+        }
+        Synth.AddTone(sound, 0, length * 0.9f, Wave.Sine, 0.3f, new Envelope(0.02f, 0.2f, 0.5f, 0.06f), 300, 900);
+        Synth.AddTone(sound, length * 0.85f, 0.05f, Wave.Square12, 0.08f, Pluck, Synth.NoteToFrequency("G6")); // plink!
+        return Done(sound, 0.7f);
+    }
+
+    /// <summary>"Pip!" — one dot of a new road popping up on the map (the map plays them higher and higher).</summary>
+    public static float[] MapPip()
+    {
+        var sound = Synth.Silence(0.15f);
+        Synth.AddTone(sound, 0, 0.045f, Wave.Square25, 0.3f, Pluck, Synth.NoteToFrequency("E6"));
+        Synth.AddTone(sound, 0.02f, 0.05f, Wave.Sine, 0.2f, Pluck, Synth.NoteToFrequency("E7")); // a little glint
+        return Done(sound, 0.6f);
+    }
+
+    /// <summary>"Ta-da-da-DAA, da-DAAAA!" — a world is CLEARED and its gold flag goes up. (Our own tune, a bass, and a cymbal.)</summary>
+    public static float[] MapFlag()
+    {
+        var sound = Tune(new[] { ("C5", 0.1f), ("E5", 0.1f), ("G5", 0.1f), ("C6", 0.2f), ("G5", 0.1f), ("C6", 0.1f), ("E6", 0.6f) },
+                         Wave.Square25, normalize: false);
+        Synth.AddTone(sound, 0.0f, 0.3f, Wave.Triangle, 0.3f, Held, Synth.NoteToFrequency("C3"));
+        Synth.AddTone(sound, 0.3f, 0.2f, Wave.Triangle, 0.3f, Held, Synth.NoteToFrequency("G3"));
+        Synth.AddTone(sound, 0.5f, 0.2f, Wave.Triangle, 0.3f, Held, Synth.NoteToFrequency("E3"));
+        Synth.AddTone(sound, 0.7f, 0.6f, Wave.Triangle, 0.3f, Held, Synth.NoteToFrequency("C3"));
+        AddNoise(sound, new Random(66), 0.7f, 0.5f, 0.1f, new Envelope(0.01f, 0.3f, 0.2f, 0.2f), 9000, 6000, hiss: true); // the cymbal
+        return Done(sound);
+    }
+
+    /// <summary>"Pff!" — a fluffy cloud puffs away from a "?" world: a soft burst of air and a little thump.</summary>
+    public static float[] MapPoof()
+    {
+        var sound = Synth.Silence(0.4f);
+        AddNoise(sound, new Random(62), 0, 0.25f, 0.6f, new Envelope(0.005f, 0.12f, 0f, 0.05f), 1800, 500);
+        Synth.AddTone(sound, 0, 0.12f, Wave.Sine, 0.5f, new Envelope(0.002f, 0.09f, 0f, 0.03f), 200, 90);
+        return Done(sound, 0.7f);
+    }
+
+    /// <summary>"SPLOOSH-blub-blub-blub!" — the space capsule splashing down in the sea: a big splash, then three bubbles.</summary>
+    public static float[] MapSplash()
+    {
+        var sound = Synth.Silence(0.6f);
+        AddNoise(sound, new Random(63), 0, 0.25f, 0.8f, new Envelope(0.003f, 0.15f, 0.1f, 0.05f), 5000, 400);
+        for (int i = 0; i < 3; i++)
+            Synth.AddTone(sound, 0.22f + i * 0.08f, 0.06f, Wave.Sine, 0.3f, new Envelope(0.003f, 0.05f, 0f, 0.02f), 600, 900);
+        return Done(sound, 0.75f);
+    }
+
+    /// <summary>"Zoooom! TA!" — GO on the map: a quick slide up, and a happy chord.</summary>
+    public static float[] MapGo()
+    {
+        var sound = Synth.Silence(0.55f);
+        Synth.AddTone(sound, 0, 0.18f, Wave.Square25, 0.3f, new Envelope(0.003f, 0.15f, 0.6f, 0.02f), 330, 1320);
+        foreach (string note in new[] { "C5", "E5", "G5" })
+            Synth.AddTone(sound, 0.18f, 0.2f, Wave.Square25, 0.2f, Pluck with { Decay = 0.15f }, Synth.NoteToFrequency(note));
+        return Done(sound);
+    }
+
+    /// <summary>
+    /// "Da-da-da-DAAAAAA!" — ALL 7 WORLDS CLEAR! A run up to a big shiny chord, a drum roll getting louder and louder,
+    /// and a cymbal crash.
+    /// </summary>
+    public static float[] MapAllClear()
+    {
+        var sound = Synth.Silence(2.3f);
+        var random = new Random(64);
+        string[] run = { "C5", "E5", "G5", "C6" };
+        for (int i = 0; i < run.Length; i++)
+            Synth.AddTone(sound, i * 0.1f, 0.09f, Wave.Square25, 0.25f, Held, Synth.NoteToFrequency(run[i]));
+        foreach (string note in new[] { "E6", "G6", "C7" })
+        {
+            Synth.AddTone(sound, 0.4f, 1.2f, Wave.Square25, 0.12f, Held, Synth.NoteToFrequency(note), vibrato: 0.008f);
+            Synth.AddTone(sound, 0.4f, 1.2f, Wave.Triangle, 0.1f, Held, Synth.NoteToFrequency(note));
+        }
+        Synth.AddTone(sound, 0.4f, 1.2f, Wave.Triangle, 0.3f, Held, Synth.NoteToFrequency("C3"));
+        for (int i = 0; i < 20; i++) // the drum roll: 20 little hits, louder and louder
+            AddNoise(sound, random, i * 0.03f, 0.02f, 0.1f + 0.4f * i / 20f, new Envelope(0.001f, 0.015f, 0f, 0.01f), 2500, 2500);
+        AddNoise(sound, random, 0.4f, 0.8f, 0.25f, new Envelope(0.005f, 0.5f, 0.1f, 0.3f), 9000, 6000, hiss: true); // the cymbal
+        return Done(sound);
+    }
+
+    /// <summary>"Bwom-BWOM!" — the next boss pops up on the map: funny-scary, not scary.</summary>
+    public static float[] MapBossSting()
+    {
+        var sound = Synth.Silence(0.8f);
+        float d3 = Synth.NoteToFrequency("D3");
+        Synth.AddTone(sound, 0, 0.16f, Wave.Square50, 0.3f, Held, d3, d3 / MathF.Pow(2, 1 / 12f)); // bwom (bending down)
+        Synth.AddTone(sound, 0.2f, 0.4f, Wave.Square50, 0.35f, Held, Synth.NoteToFrequency("G2"), vibrato: 0.02f); // BWOM!
+        Synth.AddTone(sound, 0.2f, 0.4f, Wave.Triangle, 0.25f, Held, Synth.NoteToFrequency("G2") / 2);
+        AddNoise(sound, new Random(65), 0.2f, 0.06f, 0.3f, new Envelope(0.001f, 0.04f, 0f, 0.02f), 1500, 600);
+        return Done(sound);
+    }
+
+    /// <summary>
+    /// Adds "shhh" noise with its own dice: through a filter that goes from "lowFrom" to "lowTo" (100 = a deep rumble,
+    /// 6000 = a bright hiss), or extra hissy (hiss = true, like a cymbal).
+    /// </summary>
+    static void AddNoise(float[] sound, Random random, float start, float length, float volume, Envelope envelope,
+                         float lowFrom, float lowTo, bool hiss = false)
+    {
+        int first = (int)(start * Synth.SampleRate);
+        int count = (int)((length + envelope.Release) * Synth.SampleRate);
+        float low = 0, last = 0;
+        for (int i = 0; i < count && first + i < sound.Length; i++)
+        {
+            float t = (float)i / Synth.SampleRate;
+            float cutoff = lowFrom + (lowTo - lowFrom) * MathF.Min(1, t / length);
+            float amount = 1f - MathF.Exp(-MathF.Tau * cutoff / Synth.SampleRate);
+            low += amount * (random.NextSingle() * 2f - 1f - low);
+            float sample = hiss ? (low - last) * 2f : low; // (the difference between two noises is extra hissy)
+            last = low;
+            sound[first + i] += sample * volume * envelope.LevelAt(t, length);
+        }
+    }
+
     /// <summary>Plays a list of (note, seconds) one after another.</summary>
     static float[] Tune((string Note, float Length)[] notes, Wave wave, bool normalize = true)
     {
